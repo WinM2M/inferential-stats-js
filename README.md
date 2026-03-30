@@ -205,6 +205,8 @@ You can use the SDK directly in a browser or CodePen with no build step. The sni
 ```
 
 > **Tip:** Paste the JavaScript portion into the **JS panel** of CodePen (with the "JavaScript preprocessor" set to **None** or **Babel**) and the HTML into the **HTML panel**. The demo runs entirely in the browser.
+>
+> **Live Demo:** Try it out on CodePen: https://codepen.io/editor/YoungjuneKwon/pen/019d3c97-35c0-743c-ad43-78e02225b008
 
 ---
 

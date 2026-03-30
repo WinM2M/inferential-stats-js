@@ -35,6 +35,11 @@ function randomFloat(min, max, decimals = 1) {
   return parseFloat(val.toFixed(decimals));
 }
 
+function weightedPickByGender(options, weightsByGender, gender, fallbackWeights) {
+  const weights = weightsByGender[gender] || fallbackWeights;
+  return weightedPick(options, weights);
+}
+
 // Likert scale with a slight positive skew (more 3s and 4s)
 function likert() {
   return weightedPick([1, 2, 3, 4, 5], [5, 12, 30, 35, 18]);
@@ -51,9 +56,19 @@ const nationalityWeights = [25, 18, 10, 10, 10, 9, 9, 9];
 
 const musicGenres = ['Pop', 'Rock', 'Jazz', 'Classical', 'Hip-Hop', 'R&B', 'Electronic', 'Country'];
 const musicWeights = [22, 18, 8, 7, 18, 10, 12, 5];
+const musicWeightsByGender = {
+  Male: [12, 22, 6, 4, 22, 6, 20, 8],
+  Female: [30, 10, 12, 10, 8, 16, 8, 6],
+  Other: [18, 14, 10, 10, 12, 12, 14, 10],
+};
 
 const movieGenres = ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance', 'Thriller', 'Documentary'];
 const movieWeights = [20, 18, 15, 10, 12, 8, 12, 5];
+const movieWeightsByGender = {
+  Male: [24, 16, 12, 12, 18, 4, 10, 4],
+  Female: [14, 20, 20, 10, 10, 16, 6, 4],
+  Other: [16, 18, 18, 10, 12, 12, 8, 6],
+};
 
 const artGenres = ['Painting', 'Sculpture', 'Photography', 'Digital Art', 'Illustration', 'Mixed Media'];
 const artWeights = [25, 10, 22, 20, 15, 8];
@@ -62,13 +77,14 @@ const TOTAL_ROWS = 2000;
 const data = [];
 
 for (let i = 1; i <= TOTAL_ROWS; i++) {
+  const gender = weightedPick(genders, genderWeights);
   data.push({
     id: i,
-    gender: weightedPick(genders, genderWeights),
+    gender,
     age_group: weightedPick(ageGroups, ageWeights),
     nationality: weightedPick(nationalities, nationalityWeights),
-    favorite_music: weightedPick(musicGenres, musicWeights),
-    favorite_movie: weightedPick(movieGenres, movieWeights),
+    favorite_music: weightedPickByGender(musicGenres, musicWeightsByGender, gender, musicWeights),
+    favorite_movie: weightedPickByGender(movieGenres, movieWeightsByGender, gender, movieWeights),
     favorite_art: weightedPick(artGenres, artWeights),
     music_satisfaction: likert(),
     movie_satisfaction: likert(),
