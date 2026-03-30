@@ -1,22 +1,5 @@
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import { readFileSync } from 'fs';
-
-const workerCode = () => {
-  return {
-    name: 'inline-worker',
-    resolveId(source) {
-      if (source === 'worker-inline') return source;
-      return null;
-    },
-    load(id) {
-      if (id === 'worker-inline') {
-        return `export default "inline"`;
-      }
-      return null;
-    }
-  };
-};
 
 export default [
   // Main SDK bundle
@@ -57,6 +40,7 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         declaration: false,
+        declarationDir: undefined,
       }),
     ],
     external: [],
