@@ -67,6 +67,10 @@
         renderTable(title, ['Metric', 'Value'], rows);
       };
 
+      const renderErrorTable = (title, message) => {
+        renderKeyValueTable(title, [['Error', message ?? 'Unknown error']]);
+      };
+
       const formatNumber = (value, digits = 4) => Number(value).toFixed(digits);
 
       window.addEventListener(PROGRESS_EVENT_NAME, (e) => {
@@ -88,46 +92,237 @@
         const data = await response.json();
         setStatus(`Loaded ${data.length} rows. Rendering tables...`);
 
+        const binaryData = data.map((row) => {
+          const musicScore = Number(row.music_satisfaction);
+          return {
+            ...row,
+            is_high_music: Number.isFinite(musicScore) && musicScore >= 4 ? 1 : 0,
+          };
+        });
+
+        const sampledData = data.slice(0, 300);
+
         const frequenciesResult = await stats.frequencies({
           data,
           variable: 'favorite_music',
         });
-        const frequencyRows = frequenciesResult.data.frequencies
-          .slice(0, 6)
-          .map((item) => [
-            String(item.value),
-            String(item.count),
-            `${item.percentage.toFixed(2)}%`,
+        if (frequenciesResult.success) {
+          const frequencyRows = frequenciesResult.data.frequencies
+            .slice(0, 6)
+            .map((item) => [
+              String(item.value),
+              String(item.count),
+              `${item.percentage.toFixed(2)}%`,
+            ]);
+          renderTable(
+            'Descriptive Statistics — Frequencies (favorite_music, top 6)',
+            ['Value', 'Count', 'Percent'],
+            frequencyRows
+          );
+        } else {
+          renderErrorTable('Descriptive Statistics — Frequencies (favorite_music, top 6)', frequenciesResult.error);
+        }
+
+        const descriptivesResult = await stats.descriptives({
+          data,
+          variables: [
+            'music_satisfaction',
+            'movie_satisfaction',
+            'art_satisfaction',
+            'weekly_hours_music',
+            'weekly_hours_movie',
+            'monthly_art_visits',
+          ],
+        });
+        if (descriptivesResult.success) {
+          const descriptiveRows = descriptivesResult.data.statistics.map((stat) => [
+            stat.variable,
+            formatNumber(stat.mean),
+            formatNumber(stat.std),
+            formatNumber(stat.min),
+            formatNumber(stat.max),
           ]);
-        renderTable(
-          'Descriptive Statistics — Frequencies (favorite_music, top 6)',
-          ['Value', 'Count', 'Percent'],
-          frequencyRows
-        );
+          renderTable(
+            'Descriptive Statistics — Descriptives',
+            ['Variable', 'Mean', 'Std', 'Min', 'Max'],
+            descriptiveRows
+          );
+        } else {
+          renderErrorTable('Descriptive Statistics — Descriptives', descriptivesResult.error);
+        }
+
+        const crosstabsResult = await stats.crosstabs({
+          data,
+          rowVariable: 'gender',
+          colVariable: 'favorite_music',
+        });
+        if (crosstabsResult.success) {
+          renderKeyValueTable('Descriptive Statistics — Crosstabs Summary (gender x favorite_music)', [
+            ['Chi-square', formatNumber(crosstabsResult.data.chiSquare)],
+            ['p-value', formatNumber(crosstabsResult.data.pValue)],
+            ['Cramers V', formatNumber(crosstabsResult.data.cramersV)],
+            ['df', String(crosstabsResult.data.degreesOfFreedom)],
+          ]);
+          const crosstabRows = crosstabsResult.data.table.slice(0, 12).map((cell) => [
+            cell.row,
+            cell.col,
+            String(cell.observed),
+            formatNumber(cell.expected),
+            formatNumber(cell.rowPercentage),
+            formatNumber(cell.colPercentage),
+            formatNumber(cell.totalPercentage),
+          ]);
+          renderTable(
+            'Descriptive Statistics — Crosstabs Cells (top 12)',
+            ['Row', 'Col', 'Obs', 'Exp', 'Row %', 'Col %', 'Total %'],
+            crosstabRows
+          );
+        } else {
+          renderErrorTable('Descriptive Statistics — Crosstabs Summary (gender x favorite_music)', crosstabsResult.error);
+        }
+
+        const ttestIndependentResult = await stats.ttestIndependent({
+          data,
+          variable: 'music_satisfaction',
+          groupVariable: 'gender',
+          group1Value: 'Male',
+          group2Value: 'Female',
+        });
+        if (ttestIndependentResult.success) {
+          const levene = ttestIndependentResult.data.leveneTest;
+          const equal = ttestIndependentResult.data.equalVariance;
+          const unequal = ttestIndependentResult.data.unequalVariance;
+          renderKeyValueTable('Compare Means — Independent T-Test (music_satisfaction by gender)', [
+            ['Levene p-value', formatNumber(levene.pValue)],
+            ['Equal variance', String(levene.equalVariance)],
+            ['t (equal var)', formatNumber(equal.tStatistic)],
+            ['p (equal var)', formatNumber(equal.pValue)],
+            ['t (unequal var)', formatNumber(unequal.tStatistic)],
+            ['p (unequal var)', formatNumber(unequal.pValue)],
+          ]);
+        } else {
+          renderErrorTable('Compare Means — Independent T-Test (music_satisfaction by gender)', ttestIndependentResult.error);
+        }
+
+        const ttestPairedResult = await stats.ttestPaired({
+          data,
+          variable1: 'music_satisfaction',
+          variable2: 'movie_satisfaction',
+        });
+        if (ttestPairedResult.success) {
+          renderKeyValueTable('Compare Means — Paired T-Test (music vs movie satisfaction)', [
+            ['t-statistic', formatNumber(ttestPairedResult.data.tStatistic)],
+            ['p-value', formatNumber(ttestPairedResult.data.pValue)],
+            ['Mean diff', formatNumber(ttestPairedResult.data.meanDifference)],
+            ['Std diff', formatNumber(ttestPairedResult.data.stdDifference)],
+            ['n', String(ttestPairedResult.data.n)],
+          ]);
+        } else {
+          renderErrorTable('Compare Means — Paired T-Test (music vs movie satisfaction)', ttestPairedResult.error);
+        }
 
         const anovaResult = await stats.anovaOneway({
           data,
           variable: 'music_satisfaction',
           groupVariable: 'age_group',
         });
-        renderKeyValueTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', [
-          ['F-statistic', anovaResult.data.fStatistic.toFixed(4)],
-          ['p-value', anovaResult.data.pValue.toFixed(4)],
-          ['eta-squared', anovaResult.data.etaSquared.toFixed(4)],
-        ]);
+        if (anovaResult.success) {
+          renderKeyValueTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', [
+            ['F-statistic', formatNumber(anovaResult.data.fStatistic)],
+            ['p-value', formatNumber(anovaResult.data.pValue)],
+            ['eta-squared', formatNumber(anovaResult.data.etaSquared)],
+          ]);
+        } else {
+          renderErrorTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', anovaResult.error);
+        }
+
+        const posthocResult = await stats.posthocTukey({
+          data,
+          variable: 'music_satisfaction',
+          groupVariable: 'age_group',
+          alpha: 0.05,
+        });
+        if (posthocResult.success) {
+          const posthocRows = posthocResult.data.comparisons.slice(0, 8).map((comp) => [
+            comp.group1,
+            comp.group2,
+            formatNumber(comp.meanDifference),
+            formatNumber(comp.pValue),
+            comp.reject ? 'Yes' : 'No',
+          ]);
+          renderTable(
+            'Compare Means — Post-hoc Tukey (top 8 comparisons)',
+            ['Group 1', 'Group 2', 'Mean diff', 'p-value', 'Reject'],
+            posthocRows
+          );
+        } else {
+          renderErrorTable('Compare Means — Post-hoc Tukey (top 8 comparisons)', posthocResult.error);
+        }
 
         const regressionResult = await stats.linearRegression({
           data,
           dependentVariable: 'music_satisfaction',
           independentVariables: ['weekly_hours_music', 'weekly_hours_movie'],
         });
-        renderKeyValueTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', [
-          ['R-squared', regressionResult.data.rSquared.toFixed(4)],
-          ['Adj. R-squared', regressionResult.data.adjustedRSquared.toFixed(4)],
-          ['F-statistic', regressionResult.data.fStatistic.toFixed(4)],
-          ['F p-value', regressionResult.data.fPValue.toFixed(4)],
-          ['Durbin-Watson', regressionResult.data.durbinWatson.toFixed(4)],
-        ]);
+        if (regressionResult.success) {
+          renderKeyValueTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', [
+            ['R-squared', formatNumber(regressionResult.data.rSquared)],
+            ['Adj. R-squared', formatNumber(regressionResult.data.adjustedRSquared)],
+            ['F-statistic', formatNumber(regressionResult.data.fStatistic)],
+            ['F p-value', formatNumber(regressionResult.data.fPValue)],
+            ['Durbin-Watson', formatNumber(regressionResult.data.durbinWatson)],
+          ]);
+        } else {
+          renderErrorTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', regressionResult.error);
+        }
+
+        const logisticBinaryResult = await stats.logisticBinary({
+          data: binaryData,
+          dependentVariable: 'is_high_music',
+          independentVariables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
+        });
+        if (logisticBinaryResult.success) {
+          renderKeyValueTable('Regression — Binary Logistic (is_high_music)', [
+            ['Pseudo R-squared', formatNumber(logisticBinaryResult.data.pseudoRSquared)],
+            ['LLR p-value', formatNumber(logisticBinaryResult.data.llrPValue)],
+            ['AIC', formatNumber(logisticBinaryResult.data.aic)],
+            ['BIC', formatNumber(logisticBinaryResult.data.bic)],
+            ['Converged', logisticBinaryResult.data.convergence ? 'Yes' : 'No'],
+          ]);
+          const binaryCoefRows = logisticBinaryResult.data.coefficients.slice(0, 6).map((coef) => [
+            coef.variable,
+            formatNumber(coef.coefficient),
+            formatNumber(coef.oddsRatio),
+            formatNumber(coef.pValue),
+          ]);
+          renderTable('Regression — Binary Logistic Coefficients (top 6)', ['Variable', 'Coef', 'Odds Ratio', 'p-value'], binaryCoefRows);
+        } else {
+          renderErrorTable('Regression — Binary Logistic (is_high_music)', logisticBinaryResult.error);
+        }
+
+        const logisticMultinomialResult = await stats.logisticMultinomial({
+          data,
+          dependentVariable: 'age_group',
+          independentVariables: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
+          referenceCategory: '20s',
+        });
+        if (logisticMultinomialResult.success) {
+          renderKeyValueTable('Regression — Multinomial Logistic (age_group)', [
+            ['Pseudo R-squared', formatNumber(logisticMultinomialResult.data.pseudoRSquared)],
+            ['AIC', formatNumber(logisticMultinomialResult.data.aic)],
+            ['BIC', formatNumber(logisticMultinomialResult.data.bic)],
+            ['Reference', logisticMultinomialResult.data.referenceCategory],
+          ]);
+          const multiRows = logisticMultinomialResult.data.coefficients.slice(0, 10).map((coef) => [
+            coef.category,
+            coef.variable,
+            formatNumber(coef.coefficient),
+            formatNumber(coef.oddsRatio),
+          ]);
+          renderTable('Regression — Multinomial Coefficients (top 10)', ['Category', 'Variable', 'Coef', 'Odds Ratio'], multiRows);
+        } else {
+          renderErrorTable('Regression — Multinomial Logistic (age_group)', logisticMultinomialResult.error);
+        }
 
         const kmeansResult = await stats.kmeans({
           data,
@@ -136,14 +331,37 @@
           randomState: 42,
           maxIterations: 100,
         });
-        const clusterRows = Object.entries(kmeansResult.data.clusterSizes).map(
-          ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
-        );
-        renderKeyValueTable('Classify — K-Means (k=3)', [
-          ['Inertia', kmeansResult.data.inertia.toFixed(2)],
-          ['Iterations', String(kmeansResult.data.iterations)],
-          ...clusterRows,
-        ]);
+        if (kmeansResult.success) {
+          const clusterRows = Object.entries(kmeansResult.data.clusterSizes).map(
+            ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
+          );
+          renderKeyValueTable('Classify — K-Means (k=3)', [
+            ['Inertia', kmeansResult.data.inertia.toFixed(2)],
+            ['Iterations', String(kmeansResult.data.iterations)],
+            ...clusterRows,
+          ]);
+        } else {
+          renderErrorTable('Classify — K-Means (k=3)', kmeansResult.error);
+        }
+
+        const hierarchicalResult = await stats.hierarchicalCluster({
+          data: sampledData,
+          variables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
+          method: 'ward',
+          metric: 'euclidean',
+          nClusters: 3,
+        });
+        if (hierarchicalResult.success) {
+          const hierarchicalRows = Object.entries(hierarchicalResult.data.clusterSizes).map(
+            ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
+          );
+          renderKeyValueTable('Classify — Hierarchical Cluster (n=3)', [
+            ['Clusters', String(hierarchicalResult.data.nClusters)],
+            ...hierarchicalRows,
+          ]);
+        } else {
+          renderErrorTable('Classify — Hierarchical Cluster (n=3)', hierarchicalResult.error);
+        }
 
         const pcaResult = await stats.pca({
           data,
@@ -158,11 +376,15 @@
           nComponents: 3,
           standardize: true,
         });
-        const pcaRows = pcaResult.data.explainedVarianceRatio.map((value, index) => [
-          `PC${index + 1}`,
-          formatNumber(value),
-        ]);
-        renderTable('Dimension Reduction — PCA (top 3 components)', ['Component', 'Explained Variance Ratio'], pcaRows);
+        if (pcaResult.success) {
+          const pcaRows = pcaResult.data.explainedVarianceRatio.map((value, index) => [
+            `PC${index + 1}`,
+            formatNumber(value),
+          ]);
+          renderTable('Dimension Reduction — PCA (top 3 components)', ['Component', 'Explained Variance Ratio'], pcaRows);
+        } else {
+          renderErrorTable('Dimension Reduction — PCA (top 3 components)', pcaResult.error);
+        }
 
         const efaResult = await stats.efa({
           data,
@@ -187,22 +409,55 @@
           ]);
           renderTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', efaHeaders, efaRows);
         } else {
-          renderKeyValueTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', [
-            ['Error', efaResult.error ?? 'Unknown error'],
+          renderErrorTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', efaResult.error);
+        }
+
+        setStatus('Running MDS on sampled data (300 rows)...');
+        const mdsResult = await stats.mds({
+          data: sampledData,
+          variables: [
+            'music_satisfaction',
+            'movie_satisfaction',
+            'art_satisfaction',
+            'weekly_hours_music',
+            'weekly_hours_movie',
+            'monthly_art_visits',
+          ],
+          nComponents: 2,
+          metric: true,
+          maxIterations: 100,
+          randomState: 42,
+        });
+        if (mdsResult.success) {
+          renderKeyValueTable('Dimension Reduction — MDS Summary', [
+            ['Stress', formatNumber(mdsResult.data.stress)],
+            ['Components', String(mdsResult.data.nComponents)],
           ]);
+          const mdsRows = mdsResult.data.coordinates.slice(0, 5).map((row, index) => [
+            String(index + 1),
+            formatNumber(row[0]),
+            formatNumber(row[1]),
+          ]);
+          renderTable('Dimension Reduction — MDS Coordinates (first 5, sample 300)', ['Index', 'Dim 1', 'Dim 2'], mdsRows);
+        } else {
+          renderErrorTable('Dimension Reduction — MDS', mdsResult.error);
         }
 
         const alphaResult = await stats.cronbachAlpha({
           data,
           items: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
         });
-        renderKeyValueTable('Scale — Cronbach Alpha (satisfaction items)', [
-          ['Alpha', alphaResult.data.alpha.toFixed(4)],
-          ['Standardized Alpha', alphaResult.data.standardizedAlpha.toFixed(4)],
-          ['Inter-item correlation mean', alphaResult.data.interItemCorrelationMean.toFixed(4)],
-          ['Items', String(alphaResult.data.nItems)],
-          ['Observations', String(alphaResult.data.nObservations)],
-        ]);
+        if (alphaResult.success) {
+          renderKeyValueTable('Scale — Cronbach Alpha (satisfaction items)', [
+            ['Alpha', formatNumber(alphaResult.data.alpha)],
+            ['Standardized Alpha', formatNumber(alphaResult.data.standardizedAlpha)],
+            ['Inter-item correlation mean', formatNumber(alphaResult.data.interItemCorrelationMean)],
+            ['Items', String(alphaResult.data.nItems)],
+            ['Observations', String(alphaResult.data.nObservations)],
+          ]);
+        } else {
+          renderErrorTable('Scale — Cronbach Alpha (satisfaction items)', alphaResult.error);
+        }
 
         setStatus('All analyses completed.');
       } catch (err) {
