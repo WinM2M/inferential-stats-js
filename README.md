@@ -12,10 +12,6 @@
 ## Table of Contents
 
 - [Architecture Overview](#architecture-overview)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [CDN / CodePen Usage](#cdn--codepen-usage)
-- [API Reference](#api-reference)
 - [Core Analysis Features — Mathematical & Technical Documentation](#core-analysis-features--mathematical--technical-documentation)
   - [① Descriptive Statistics](#-descriptive-statistics)
   - [② Compare Means](#-compare-means)
@@ -23,6 +19,10 @@
   - [④ Classify](#-classify)
   - [⑤ Dimension Reduction](#-dimension-reduction)
   - [⑥ Scale](#-scale)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [CDN / CodePen Usage](#cdn--codepen-usage)
+- [API Reference](#api-reference)
 - [Sample Data](#sample-data)
 - [Progress Event Handling](#progress-event-handling)
 - [License](#license)
@@ -41,14 +41,14 @@
 │  │  (ESM / CJS)          │     (Transferable)     │     │
 │  └───────────────────────┘                        ▼     │
 │                                 ┌─────────────────────┐ │
-│                                 │  Web Worker          │ │
-│                                 │  ┌────────────────┐  │ │
-│                                 │  │  Pyodide WASM  │  │ │
-│                                 │  │  ┌───────────┐ │  │ │
-│                                 │  │  │  Python    │ │  │ │
-│                                 │  │  │  Runtime   │ │  │ │
-│                                 │  │  └───────────┘ │  │ │
-│                                 │  └────────────────┘  │ │
+│                                 │  Web Worker         │ │
+│                                 │  ┌────────────────┐ │ │
+│                                 │  │  Pyodide WASM  │ │ │
+│                                 │  │  ┌───────────┐ │ │ │
+│                                 │  │  │  Python   │ │ │ │
+│                                 │  │  │  Runtime  │ │ │ │
+│                                 │  │  └───────────┘ │ │ │
+│                                 │  └────────────────┘ │ │
 │                                 └─────────────────────┘ │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -63,6 +63,330 @@
 | **Pyodide WASM Runtime** | The worker loads [Pyodide](https://pyodide.org/) — a full CPython interpreter compiled to WebAssembly — along with pandas, SciPy, statsmodels, scikit-learn, and factor_analyzer. |
 | **Progress Events** | Initialization and computation stages emit `CustomEvent` progress events on a configurable `EventTarget`, enabling real-time progress bars. |
 | **Dual Module Format** | Ships as both ESM (`dist/index.js`) and CommonJS (`dist/index.cjs`) with full TypeScript declarations. |
+
+---
+
+## Core Analysis Features — Mathematical & Technical Documentation
+
+This section documents the mathematical foundations and internal Python implementations of all 16 analyses.
+
+> **Note on math rendering:** Equations are rendered as images via `latex.codecogs.com` so they display correctly on npm.
+
+---
+
+### ① Descriptive Statistics
+
+#### Frequencies
+
+Computes a frequency distribution for a categorical variable, including absolute counts, relative percentages, and cumulative percentages.
+
+**Python implementation:** `pandas.Series.value_counts(normalize=True)`
+
+**Relative frequency:**
+
+![formula](https://latex.codecogs.com/svg.image?f_i=\frac{n_i}{N})
+
+where $n_i$ is the count of category $i$ and $N$ is the total number of observations. Cumulative percentage is the running sum of $f_i \times 100$.
+
+---
+
+#### Descriptives
+
+Produces summary statistics for one or more numeric variables: count, mean, standard deviation, min, max, quartiles (Q1, Q2, Q3), skewness, and kurtosis.
+
+**Python implementation:** `pandas.DataFrame.describe()`, `scipy.stats.skew`, `scipy.stats.kurtosis`
+
+**Arithmetic mean:**
+
+![formula](https://latex.codecogs.com/svg.image?\bar{x}=\frac{1}{N}\sum_{i=1}^{N}x_i)
+
+**Sample standard deviation (Bessel-corrected):**
+
+![formula](https://latex.codecogs.com/svg.image?s=\sqrt{\frac{1}{N-1}\sum_{i=1}^{N}(x_i-\bar{x})^2})
+
+**Skewness (Fisher):**
+
+![formula](https://latex.codecogs.com/svg.image?g_1=\frac{m_3}{m_2^{3/2}},\quad m_k=\frac{1}{N}\sum_{i=1}^{N}(x_i-\bar{x})^k)
+
+**Excess kurtosis (Fisher):**
+
+![formula](https://latex.codecogs.com/svg.image?g_2=\frac{m_4}{m_2^2}-3)
+
+---
+
+#### Crosstabs
+
+Cross-tabulates two categorical variables and tests for independence using Pearson's Chi-square test. Reports observed and expected counts, row/column/total percentages, and Cramér's V as an effect-size measure.
+
+**Python implementation:** `pandas.crosstab`, `scipy.stats.chi2_contingency`
+
+**Pearson's Chi-square statistic:**
+
+![formula](https://latex.codecogs.com/svg.image?\chi^2=\sum\frac{(O_{ij}-E_{ij})^2}{E_{ij}})
+
+where $O_{ij}$ is the observed frequency in cell $(i, j)$ and $E_{ij} = \frac{R_i \cdot C_j}{N}$ is the expected frequency under independence.
+
+**Cramér's V:**
+
+![formula](https://latex.codecogs.com/svg.image?V=\sqrt{\frac{\chi^2}{N\cdot(k-1)}})
+
+where $k = \min(\text{rows}, \text{cols})$.
+
+---
+
+### ② Compare Means
+
+#### Independent-Samples T-Test
+
+Compares the means of a numeric variable between two independent groups. Automatically reports results for both equal-variance and unequal-variance (Welch's) assumptions. Includes Levene's test for equality of variances.
+
+**Python implementation:** `scipy.stats.ttest_ind`, `scipy.stats.levene`
+
+**T-statistic (equal variance assumed):**
+
+![formula](https://latex.codecogs.com/svg.image?t=\frac{\bar{X}_1-\bar{X}_2}{S_p\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}})
+
+**Pooled standard deviation:**
+
+![formula](https://latex.codecogs.com/svg.image?S_p=\sqrt{\frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2}})
+
+**Degrees of freedom:** $df = n_1 + n_2 - 2$
+
+When Levene's test is significant ($p < 0.05$), Welch's t-test is recommended, which uses the Welch–Satterthwaite approximation for degrees of freedom.
+
+---
+
+#### Paired-Samples T-Test
+
+Tests whether the mean difference between two paired measurements is significantly different from zero.
+
+**Python implementation:** `scipy.stats.ttest_rel`
+
+**T-statistic:**
+
+![formula](https://latex.codecogs.com/svg.image?t=\frac{\bar{D}}{S_D/\sqrt{n}})
+
+where $\bar{D} = \frac{1}{n}\sum_{i=1}^{n}(X_{1i} - X_{2i})$ is the mean difference and $S_D$ is the standard deviation of the differences.
+
+**Degrees of freedom:** $df = n - 1$
+
+---
+
+#### One-Way ANOVA
+
+Tests whether the means of a numeric variable differ significantly across three or more groups.
+
+**Python implementation:** `scipy.stats.f_oneway`
+
+**F-statistic:**
+
+![formula](https://latex.codecogs.com/svg.image?F=\frac{MS_{between}}{MS_{within}})
+
+**Sum of Squares Between Groups:**
+
+![formula](https://latex.codecogs.com/svg.image?SS_{between}=\sum_{j=1}^{k}n_j(\bar{X}_j-\bar{X})^2)
+
+**Sum of Squares Within Groups:**
+
+![formula](https://latex.codecogs.com/svg.image?SS_{within}=\sum_{j=1}^{k}\sum_{i=1}^{n_j}(X_{ij}-\bar{X}_j)^2)
+
+**Mean Squares:**
+
+![formula](https://latex.codecogs.com/svg.image?MS_{between}=\frac{SS_{between}}{k-1},\quad MS_{within}=\frac{SS_{within}}{N-k})
+
+**Effect size (Eta-squared):**
+
+![formula](https://latex.codecogs.com/svg.image?\eta^2=\frac{SS_{between}}{SS_{total}})
+
+---
+
+#### Post-hoc Tukey HSD
+
+Performs pairwise comparisons of group means following a significant ANOVA result using the Studentized Range distribution.
+
+**Python implementation:** `statsmodels.stats.multicomp.pairwise_tukeyhsd`
+
+**Studentized range statistic:**
+
+![formula](https://latex.codecogs.com/svg.image?q=\frac{\bar{X}_i-\bar{X}_j}{\sqrt{MS_W/n}})
+
+where $MS_W$ is the within-group mean square from the ANOVA and $n$ is the harmonic mean of group sizes. The critical $q$ value is obtained from the Studentized Range distribution with $k$ groups and $N - k$ degrees of freedom.
+
+---
+
+### ③ Regression
+
+#### Linear Regression (OLS)
+
+Fits an Ordinary Least Squares regression model with one or more independent variables. Reports regression coefficients, standard errors, t-statistics, p-values, confidence intervals, $R^2$, adjusted $R^2$, F-test, and the Durbin-Watson statistic for autocorrelation detection.
+
+**Python implementation:** `statsmodels.api.OLS`
+
+**Model:**
+
+![formula](https://latex.codecogs.com/svg.image?Y=\beta_0+\beta_1X_1+\cdots+\beta_pX_p+\epsilon)
+
+where $\epsilon \sim N(0, \sigma^2)$.
+
+**OLS estimator:**
+
+![formula](https://latex.codecogs.com/svg.image?\hat{\beta}=(X^TX)^{-1}X^TY)
+
+**Coefficient of determination:**
+
+![formula](https://latex.codecogs.com/svg.image?R^2=1-\frac{SS_{res}}{SS_{tot}})
+
+where $SS_{res} = \sum(Y_i - \hat{Y}_i)^2$ and $SS_{tot} = \sum(Y_i - \bar{Y})^2$.
+
+---
+
+#### Binary Logistic Regression
+
+Models the probability of a binary outcome as a function of one or more independent variables. Reports coefficients (log-odds), odds ratios, z-statistics, p-values, pseudo-$R^2$, AIC, and BIC.
+
+**Python implementation:** `statsmodels.discrete.discrete_model.Logit`
+
+**Logit link function:**
+
+![formula](https://latex.codecogs.com/svg.image?\ln\left(\frac{p}{1-p}\right)=\beta_0+\beta_1X_1+\cdots+\beta_pX_p)
+
+**Predicted probability:**
+
+![formula](https://latex.codecogs.com/svg.image?P(Y=1|X)=\frac{1}{1+e^{-(\beta_0+\beta_1X_1+\cdots+\beta_pX_p)}})
+
+Coefficients are estimated by Maximum Likelihood Estimation (MLE). The odds ratio for predictor $j$ is $e^{\beta_j}$.
+
+---
+
+#### Multinomial Logistic Regression
+
+Extends binary logistic regression to outcomes with more than two unordered categories. One category is designated as the reference; the model estimates log-odds of each other category relative to the reference.
+
+**Python implementation:** `sklearn.linear_model.LogisticRegression(multi_class='multinomial')`
+
+**Log-odds relative to reference category $K$:**
+
+![formula](https://latex.codecogs.com/svg.image?\ln\left(\frac{P(Y=k)}{P(Y=K)}\right)=\beta_{k0}+\beta_{k1}X_1+\cdots+\beta_{kp}X_p)
+
+for each category $k \neq K$.
+
+**Predicted probability via softmax:**
+
+![formula](https://latex.codecogs.com/svg.image?P(Y=k|X)=\frac{e^{\beta_{k0}+\beta_{k1}X_1+\cdots+\beta_{kp}X_p}}{\sum_{j=1}^{K}e^{\beta_{j0}+\beta_{j1}X_1+\cdots+\beta_{jp}X_p}})
+
+---
+
+### ④ Classify
+
+#### K-Means Clustering
+
+Partitions observations into $K$ clusters by iteratively assigning points to the nearest centroid and updating centroids until convergence.
+
+**Python implementation:** `sklearn.cluster.KMeans`
+
+**Objective function (inertia):**
+
+![formula](https://latex.codecogs.com/svg.image?J=\sum_{j=1}^{K}\sum_{i\in C_j}\|x_i-\mu_j\|^2)
+
+where $C_j$ is the set of observations in cluster $j$ and $\mu_j$ is the centroid. The algorithm minimizes $J$ using Lloyd's algorithm (Expectation-Maximization style).
+
+---
+
+#### Hierarchical (Agglomerative) Clustering
+
+Builds a hierarchy of clusters using a bottom-up approach. Supports Ward, complete, average, and single linkage methods. Returns a full linkage matrix and dendrogram data for visualization.
+
+**Python implementation:** `scipy.cluster.hierarchy.linkage`, `scipy.cluster.hierarchy.fcluster`
+
+**Ward's minimum variance method** (default):
+
+![formula](https://latex.codecogs.com/svg.image?\Delta(A,B)=\frac{n_A n_B}{n_A+n_B}\|\bar{x}_A-\bar{x}_B\|^2)
+
+At each step, the pair of clusters $(A, B)$ that produces the smallest increase in total within-cluster variance is merged. Ward's method tends to produce compact, equally sized clusters.
+
+---
+
+### ⑤ Dimension Reduction
+
+#### Exploratory Factor Analysis (EFA)
+
+Discovers latent factors underlying a set of observed variables. Supports varimax, promax, oblimin, and no rotation. Reports factor loadings, communalities, eigenvalues, KMO measure of sampling adequacy, and Bartlett's test of sphericity.
+
+**Python implementation:** `factor_analyzer.FactorAnalyzer(rotation='varimax')` — installed at runtime via `micropip`
+
+**Factor model:**
+
+![formula](https://latex.codecogs.com/svg.image?X=\Lambda F+\epsilon)
+
+where $X$ is the observed variable vector, $\Lambda$ is the matrix of factor loadings, $F$ is the vector of latent factors, and $\epsilon$ is the unique variance.
+
+**Kaiser-Meyer-Olkin (KMO) measure:**
+
+![formula](https://latex.codecogs.com/svg.image?KMO=\frac{\sum\sum_{i\neq j} r_{ij}^2}{\sum\sum_{i\neq j} r_{ij}^2+\sum\sum_{i\neq j} u_{ij}^2})
+
+where $r_{ij}$ are elements of the correlation matrix and $u_{ij}$ are elements of the partial correlation matrix. KMO values above 0.6 are generally considered acceptable for factor analysis.
+
+---
+
+#### Principal Component Analysis (PCA)
+
+Finds orthogonal components that maximize variance in the data. Reports component loadings, explained variance, cumulative variance ratios, and singular values. Optionally standardizes the input.
+
+**Python implementation:** `sklearn.decomposition.PCA`
+
+**Objective:** Find the weight vector $w$ that maximizes projected variance:
+
+![formula](https://latex.codecogs.com/svg.image?\text{Var}(Xw)\to\max\quad\text{subject to}\quad\|w\|=1)
+
+This is equivalent to finding the eigenvectors of the covariance matrix $\Sigma = \frac{1}{N-1}X^TX$. The eigenvalues $\lambda_1 \geq \lambda_2 \geq \cdots$ represent the variance explained by each component.
+
+**Explained variance ratio:**
+
+![formula](https://latex.codecogs.com/svg.image?\text{EVR}_k=\frac{\lambda_k}{\sum_{i=1}^{p}\lambda_i})
+
+---
+
+#### Multidimensional Scaling (MDS)
+
+Projects high-dimensional data into a lower-dimensional space (typically 2D) while preserving pairwise distances. Supports both metric and non-metric MDS.
+
+**Python implementation:** `sklearn.manifold.MDS`
+
+**Stress function (Kruskal's Stress-1):**
+
+![formula](https://latex.codecogs.com/svg.image?\sigma=\sqrt{\frac{\sum_{i<j}(d_{ij}-\delta_{ij})^2}{\sum_{i<j}d_{ij}^2}})
+
+where $d_{ij}$ is the distance in the reduced space and $\delta_{ij}$ is the original distance (or a monotonic transformation for non-metric MDS). A stress value below 0.1 is generally considered a good fit.
+
+---
+
+### ⑥ Scale
+
+#### Cronbach's Alpha
+
+Measures the internal consistency (reliability) of a set of scale items. Reports raw alpha, standardized alpha, item-total correlations, and alpha-if-item-deleted for diagnostic purposes.
+
+**Python implementation:** Custom implementation using `pandas` covariance matrix operations
+
+**Cronbach's alpha (raw):**
+
+![formula](https://latex.codecogs.com/svg.image?\alpha=\frac{K}{K-1}\left(1-\frac{\sum_{i=1}^{K}\sigma_{Y_i}^2}{\sigma_X^2}\right))
+
+where $K$ is the number of items, $\sigma_{Y_i}^2$ is the variance of item $i$, and $\sigma_X^2$ is the variance of the total score.
+
+**Standardized alpha (based on mean inter-item correlation):**
+
+![formula](https://latex.codecogs.com/svg.image?\alpha_{std}=\frac{K\bar{r}}{1+(K-1)\bar{r}})
+
+where $\bar{r}$ is the mean of all pairwise Pearson correlations among items.
+
+| $\alpha$ Range | Interpretation |
+|---|---|
+| ≥ 0.9 | Excellent |
+| 0.8 – 0.9 | Good |
+| 0.7 – 0.8 | Acceptable |
+| 0.6 – 0.7 | Questionable |
+| < 0.6 | Poor |
 
 ---
 
@@ -126,494 +450,10 @@ stats.destroy();
 
 ## CDN / CodePen Usage
 
-You can use the SDK directly in a browser or CodePen with no build step. The snippet below loads the library from a CDN, fetches the sample dataset from GitHub Pages, and runs every analysis method in the SDK. Results are rendered as HTML tables.
+You can use the SDK directly in a browser or CodePen with no build step. The full demo code is identical to the local page below (except for CDN import paths).
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>inferential-stats-js CDN Demo</title>
-</head>
-<body>
-  <h1>inferential-stats-js — CDN Demo</h1>
-  <p id="status">Initializing...</p>
-  <div id="output"></div>
-
-  <style>
-    body { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; margin: 24px; }
-    table { border-collapse: collapse; margin: 12px 0 24px; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 6px 10px; font-size: 14px; }
-    th { background: #f5f5f5; text-align: left; }
-    h2 { margin: 20px 0 8px; font-size: 18px; }
-  </style>
-
-  <!-- Load the worker script (global IIFE, no import needed) -->
-  <!-- The worker is loaded by URL below, not as a script tag -->
-
-  <script type="module">
-    // 1. Import the SDK from a CDN
-    import { InferentialStats, PROGRESS_EVENT_NAME } from 'https://unpkg.com/@winm2m/inferential-stats-js/dist/index.js';
-
-    const status = document.getElementById('status');
-    const output = document.getElementById('output');
-
-    const setStatus = (message) => {
-      if (status) {
-        status.textContent = message;
-      }
-    };
-
-    const renderTable = (title, headers, rows) => {
-      if (!output) return;
-
-      const section = document.createElement('section');
-      const heading = document.createElement('h2');
-      heading.textContent = title;
-      section.appendChild(heading);
-
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      headers.forEach((header) => {
-        const th = document.createElement('th');
-        th.textContent = header;
-        headerRow.appendChild(th);
-      });
-      thead.appendChild(headerRow);
-      table.appendChild(thead);
-
-      const tbody = document.createElement('tbody');
-      rows.forEach((cells) => {
-        const tr = document.createElement('tr');
-        cells.forEach((cell) => {
-          const td = document.createElement('td');
-          td.textContent = cell;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      section.appendChild(table);
-      output.appendChild(section);
-    };
-
-    const renderKeyValueTable = (title, rows) => {
-      renderTable(title, ['Metric', 'Value'], rows);
-    };
-
-    const renderErrorTable = (title, message) => {
-      renderKeyValueTable(title, [['Error', message ?? 'Unknown error']]);
-    };
-
-    const formatNumber = (value, digits = 4) => Number(value).toFixed(digits);
-
-    // 2. Listen for progress events
-    window.addEventListener(PROGRESS_EVENT_NAME, (e) => {
-      const { stage, progress, message } = e.detail;
-      setStatus(`[${stage}] ${message} (${progress}%)`);
-    });
-
-    // 3. Create an instance pointing to the CDN-hosted worker
-    const stats = new InferentialStats({
-      workerUrl: 'https://unpkg.com/@winm2m/inferential-stats-js/dist/stats-worker.js',
-    });
-
-    try {
-      // 4. Initialize (downloads Pyodide WASM + Python packages)
-      await stats.init();
-      setStatus('Initialization complete. Running analyses...');
-
-      // 5. Fetch sample survey data from GitHub Pages
-      const response = await fetch(
-        'https://winm2m.github.io/inferential-stats-js/sample-survey-data.json'
-      );
-      const data = await response.json();
-      setStatus(`Loaded ${data.length} rows. Rendering tables...`);
-
-      const binaryData = data.map((row) => {
-        const musicScore = Number(row.music_satisfaction);
-        return {
-          ...row,
-          is_high_music: Number.isFinite(musicScore) && musicScore >= 4 ? 1 : 0,
-        };
-      });
-
-      const sampledData = data.slice(0, 300);
-
-      // 6. Descriptive Statistics — Frequencies
-      const frequenciesResult = await stats.frequencies({
-        data,
-        variable: 'favorite_music',
-      });
-      if (frequenciesResult.success) {
-        const frequencyRows = frequenciesResult.data.frequencies
-          .slice(0, 6)
-          .map((item) => [
-            String(item.value),
-            String(item.count),
-            `${item.percentage.toFixed(2)}%`,
-          ]);
-        renderTable(
-          'Descriptive Statistics — Frequencies (favorite_music, top 6)',
-          ['Value', 'Count', 'Percent'],
-          frequencyRows
-        );
-      } else {
-        renderErrorTable('Descriptive Statistics — Frequencies (favorite_music, top 6)', frequenciesResult.error);
-      }
-
-      const descriptivesResult = await stats.descriptives({
-        data,
-        variables: [
-          'music_satisfaction',
-          'movie_satisfaction',
-          'art_satisfaction',
-          'weekly_hours_music',
-          'weekly_hours_movie',
-          'monthly_art_visits',
-        ],
-      });
-      if (descriptivesResult.success) {
-        const descriptiveRows = descriptivesResult.data.statistics.map((stat) => [
-          stat.variable,
-          formatNumber(stat.mean),
-          formatNumber(stat.std),
-          formatNumber(stat.min),
-          formatNumber(stat.max),
-        ]);
-        renderTable(
-          'Descriptive Statistics — Descriptives',
-          ['Variable', 'Mean', 'Std', 'Min', 'Max'],
-          descriptiveRows
-        );
-      } else {
-        renderErrorTable('Descriptive Statistics — Descriptives', descriptivesResult.error);
-      }
-
-      const crosstabsResult = await stats.crosstabs({
-        data,
-        rowVariable: 'gender',
-        colVariable: 'favorite_music',
-      });
-      if (crosstabsResult.success) {
-        renderKeyValueTable('Descriptive Statistics — Crosstabs Summary (gender x favorite_music)', [
-          ['Chi-square', formatNumber(crosstabsResult.data.chiSquare)],
-          ['p-value', formatNumber(crosstabsResult.data.pValue)],
-          ['Cramers V', formatNumber(crosstabsResult.data.cramersV)],
-          ['df', String(crosstabsResult.data.degreesOfFreedom)],
-        ]);
-        const crosstabRows = crosstabsResult.data.table.slice(0, 12).map((cell) => [
-          cell.row,
-          cell.col,
-          String(cell.observed),
-          formatNumber(cell.expected),
-          formatNumber(cell.rowPercentage),
-          formatNumber(cell.colPercentage),
-          formatNumber(cell.totalPercentage),
-        ]);
-        renderTable(
-          'Descriptive Statistics — Crosstabs Cells (top 12)',
-          ['Row', 'Col', 'Obs', 'Exp', 'Row %', 'Col %', 'Total %'],
-          crosstabRows
-        );
-      } else {
-        renderErrorTable('Descriptive Statistics — Crosstabs Summary (gender x favorite_music)', crosstabsResult.error);
-      }
-
-      const ttestIndependentResult = await stats.ttestIndependent({
-        data,
-        variable: 'music_satisfaction',
-        groupVariable: 'gender',
-        group1Value: 'Male',
-        group2Value: 'Female',
-      });
-      if (ttestIndependentResult.success) {
-        const levene = ttestIndependentResult.data.leveneTest;
-        const equal = ttestIndependentResult.data.equalVariance;
-        const unequal = ttestIndependentResult.data.unequalVariance;
-        renderKeyValueTable('Compare Means — Independent T-Test (music_satisfaction by gender)', [
-          ['Levene p-value', formatNumber(levene.pValue)],
-          ['Equal variance', String(levene.equalVariance)],
-          ['t (equal var)', formatNumber(equal.tStatistic)],
-          ['p (equal var)', formatNumber(equal.pValue)],
-          ['t (unequal var)', formatNumber(unequal.tStatistic)],
-          ['p (unequal var)', formatNumber(unequal.pValue)],
-        ]);
-      } else {
-        renderErrorTable('Compare Means — Independent T-Test (music_satisfaction by gender)', ttestIndependentResult.error);
-      }
-
-      const ttestPairedResult = await stats.ttestPaired({
-        data,
-        variable1: 'music_satisfaction',
-        variable2: 'movie_satisfaction',
-      });
-      if (ttestPairedResult.success) {
-        renderKeyValueTable('Compare Means — Paired T-Test (music vs movie satisfaction)', [
-          ['t-statistic', formatNumber(ttestPairedResult.data.tStatistic)],
-          ['p-value', formatNumber(ttestPairedResult.data.pValue)],
-          ['Mean diff', formatNumber(ttestPairedResult.data.meanDifference)],
-          ['Std diff', formatNumber(ttestPairedResult.data.stdDifference)],
-          ['n', String(ttestPairedResult.data.n)],
-        ]);
-      } else {
-        renderErrorTable('Compare Means — Paired T-Test (music vs movie satisfaction)', ttestPairedResult.error);
-      }
-
-      const anovaResult = await stats.anovaOneway({
-        data,
-        variable: 'music_satisfaction',
-        groupVariable: 'age_group',
-      });
-      if (anovaResult.success) {
-        renderKeyValueTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', [
-          ['F-statistic', formatNumber(anovaResult.data.fStatistic)],
-          ['p-value', formatNumber(anovaResult.data.pValue)],
-          ['eta-squared', formatNumber(anovaResult.data.etaSquared)],
-        ]);
-      } else {
-        renderErrorTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', anovaResult.error);
-      }
-
-      const posthocResult = await stats.posthocTukey({
-        data,
-        variable: 'music_satisfaction',
-        groupVariable: 'age_group',
-        alpha: 0.05,
-      });
-      if (posthocResult.success) {
-        const posthocRows = posthocResult.data.comparisons.slice(0, 8).map((comp) => [
-          comp.group1,
-          comp.group2,
-          formatNumber(comp.meanDifference),
-          formatNumber(comp.pValue),
-          comp.reject ? 'Yes' : 'No',
-        ]);
-        renderTable(
-          'Compare Means — Post-hoc Tukey (top 8 comparisons)',
-          ['Group 1', 'Group 2', 'Mean diff', 'p-value', 'Reject'],
-          posthocRows
-        );
-      } else {
-        renderErrorTable('Compare Means — Post-hoc Tukey (top 8 comparisons)', posthocResult.error);
-      }
-
-      const regressionResult = await stats.linearRegression({
-        data,
-        dependentVariable: 'music_satisfaction',
-        independentVariables: ['weekly_hours_music', 'weekly_hours_movie'],
-      });
-      if (regressionResult.success) {
-        renderKeyValueTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', [
-          ['R-squared', formatNumber(regressionResult.data.rSquared)],
-          ['Adj. R-squared', formatNumber(regressionResult.data.adjustedRSquared)],
-          ['F-statistic', formatNumber(regressionResult.data.fStatistic)],
-          ['F p-value', formatNumber(regressionResult.data.fPValue)],
-          ['Durbin-Watson', formatNumber(regressionResult.data.durbinWatson)],
-        ]);
-      } else {
-        renderErrorTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', regressionResult.error);
-      }
-
-      const logisticBinaryResult = await stats.logisticBinary({
-        data: binaryData,
-        dependentVariable: 'is_high_music',
-        independentVariables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
-      });
-      if (logisticBinaryResult.success) {
-        renderKeyValueTable('Regression — Binary Logistic (is_high_music)', [
-          ['Pseudo R-squared', formatNumber(logisticBinaryResult.data.pseudoRSquared)],
-          ['LLR p-value', formatNumber(logisticBinaryResult.data.llrPValue)],
-          ['AIC', formatNumber(logisticBinaryResult.data.aic)],
-          ['BIC', formatNumber(logisticBinaryResult.data.bic)],
-          ['Converged', logisticBinaryResult.data.convergence ? 'Yes' : 'No'],
-        ]);
-        const binaryCoefRows = logisticBinaryResult.data.coefficients.slice(0, 6).map((coef) => [
-          coef.variable,
-          formatNumber(coef.coefficient),
-          formatNumber(coef.oddsRatio),
-          formatNumber(coef.pValue),
-        ]);
-        renderTable('Regression — Binary Logistic Coefficients (top 6)', ['Variable', 'Coef', 'Odds Ratio', 'p-value'], binaryCoefRows);
-      } else {
-        renderErrorTable('Regression — Binary Logistic (is_high_music)', logisticBinaryResult.error);
-      }
-
-      const logisticMultinomialResult = await stats.logisticMultinomial({
-        data,
-        dependentVariable: 'age_group',
-        independentVariables: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
-        referenceCategory: '20s',
-      });
-      if (logisticMultinomialResult.success) {
-        renderKeyValueTable('Regression — Multinomial Logistic (age_group)', [
-          ['Pseudo R-squared', formatNumber(logisticMultinomialResult.data.pseudoRSquared)],
-          ['AIC', formatNumber(logisticMultinomialResult.data.aic)],
-          ['BIC', formatNumber(logisticMultinomialResult.data.bic)],
-          ['Reference', logisticMultinomialResult.data.referenceCategory],
-        ]);
-        const multiRows = logisticMultinomialResult.data.coefficients.slice(0, 10).map((coef) => [
-          coef.category,
-          coef.variable,
-          formatNumber(coef.coefficient),
-          formatNumber(coef.oddsRatio),
-        ]);
-        renderTable('Regression — Multinomial Coefficients (top 10)', ['Category', 'Variable', 'Coef', 'Odds Ratio'], multiRows);
-      } else {
-        renderErrorTable('Regression — Multinomial Logistic (age_group)', logisticMultinomialResult.error);
-      }
-
-      const kmeansResult = await stats.kmeans({
-        data,
-        variables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
-        k: 3,
-        randomState: 42,
-        maxIterations: 100,
-      });
-      if (kmeansResult.success) {
-        const clusterRows = Object.entries(kmeansResult.data.clusterSizes).map(
-          ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
-        );
-        renderKeyValueTable('Classify — K-Means (k=3)', [
-          ['Inertia', kmeansResult.data.inertia.toFixed(2)],
-          ['Iterations', String(kmeansResult.data.iterations)],
-          ...clusterRows,
-        ]);
-      } else {
-        renderErrorTable('Classify — K-Means (k=3)', kmeansResult.error);
-      }
-
-      const hierarchicalResult = await stats.hierarchicalCluster({
-        data: sampledData,
-        variables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
-        method: 'ward',
-        metric: 'euclidean',
-        nClusters: 3,
-      });
-      if (hierarchicalResult.success) {
-        const hierarchicalRows = Object.entries(hierarchicalResult.data.clusterSizes).map(
-          ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
-        );
-        renderKeyValueTable('Classify — Hierarchical Cluster (n=3)', [
-          ['Clusters', String(hierarchicalResult.data.nClusters)],
-          ...hierarchicalRows,
-        ]);
-      } else {
-        renderErrorTable('Classify — Hierarchical Cluster (n=3)', hierarchicalResult.error);
-      }
-
-      const pcaResult = await stats.pca({
-        data,
-        variables: [
-          'music_satisfaction',
-          'movie_satisfaction',
-          'art_satisfaction',
-          'weekly_hours_music',
-          'weekly_hours_movie',
-          'monthly_art_visits',
-        ],
-        nComponents: 3,
-        standardize: true,
-      });
-      if (pcaResult.success) {
-        const pcaRows = pcaResult.data.explainedVarianceRatio.map((value, index) => [
-          `PC${index + 1}`,
-          formatNumber(value),
-        ]);
-        renderTable('Dimension Reduction — PCA (top 3 components)', ['Component', 'Explained Variance Ratio'], pcaRows);
-      } else {
-        renderErrorTable('Dimension Reduction — PCA (top 3 components)', pcaResult.error);
-      }
-
-      const efaResult = await stats.efa({
-        data,
-        variables: [
-          'music_satisfaction',
-          'movie_satisfaction',
-          'art_satisfaction',
-          'weekly_hours_music',
-          'weekly_hours_movie',
-          'monthly_art_visits',
-        ],
-        nFactors: 3,
-        rotation: 'varimax',
-      });
-      if (efaResult.success) {
-        const efaHeaders = ['Variable', 'Factor 1', 'Factor 2', 'Factor 3'];
-        const efaRows = Object.entries(efaResult.data.loadings).map(([variable, loadings]) => [
-          variable,
-          formatNumber(loadings[0]),
-          formatNumber(loadings[1]),
-          formatNumber(loadings[2]),
-        ]);
-        renderTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', efaHeaders, efaRows);
-      } else {
-        renderErrorTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', efaResult.error);
-      }
-
-      setStatus('Running MDS on sampled data (300 rows)...');
-      const mdsResult = await stats.mds({
-        data: sampledData,
-        variables: [
-          'music_satisfaction',
-          'movie_satisfaction',
-          'art_satisfaction',
-          'weekly_hours_music',
-          'weekly_hours_movie',
-          'monthly_art_visits',
-        ],
-        nComponents: 2,
-        metric: true,
-        maxIterations: 100,
-        randomState: 42,
-      });
-      if (mdsResult.success) {
-        renderKeyValueTable('Dimension Reduction — MDS Summary', [
-          ['Stress', formatNumber(mdsResult.data.stress)],
-          ['Components', String(mdsResult.data.nComponents)],
-        ]);
-        const mdsRows = mdsResult.data.coordinates.slice(0, 5).map((row, index) => [
-          String(index + 1),
-          formatNumber(row[0]),
-          formatNumber(row[1]),
-        ]);
-        renderTable('Dimension Reduction — MDS Coordinates (first 5, sample 300)', ['Index', 'Dim 1', 'Dim 2'], mdsRows);
-      } else {
-        renderErrorTable('Dimension Reduction — MDS', mdsResult.error);
-      }
-
-      const alphaResult = await stats.cronbachAlpha({
-        data,
-        items: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
-      });
-      if (alphaResult.success) {
-        renderKeyValueTable('Scale — Cronbach Alpha (satisfaction items)', [
-          ['Alpha', formatNumber(alphaResult.data.alpha)],
-          ['Standardized Alpha', formatNumber(alphaResult.data.standardizedAlpha)],
-          ['Inter-item correlation mean', formatNumber(alphaResult.data.interItemCorrelationMean)],
-          ['Items', String(alphaResult.data.nItems)],
-          ['Observations', String(alphaResult.data.nObservations)],
-        ]);
-      } else {
-        renderErrorTable('Scale — Cronbach Alpha (satisfaction items)', alphaResult.error);
-      }
-
-      setStatus('All analyses completed.');
-
-    } catch (err) {
-      setStatus('Error: ' + err.message);
-    } finally {
-      stats.destroy();
-    }
-  </script>
-</body>
-</html>
-```
-
-> **Tip:** Paste the JavaScript portion into the **JS panel** of CodePen (with the "JavaScript preprocessor" set to **None** or **Babel**) and the HTML into the **HTML panel**. The demo runs entirely in the browser.
->
-> **Live Demo:** Try it out on CodePen: https://codepen.io/editor/YoungjuneKwon/pen/019d3c97-35c0-743c-ad43-78e02225b008
+- **Local demo source:** `src/dev/demo.html`
+- **CodePen live demo:** https://codepen.io/editor/YoungjuneKwon/pen/019d3c97-35c0-743c-ad43-78e02225b008
 
 ---
 
@@ -686,328 +526,6 @@ interface AnalysisResult<T> {
 | # | Method | Input → Output | Description |
 |---|---|---|---|
 | 16 | `cronbachAlpha(input)` | `CronbachAlphaInput` → `CronbachAlphaOutput` | Reliability analysis with Cronbach's alpha, item-total correlations, and alpha-if-deleted. |
-
----
-
-## Core Analysis Features — Mathematical & Technical Documentation
-
-This section documents the mathematical foundations and internal Python implementations of all 16 analyses.
-
----
-
-### ① Descriptive Statistics
-
-#### Frequencies
-
-Computes a frequency distribution for a categorical variable, including absolute counts, relative percentages, and cumulative percentages.
-
-**Python implementation:** `pandas.Series.value_counts(normalize=True)`
-
-**Relative frequency:**
-
-$$f_i = \frac{n_i}{N}$$
-
-where $n_i$ is the count of category $i$ and $N$ is the total number of observations. Cumulative percentage is the running sum of $f_i \times 100$.
-
----
-
-#### Descriptives
-
-Produces summary statistics for one or more numeric variables: count, mean, standard deviation, min, max, quartiles (Q1, Q2, Q3), skewness, and kurtosis.
-
-**Python implementation:** `pandas.DataFrame.describe()`, `scipy.stats.skew`, `scipy.stats.kurtosis`
-
-**Arithmetic mean:**
-
-$$\bar{x} = \frac{1}{N}\sum_{i=1}^{N} x_i$$
-
-**Sample standard deviation (Bessel-corrected):**
-
-$$s = \sqrt{\frac{1}{N-1}\sum_{i=1}^{N}(x_i - \bar{x})^2}$$
-
-**Skewness (Fisher):**
-
-$$g_1 = \frac{m_3}{m_2^{3/2}}, \quad m_k = \frac{1}{N}\sum_{i=1}^{N}(x_i - \bar{x})^k$$
-
-**Excess kurtosis (Fisher):**
-
-$$g_2 = \frac{m_4}{m_2^2} - 3$$
-
----
-
-#### Crosstabs
-
-Cross-tabulates two categorical variables and tests for independence using Pearson's Chi-square test. Reports observed and expected counts, row/column/total percentages, and Cramér's V as an effect-size measure.
-
-**Python implementation:** `pandas.crosstab`, `scipy.stats.chi2_contingency`
-
-**Pearson's Chi-square statistic:**
-
-$$\chi^2 = \sum \frac{(O_{ij} - E_{ij})^2}{E_{ij}}$$
-
-where $O_{ij}$ is the observed frequency in cell $(i, j)$ and $E_{ij} = \frac{R_i \cdot C_j}{N}$ is the expected frequency under independence.
-
-**Cramér's V:**
-
-$$V = \sqrt{\frac{\chi^2}{N \cdot (k-1)}}$$
-
-where $k = \min(\text{rows}, \text{cols})$.
-
----
-
-### ② Compare Means
-
-#### Independent-Samples T-Test
-
-Compares the means of a numeric variable between two independent groups. Automatically reports results for both equal-variance and unequal-variance (Welch's) assumptions. Includes Levene's test for equality of variances.
-
-**Python implementation:** `scipy.stats.ttest_ind`, `scipy.stats.levene`
-
-**T-statistic (equal variance assumed):**
-
-$$t = \frac{\bar{X}_1 - \bar{X}_2}{S_p\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}}$$
-
-**Pooled standard deviation:**
-
-$$S_p = \sqrt{\frac{(n_1-1)s_1^2 + (n_2-1)s_2^2}{n_1+n_2-2}}$$
-
-**Degrees of freedom:** $df = n_1 + n_2 - 2$
-
-When Levene's test is significant ($p < 0.05$), Welch's t-test is recommended, which uses the Welch–Satterthwaite approximation for degrees of freedom.
-
----
-
-#### Paired-Samples T-Test
-
-Tests whether the mean difference between two paired measurements is significantly different from zero.
-
-**Python implementation:** `scipy.stats.ttest_rel`
-
-**T-statistic:**
-
-$$t = \frac{\bar{D}}{S_D / \sqrt{n}}$$
-
-where $\bar{D} = \frac{1}{n}\sum_{i=1}^{n}(X_{1i} - X_{2i})$ is the mean difference and $S_D$ is the standard deviation of the differences.
-
-**Degrees of freedom:** $df = n - 1$
-
----
-
-#### One-Way ANOVA
-
-Tests whether the means of a numeric variable differ significantly across three or more groups.
-
-**Python implementation:** `scipy.stats.f_oneway`
-
-**F-statistic:**
-
-$$F = \frac{MS_{between}}{MS_{within}}$$
-
-**Sum of Squares Between Groups:**
-
-$$SS_{between} = \sum_{j=1}^{k} n_j(\bar{X}_j - \bar{X})^2$$
-
-**Sum of Squares Within Groups:**
-
-$$SS_{within} = \sum_{j=1}^{k}\sum_{i=1}^{n_j}(X_{ij} - \bar{X}_j)^2$$
-
-**Mean Squares:**
-
-$$MS_{between} = \frac{SS_{between}}{k-1}, \quad MS_{within} = \frac{SS_{within}}{N-k}$$
-
-**Effect size (Eta-squared):**
-
-$$\eta^2 = \frac{SS_{between}}{SS_{total}}$$
-
----
-
-#### Post-hoc Tukey HSD
-
-Performs pairwise comparisons of group means following a significant ANOVA result using the Studentized Range distribution.
-
-**Python implementation:** `statsmodels.stats.multicomp.pairwise_tukeyhsd`
-
-**Studentized range statistic:**
-
-$$q = \frac{\bar{X}_i - \bar{X}_j}{\sqrt{MS_W / n}}$$
-
-where $MS_W$ is the within-group mean square from the ANOVA and $n$ is the harmonic mean of group sizes. The critical $q$ value is obtained from the Studentized Range distribution with $k$ groups and $N - k$ degrees of freedom.
-
----
-
-### ③ Regression
-
-#### Linear Regression (OLS)
-
-Fits an Ordinary Least Squares regression model with one or more independent variables. Reports regression coefficients, standard errors, t-statistics, p-values, confidence intervals, $R^2$, adjusted $R^2$, F-test, and the Durbin-Watson statistic for autocorrelation detection.
-
-**Python implementation:** `statsmodels.api.OLS`
-
-**Model:**
-
-$$Y = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p + \epsilon$$
-
-where $\epsilon \sim N(0, \sigma^2)$.
-
-**OLS estimator:**
-
-$$\hat{\beta} = (X^T X)^{-1} X^T Y$$
-
-**Coefficient of determination:**
-
-$$R^2 = 1 - \frac{SS_{res}}{SS_{tot}}$$
-
-where $SS_{res} = \sum(Y_i - \hat{Y}_i)^2$ and $SS_{tot} = \sum(Y_i - \bar{Y})^2$.
-
----
-
-#### Binary Logistic Regression
-
-Models the probability of a binary outcome as a function of one or more independent variables. Reports coefficients (log-odds), odds ratios, z-statistics, p-values, pseudo-$R^2$, AIC, and BIC.
-
-**Python implementation:** `statsmodels.discrete.discrete_model.Logit`
-
-**Logit link function:**
-
-$$\ln\left(\frac{p}{1-p}\right) = \beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p$$
-
-**Predicted probability:**
-
-$$P(Y=1|X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X_1 + \cdots + \beta_p X_p)}}$$
-
-Coefficients are estimated by Maximum Likelihood Estimation (MLE). The odds ratio for predictor $j$ is $e^{\beta_j}$.
-
----
-
-#### Multinomial Logistic Regression
-
-Extends binary logistic regression to outcomes with more than two unordered categories. One category is designated as the reference; the model estimates log-odds of each other category relative to the reference.
-
-**Python implementation:** `sklearn.linear_model.LogisticRegression(multi_class='multinomial')`
-
-**Log-odds relative to reference category $K$:**
-
-$$\ln\left(\frac{P(Y=k)}{P(Y=K)}\right) = \beta_{k0} + \beta_{k1}X_1 + \cdots + \beta_{kp}X_p$$
-
-for each category $k \neq K$.
-
-**Predicted probability via softmax:**
-
-$$P(Y=k|X) = \frac{e^{\beta_{k0} + \beta_{k1}X_1 + \cdots + \beta_{kp}X_p}}{\sum_{j=1}^{K} e^{\beta_{j0} + \beta_{j1}X_1 + \cdots + \beta_{jp}X_p}}$$
-
----
-
-### ④ Classify
-
-#### K-Means Clustering
-
-Partitions observations into $K$ clusters by iteratively assigning points to the nearest centroid and updating centroids until convergence.
-
-**Python implementation:** `sklearn.cluster.KMeans`
-
-**Objective function (inertia):**
-
-$$J = \sum_{j=1}^{K}\sum_{i \in C_j} \|x_i - \mu_j\|^2$$
-
-where $C_j$ is the set of observations in cluster $j$ and $\mu_j$ is the centroid. The algorithm minimizes $J$ using Lloyd's algorithm (Expectation-Maximization style).
-
----
-
-#### Hierarchical (Agglomerative) Clustering
-
-Builds a hierarchy of clusters using a bottom-up approach. Supports Ward, complete, average, and single linkage methods. Returns a full linkage matrix and dendrogram data for visualization.
-
-**Python implementation:** `scipy.cluster.hierarchy.linkage`, `scipy.cluster.hierarchy.fcluster`
-
-**Ward's minimum variance method** (default):
-
-$$\Delta(A,B) = \frac{n_A n_B}{n_A + n_B}\|\bar{x}_A - \bar{x}_B\|^2$$
-
-At each step, the pair of clusters $(A, B)$ that produces the smallest increase in total within-cluster variance is merged. Ward's method tends to produce compact, equally sized clusters.
-
----
-
-### ⑤ Dimension Reduction
-
-#### Exploratory Factor Analysis (EFA)
-
-Discovers latent factors underlying a set of observed variables. Supports varimax, promax, oblimin, and no rotation. Reports factor loadings, communalities, eigenvalues, KMO measure of sampling adequacy, and Bartlett's test of sphericity.
-
-**Python implementation:** `factor_analyzer.FactorAnalyzer(rotation='varimax')` — installed at runtime via `micropip`
-
-**Factor model:**
-
-$$X = \Lambda F + \epsilon$$
-
-where $X$ is the observed variable vector, $\Lambda$ is the matrix of factor loadings, $F$ is the vector of latent factors, and $\epsilon$ is the unique variance.
-
-**Kaiser-Meyer-Olkin (KMO) measure:**
-
-$$KMO = \frac{\sum\sum_{i \neq j} r_{ij}^2}{\sum\sum_{i \neq j} r_{ij}^2 + \sum\sum_{i \neq j} u_{ij}^2}$$
-
-where $r_{ij}$ are elements of the correlation matrix and $u_{ij}$ are elements of the partial correlation matrix. KMO values above 0.6 are generally considered acceptable for factor analysis.
-
----
-
-#### Principal Component Analysis (PCA)
-
-Finds orthogonal components that maximize variance in the data. Reports component loadings, explained variance, cumulative variance ratios, and singular values. Optionally standardizes the input.
-
-**Python implementation:** `sklearn.decomposition.PCA`
-
-**Objective:** Find the weight vector $w$ that maximizes projected variance:
-
-$$\text{Var}(Xw) \to \max \quad \text{subject to} \quad \|w\| = 1$$
-
-This is equivalent to finding the eigenvectors of the covariance matrix $\Sigma = \frac{1}{N-1}X^TX$. The eigenvalues $\lambda_1 \geq \lambda_2 \geq \cdots$ represent the variance explained by each component.
-
-**Explained variance ratio:**
-
-$$\text{EVR}_k = \frac{\lambda_k}{\sum_{i=1}^{p} \lambda_i}$$
-
----
-
-#### Multidimensional Scaling (MDS)
-
-Projects high-dimensional data into a lower-dimensional space (typically 2D) while preserving pairwise distances. Supports both metric and non-metric MDS.
-
-**Python implementation:** `sklearn.manifold.MDS`
-
-**Stress function (Kruskal's Stress-1):**
-
-$$\sigma = \sqrt{\frac{\sum_{i<j}(d_{ij} - \delta_{ij})^2}{\sum_{i<j}d_{ij}^2}}$$
-
-where $d_{ij}$ is the distance in the reduced space and $\delta_{ij}$ is the original distance (or a monotonic transformation for non-metric MDS). A stress value below 0.1 is generally considered a good fit.
-
----
-
-### ⑥ Scale
-
-#### Cronbach's Alpha
-
-Measures the internal consistency (reliability) of a set of scale items. Reports raw alpha, standardized alpha, item-total correlations, and alpha-if-item-deleted for diagnostic purposes.
-
-**Python implementation:** Custom implementation using `pandas` covariance matrix operations
-
-**Cronbach's alpha (raw):**
-
-$$\alpha = \frac{K}{K-1}\left(1 - \frac{\sum_{i=1}^{K} \sigma_{Y_i}^2}{\sigma_X^2}\right)$$
-
-where $K$ is the number of items, $\sigma_{Y_i}^2$ is the variance of item $i$, and $\sigma_X^2$ is the variance of the total score.
-
-**Standardized alpha (based on mean inter-item correlation):**
-
-$$\alpha_{std} = \frac{K\bar{r}}{1+(K-1)\bar{r}}$$
-
-where $\bar{r}$ is the mean of all pairwise Pearson correlations among items.
-
-| $\alpha$ Range | Interpretation |
-|---|---|
-| ≥ 0.9 | Excellent |
-| 0.8 – 0.9 | Good |
-| 0.7 – 0.8 | Acceptable |
-| 0.6 – 0.7 | Questionable |
-| < 0.6 | Poor |
 
 ---
 

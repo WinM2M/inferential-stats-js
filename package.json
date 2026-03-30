@@ -1,6 +1,6 @@
 {
   "name": "@winm2m/inferential-stats-js",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A headless JavaScript SDK for advanced statistical analysis in the browser using WebAssembly (Pyodide). Performs SPSS-level inferential statistics entirely client-side with no backend required.",
   "author": "Youngjune Kwon <yjkwon@winm2m.com>",
   "license": "MIT",
