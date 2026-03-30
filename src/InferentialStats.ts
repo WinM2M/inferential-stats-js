@@ -55,6 +55,7 @@ export const PROGRESS_EVENT_NAME = 'inferential-stats-progress';
  */
 export class InferentialStats {
   private worker: Worker | null = null;
+  private blobUrl: string | null = null;
   private pendingRequests: Map<string, {
     resolve: (value: unknown) => void;
     reject: (reason: unknown) => void;
@@ -88,7 +89,7 @@ export class InferentialStats {
   private async _doInit(): Promise<void> {
     // Create worker
     if (this.config.workerUrl) {
-      this.worker = new Worker(this.config.workerUrl);
+      this.worker = await this._createWorker(this.config.workerUrl);
     } else {
       throw new Error(
         'workerUrl is required. Point it to the stats-worker.js file from @winm2m/inferential-stats-js/worker'
@@ -120,6 +121,56 @@ export class InferentialStats {
     });
 
     this.initialized = true;
+  }
+
+  /**
+   * Check if a URL is cross-origin relative to the current page.
+   * Returns false for relative URLs or when origin comparison is not possible (e.g., Node.js).
+   */
+  private _isCrossOrigin(url: string): boolean {
+    try {
+      if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('//')) {
+        return false;
+      }
+      const pageOrigin = globalThis.location?.origin;
+      if (!pageOrigin || pageOrigin === 'null') return false;
+      const resolved = new URL(url, pageOrigin);
+      return resolved.origin !== pageOrigin;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Create a Worker, handling cross-origin URLs by fetching the script
+   * and creating a same-origin Blob URL.
+   *
+   * Web Workers require same-origin scripts. When loading the library
+   * from a CDN (e.g., unpkg), the worker script URL is cross-origin and
+   * cannot be passed directly to `new Worker()`. This method works around
+   * the restriction by fetching the script content and creating a Blob URL.
+   */
+  private async _createWorker(url: string): Promise<Worker> {
+    if (this._isCrossOrigin(url)) {
+      let response: Response;
+      try {
+        response = await fetch(url);
+      } catch (err) {
+        throw new Error(
+          `Failed to fetch worker script from ${url}: ${err instanceof Error ? err.message : 'Network error or CORS policy blocked the request'}`
+        );
+      }
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch worker script from ${url}: ${response.status} ${response.statusText}`
+        );
+      }
+      const scriptText = await response.text();
+      const blob = new Blob([scriptText], { type: 'application/javascript' });
+      this.blobUrl = URL.createObjectURL(blob);
+      return new Worker(this.blobUrl);
+    }
+    return new Worker(url);
   }
 
   /** Handle messages from the worker */
@@ -333,6 +384,10 @@ export class InferentialStats {
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;
+    }
+    if (this.blobUrl) {
+      URL.revokeObjectURL(this.blobUrl);
+      this.blobUrl = null;
     }
     this.initialized = false;
     this.initPromise = null;
