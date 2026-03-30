@@ -152,7 +152,14 @@ export class InferentialStats {
    */
   private async _createWorker(url: string): Promise<Worker> {
     if (this._isCrossOrigin(url)) {
-      const response = await fetch(url);
+      let response: Response;
+      try {
+        response = await fetch(url);
+      } catch (err) {
+        throw new Error(
+          `Failed to fetch worker script from ${url}: ${err instanceof Error ? err.message : 'Network error or CORS policy blocked the request'}`
+        );
+      }
       if (!response.ok) {
         throw new Error(
           `Failed to fetch worker script from ${url}: ${response.status} ${response.statusText}`

@@ -611,6 +611,18 @@ describe('InferentialStats: Cross-Origin Worker', () => {
     await expect(stats.init()).rejects.toThrow('Failed to fetch worker script');
     stats.destroy();
   });
+
+  it('should throw error when cross-origin fetch encounters a network error', async () => {
+    globalThis.fetch = (async () => {
+      throw new TypeError('Failed to fetch');
+    }) as unknown as typeof fetch;
+
+    const stats = new InferentialStats({
+      workerUrl: 'https://unpkg.com/@winm2m/inferential-stats-js/dist/stats-worker.js',
+    });
+    await expect(stats.init()).rejects.toThrow('Failed to fetch');
+    stats.destroy();
+  });
 });
 
 describe('InferentialStats: Error Handling', () => {
