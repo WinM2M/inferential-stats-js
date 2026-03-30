@@ -70,7 +70,7 @@
 
 This section documents the mathematical foundations and internal Python implementations of all 16 analyses.
 
-> **Note on math rendering:** Equations are rendered as images via `latex.codecogs.com` so they display correctly on npm.
+> **Note on math rendering:** Equations are rendered as images so they display correctly on npm.
 
 ---
 
@@ -84,9 +84,9 @@ Computes a frequency distribution for a categorical variable, including absolute
 
 **Relative frequency:**
 
-![formula](https://latex.codecogs.com/svg.image?f_i%3D%5Cfrac%7Bn_i%7D%7BN%7D)
+![formula](<https://latex.codecogs.com/svg.image?f_i%3D%5Cfrac%7Bn_i%7D%7BN%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?n_i) is the count of category ![formula](https://latex.codecogs.com/svg.image?i) and ![formula](https://latex.codecogs.com/svg.image?N) is the total number of observations. Cumulative percentage is the running sum of ![formula](https://latex.codecogs.com/svg.image?f_i%5Ctimes%20100).
+where ![formula](<https://latex.codecogs.com/svg.image?n_i>) is the count of category ![formula](<https://latex.codecogs.com/svg.image?i>) and ![formula](<https://latex.codecogs.com/svg.image?N>) is the total number of observations. Cumulative percentage is the running sum of ![formula](<https://latex.codecogs.com/svg.image?f_i%5Ctimes%20100>).
 
 ---
 
@@ -98,19 +98,19 @@ Produces summary statistics for one or more numeric variables: count, mean, stan
 
 **Arithmetic mean:**
 
-![formula](https://latex.codecogs.com/svg.image?%5Cbar%7Bx%7D%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7Dx_i)
+![formula](<https://latex.codecogs.com/svg.image?%5Cbar%7Bx%7D%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7Dx_i>)
 
 **Sample standard deviation (Bessel-corrected):**
 
-![formula](https://latex.codecogs.com/svg.image?s%3D%5Csqrt%7B%5Cfrac%7B1%7D%7BN-1%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5E2%7D)
+![formula](<https://latex.codecogs.com/svg.image?s%3D%5Csqrt%7B%5Cfrac%7B1%7D%7BN-1%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5E2%7D>)
 
 **Skewness (Fisher):**
 
-![formula](https://latex.codecogs.com/svg.image?g_1%3D%5Cfrac%7Bm_3%7D%7Bm_2%5E%7B3%2F2%7D%7D%2C%5Cquad%20m_k%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5Ek)
+![formula](<https://latex.codecogs.com/svg.image?g_1%3D%5Cfrac%7Bm_3%7D%7Bm_2%5E%7B3%2F2%7D%7D%2C%5Cquad%20m_k%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5Ek>)
 
 **Excess kurtosis (Fisher):**
 
-![formula](https://latex.codecogs.com/svg.image?g_2%3D%5Cfrac%7Bm_4%7D%7Bm_2%5E2%7D-3)
+![formula](<https://latex.codecogs.com/svg.image?g_2%3D%5Cfrac%7Bm_4%7D%7Bm_2%5E2%7D-3>)
 
 ---
 
@@ -122,15 +122,15 @@ Cross-tabulates two categorical variables and tests for independence using Pears
 
 **Pearson's Chi-square statistic:**
 
-![formula](https://latex.codecogs.com/svg.image?%5Cchi%5E2%3D%5Csum%5Cfrac%7B(O_%7Bij%7D-E_%7Bij%7D)%5E2%7D%7BE_%7Bij%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?%5Cchi%5E2%3D%5Csum%5Cfrac%7B(O_%7Bij%7D-E_%7Bij%7D)%5E2%7D%7BE_%7Bij%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?O_%7Bij%7D) is the observed frequency in cell (![formula](https://latex.codecogs.com/svg.image?i%2C%20j)) and ![formula](https://latex.codecogs.com/svg.image?E_%7Bij%7D%3D%5Cfrac%7BR_i%5Ccdot%20C_j%7D%7BN%7D) is the expected frequency under independence.
+where ![formula](<https://latex.codecogs.com/svg.image?O_%7Bij%7D>) is the observed frequency in cell (![formula](<https://latex.codecogs.com/svg.image?i%2C%20j>)) and ![formula](<https://latex.codecogs.com/svg.image?E_%7Bij%7D%3D%5Cfrac%7BR_i%5Ccdot%20C_j%7D%7BN%7D>) is the expected frequency under independence.
 
 **Cramér's V:**
 
-![formula](https://latex.codecogs.com/svg.image?V%3D%5Csqrt%7B%5Cfrac%7B%5Cchi%5E2%7D%7BN%5Ccdot(k-1)%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?V%3D%5Csqrt%7B%5Cfrac%7B%5Cchi%5E2%7D%7BN%5Ccdot(k-1)%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?k%3D%5Cmin(%5Ctext%7Brows%7D%2C%5Ctext%7Bcols%7D)).
+where ![formula](<https://latex.codecogs.com/svg.image?k%3D%5Cmin(%5Ctext%7Brows%7D%2C%5Ctext%7Bcols%7D)>).
 
 ---
 
@@ -144,15 +144,15 @@ Compares the means of a numeric variable between two independent groups. Automat
 
 **T-statistic (equal variance assumed):**
 
-![formula](https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BX%7D_1-%5Cbar%7BX%7D_2%7D%7BS_p%5Csqrt%7B%5Cfrac%7B1%7D%7Bn_1%7D%2B%5Cfrac%7B1%7D%7Bn_2%7D%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BX%7D_1-%5Cbar%7BX%7D_2%7D%7BS_p%5Csqrt%7B%5Cfrac%7B1%7D%7Bn_1%7D%2B%5Cfrac%7B1%7D%7Bn_2%7D%7D%7D>)
 
 **Pooled standard deviation:**
 
-![formula](https://latex.codecogs.com/svg.image?S_p%3D%5Csqrt%7B%5Cfrac%7B(n_1-1)s_1%5E2%2B(n_2-1)s_2%5E2%7D%7Bn_1%2Bn_2-2%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?S_p%3D%5Csqrt%7B%5Cfrac%7B(n_1-1)s_1%5E2%2B(n_2-1)s_2%5E2%7D%7Bn_1%2Bn_2-2%7D%7D>)
 
-**Degrees of freedom:** ![formula](https://latex.codecogs.com/svg.image?df%3Dn_1%2Bn_2-2)
+**Degrees of freedom:** ![formula](<https://latex.codecogs.com/svg.image?df%3Dn_1%2Bn_2-2>)
 
-When Levene's test is significant (![formula](https://latex.codecogs.com/svg.image?p%3C0.05)), Welch's t-test is recommended, which uses the Welch–Satterthwaite approximation for degrees of freedom.
+When Levene's test is significant (![formula](<https://latex.codecogs.com/svg.image?p%3C0.05>)), Welch's t-test is recommended, which uses the Welch–Satterthwaite approximation for degrees of freedom.
 
 ---
 
@@ -164,11 +164,11 @@ Tests whether the mean difference between two paired measurements is significant
 
 **T-statistic:**
 
-![formula](https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BD%7D%7D%7BS_D%2F%5Csqrt%7Bn%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BD%7D%7D%7BS_D%2F%5Csqrt%7Bn%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?%5Cbar%7BD%7D%3D%5Cfrac%7B1%7D%7Bn%7D%5Csum_%7Bi%3D1%7D%5E%7Bn%7D(X_%7B1i%7D-X_%7B2i%7D)) is the mean difference and ![formula](https://latex.codecogs.com/svg.image?S_D) is the standard deviation of the differences.
+where ![formula](<https://latex.codecogs.com/svg.image?%5Cbar%7BD%7D%3D%5Cfrac%7B1%7D%7Bn%7D%5Csum_%7Bi%3D1%7D%5E%7Bn%7D(X_%7B1i%7D-X_%7B2i%7D)>) is the mean difference and ![formula](<https://latex.codecogs.com/svg.image?S_D>) is the standard deviation of the differences.
 
-**Degrees of freedom:** ![formula](https://latex.codecogs.com/svg.image?df%3Dn-1)
+**Degrees of freedom:** ![formula](<https://latex.codecogs.com/svg.image?df%3Dn-1>)
 
 ---
 
@@ -180,23 +180,23 @@ Tests whether the means of a numeric variable differ significantly across three 
 
 **F-statistic:**
 
-![formula](https://latex.codecogs.com/svg.image?F%3D%5Cfrac%7BMS_%7Bbetween%7D%7D%7BMS_%7Bwithin%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?F%3D%5Cfrac%7BMS_%7Bbetween%7D%7D%7BMS_%7Bwithin%7D%7D>)
 
 **Sum of Squares Between Groups:**
 
-![formula](https://latex.codecogs.com/svg.image?SS_%7Bbetween%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7Dn_j(%5Cbar%7BX%7D_j-%5Cbar%7BX%7D)%5E2)
+![formula](<https://latex.codecogs.com/svg.image?SS_%7Bbetween%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7Dn_j(%5Cbar%7BX%7D_j-%5Cbar%7BX%7D)%5E2>)
 
 **Sum of Squares Within Groups:**
 
-![formula](https://latex.codecogs.com/svg.image?SS_%7Bwithin%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7D%5Csum_%7Bi%3D1%7D%5E%7Bn_j%7D(X_%7Bij%7D-%5Cbar%7BX%7D_j)%5E2)
+![formula](<https://latex.codecogs.com/svg.image?SS_%7Bwithin%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7D%5Csum_%7Bi%3D1%7D%5E%7Bn_j%7D(X_%7Bij%7D-%5Cbar%7BX%7D_j)%5E2>)
 
 **Mean Squares:**
 
-![formula](https://latex.codecogs.com/svg.image?MS_%7Bbetween%7D%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7Bk-1%7D%2C%5Cquad%20MS_%7Bwithin%7D%3D%5Cfrac%7BSS_%7Bwithin%7D%7D%7BN-k%7D)
+![formula](<https://latex.codecogs.com/svg.image?MS_%7Bbetween%7D%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7Bk-1%7D%2C%5Cquad%20MS_%7Bwithin%7D%3D%5Cfrac%7BSS_%7Bwithin%7D%7D%7BN-k%7D>)
 
 **Effect size (Eta-squared):**
 
-![formula](https://latex.codecogs.com/svg.image?%5Ceta%5E2%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7BSS_%7Btotal%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?%5Ceta%5E2%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7BSS_%7Btotal%7D%7D>)
 
 ---
 
@@ -208,9 +208,9 @@ Performs pairwise comparisons of group means following a significant ANOVA resul
 
 **Studentized range statistic:**
 
-![formula](https://latex.codecogs.com/svg.image?q%3D%5Cfrac%7B%5Cbar%7BX%7D_i-%5Cbar%7BX%7D_j%7D%7B%5Csqrt%7BMS_W%2Fn%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?q%3D%5Cfrac%7B%5Cbar%7BX%7D_i-%5Cbar%7BX%7D_j%7D%7B%5Csqrt%7BMS_W%2Fn%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?MS_W) is the within-group mean square from the ANOVA and ![formula](https://latex.codecogs.com/svg.image?n) is the harmonic mean of group sizes. The critical ![formula](https://latex.codecogs.com/svg.image?q) value is obtained from the Studentized Range distribution with ![formula](https://latex.codecogs.com/svg.image?k) groups and ![formula](https://latex.codecogs.com/svg.image?N-k) degrees of freedom.
+where ![formula](<https://latex.codecogs.com/svg.image?MS_W>) is the within-group mean square from the ANOVA and ![formula](<https://latex.codecogs.com/svg.image?n>) is the harmonic mean of group sizes. The critical ![formula](<https://latex.codecogs.com/svg.image?q>) value is obtained from the Studentized Range distribution with ![formula](<https://latex.codecogs.com/svg.image?k>) groups and ![formula](<https://latex.codecogs.com/svg.image?N-k>) degrees of freedom.
 
 ---
 
@@ -218,43 +218,43 @@ where ![formula](https://latex.codecogs.com/svg.image?MS_W) is the within-group 
 
 #### Linear Regression (OLS)
 
-Fits an Ordinary Least Squares regression model with one or more independent variables. Reports regression coefficients, standard errors, t-statistics, p-values, confidence intervals, ![formula](https://latex.codecogs.com/svg.image?R%5E2), adjusted ![formula](https://latex.codecogs.com/svg.image?R%5E2), F-test, and the Durbin-Watson statistic for autocorrelation detection.
+Fits an Ordinary Least Squares regression model with one or more independent variables. Reports regression coefficients, standard errors, t-statistics, p-values, confidence intervals, ![formula](<https://latex.codecogs.com/svg.image?R%5E2>), adjusted ![formula](<https://latex.codecogs.com/svg.image?R%5E2>), F-test, and the Durbin-Watson statistic for autocorrelation detection.
 
 **Python implementation:** `statsmodels.api.OLS`
 
 **Model:**
 
-![formula](https://latex.codecogs.com/svg.image?Y%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p%2B%5Cepsilon)
+![formula](<https://latex.codecogs.com/svg.image?Y%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p%2B%5Cepsilon>)
 
-where ![formula](https://latex.codecogs.com/svg.image?%5Cepsilon%5Csim%20N(0%2C%5Csigma%5E2)).
+where ![formula](<https://latex.codecogs.com/svg.image?%5Cepsilon%5Csim%20N(0%2C%5Csigma%5E2)>).
 
 **OLS estimator:**
 
-![formula](https://latex.codecogs.com/svg.image?%5Chat%7B%5Cbeta%7D%3D(X%5ETX)%5E%7B-1%7DX%5ETY)
+![formula](<https://latex.codecogs.com/svg.image?%5Chat%7B%5Cbeta%7D%3D(X%5ETX)%5E%7B-1%7DX%5ETY>)
 
 **Coefficient of determination:**
 
-![formula](https://latex.codecogs.com/svg.image?R%5E2%3D1-%5Cfrac%7BSS_%7Bres%7D%7D%7BSS_%7Btot%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?R%5E2%3D1-%5Cfrac%7BSS_%7Bres%7D%7D%7BSS_%7Btot%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?SS_%7Bres%7D%3D%5Csum(Y_i-%5Chat%7BY%7D_i)%5E2) and ![formula](https://latex.codecogs.com/svg.image?SS_%7Btot%7D%3D%5Csum(Y_i-%5Cbar%7BY%7D)%5E2).
+where ![formula](<https://latex.codecogs.com/svg.image?SS_%7Bres%7D%3D%5Csum(Y_i-%5Chat%7BY%7D_i)%5E2>) and ![formula](<https://latex.codecogs.com/svg.image?SS_%7Btot%7D%3D%5Csum(Y_i-%5Cbar%7BY%7D)%5E2>).
 
 ---
 
 #### Binary Logistic Regression
 
-Models the probability of a binary outcome as a function of one or more independent variables. Reports coefficients (log-odds), odds ratios, z-statistics, p-values, pseudo-![formula](https://latex.codecogs.com/svg.image?R%5E2), AIC, and BIC.
+Models the probability of a binary outcome as a function of one or more independent variables. Reports coefficients (log-odds), odds ratios, z-statistics, p-values, pseudo-![formula](<https://latex.codecogs.com/svg.image?R%5E2>), AIC, and BIC.
 
 **Python implementation:** `statsmodels.discrete.discrete_model.Logit`
 
 **Logit link function:**
 
-![formula](https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7Bp%7D%7B1-p%7D%5Cright)%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p)
+![formula](<https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7Bp%7D%7B1-p%7D%5Cright)%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p>)
 
 **Predicted probability:**
 
-![formula](https://latex.codecogs.com/svg.image?P(Y%3D1%7CX)%3D%5Cfrac%7B1%7D%7B1%2Be%5E%7B-(%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p)%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?P(Y%3D1%7CX)%3D%5Cfrac%7B1%7D%7B1%2Be%5E%7B-(%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p)%7D%7D>)
 
-Coefficients are estimated by Maximum Likelihood Estimation (MLE). The odds ratio for predictor j is ![formula](https://latex.codecogs.com/svg.image?e%5E%7B%5Cbeta_j%7D).
+Coefficients are estimated by Maximum Likelihood Estimation (MLE). The odds ratio for predictor j is ![formula](<https://latex.codecogs.com/svg.image?e%5E%7B%5Cbeta_j%7D>).
 
 ---
 
@@ -264,15 +264,15 @@ Extends binary logistic regression to outcomes with more than two unordered cate
 
 **Python implementation:** `sklearn.linear_model.LogisticRegression(multi_class='multinomial')`
 
-**Log-odds relative to reference category ![formula](https://latex.codecogs.com/svg.image?K):**
+**Log-odds relative to reference category ![formula](<https://latex.codecogs.com/svg.image?K>):**
 
-![formula](https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7BP(Y%3Dk)%7D%7BP(Y%3DK)%7D%5Cright)%3D%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p)
+![formula](<https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7BP(Y%3Dk)%7D%7BP(Y%3DK)%7D%5Cright)%3D%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p>)
 
-for each category ![formula](https://latex.codecogs.com/svg.image?k%5Cneq%20K).
+for each category ![formula](<https://latex.codecogs.com/svg.image?k%5Cneq%20K>).
 
 **Predicted probability via softmax:**
 
-![formula](https://latex.codecogs.com/svg.image?P(Y%3Dk%7CX)%3D%5Cfrac%7Be%5E%7B%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p%7D%7D%7B%5Csum_%7Bj%3D1%7D%5E%7BK%7De%5E%7B%5Cbeta_%7Bj0%7D%2B%5Cbeta_%7Bj1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bjp%7DX_p%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?P(Y%3Dk%7CX)%3D%5Cfrac%7Be%5E%7B%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p%7D%7D%7B%5Csum_%7Bj%3D1%7D%5E%7BK%7De%5E%7B%5Cbeta_%7Bj0%7D%2B%5Cbeta_%7Bj1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bjp%7DX_p%7D%7D>)
 
 ---
 
@@ -280,15 +280,15 @@ for each category ![formula](https://latex.codecogs.com/svg.image?k%5Cneq%20K).
 
 #### K-Means Clustering
 
-Partitions observations into ![formula](https://latex.codecogs.com/svg.image?K) clusters by iteratively assigning points to the nearest centroid and updating centroids until convergence.
+Partitions observations into ![formula](<https://latex.codecogs.com/svg.image?K>) clusters by iteratively assigning points to the nearest centroid and updating centroids until convergence.
 
 **Python implementation:** `sklearn.cluster.KMeans`
 
 **Objective function (inertia):**
 
-![formula](https://latex.codecogs.com/svg.image?J%3D%5Csum_%7Bj%3D1%7D%5E%7BK%7D%5Csum_%7Bi%5Cin%20C_j%7D%5C%7Cx_i-%5Cmu_j%5C%7C%5E2)
+![formula](<https://latex.codecogs.com/svg.image?J%3D%5Csum_%7Bj%3D1%7D%5E%7BK%7D%5Csum_%7Bi%5Cin%20C_j%7D%5C%7Cx_i-%5Cmu_j%5C%7C%5E2>)
 
-where ![formula](https://latex.codecogs.com/svg.image?C_j) is the set of observations in cluster j and ![formula](https://latex.codecogs.com/svg.image?%5Cmu_j) is the centroid. The algorithm minimizes J using Lloyd's algorithm (Expectation-Maximization style).
+where ![formula](<https://latex.codecogs.com/svg.image?C_j>) is the set of observations in cluster j and ![formula](<https://latex.codecogs.com/svg.image?%5Cmu_j>) is the centroid. The algorithm minimizes J using Lloyd's algorithm (Expectation-Maximization style).
 
 ---
 
@@ -300,7 +300,7 @@ Builds a hierarchy of clusters using a bottom-up approach. Supports Ward, comple
 
 **Ward's minimum variance method** (default):
 
-![formula](https://latex.codecogs.com/svg.image?%5CDelta(A%2CB)%3D%5Cfrac%7Bn_A%20n_B%7D%7Bn_A%2Bn_B%7D%5C%7C%5Cbar%7Bx%7D_A-%5Cbar%7Bx%7D_B%5C%7C%5E2)
+![formula](<https://latex.codecogs.com/svg.image?%5CDelta(A%2CB)%3D%5Cfrac%7Bn_A%20n_B%7D%7Bn_A%2Bn_B%7D%5C%7C%5Cbar%7Bx%7D_A-%5Cbar%7Bx%7D_B%5C%7C%5E2>)
 
 At each step, the pair of clusters (A, B) that produces the smallest increase in total within-cluster variance is merged. Ward's method tends to produce compact, equally sized clusters.
 
@@ -316,15 +316,15 @@ Discovers latent factors underlying a set of observed variables. Supports varima
 
 **Factor model:**
 
-![formula](https://latex.codecogs.com/svg.image?X%3D%5CLambda%20F%2B%5Cepsilon)
+![formula](<https://latex.codecogs.com/svg.image?X%3D%5CLambda%20F%2B%5Cepsilon>)
 
-where ![formula](https://latex.codecogs.com/svg.image?X) is the observed variable vector, ![formula](https://latex.codecogs.com/svg.image?%5CLambda) is the matrix of factor loadings, ![formula](https://latex.codecogs.com/svg.image?F) is the vector of latent factors, and ![formula](https://latex.codecogs.com/svg.image?%5Cepsilon) is the unique variance.
+where ![formula](<https://latex.codecogs.com/svg.image?X>) is the observed variable vector, ![formula](<https://latex.codecogs.com/svg.image?%5CLambda>) is the matrix of factor loadings, ![formula](<https://latex.codecogs.com/svg.image?F>) is the vector of latent factors, and ![formula](<https://latex.codecogs.com/svg.image?%5Cepsilon>) is the unique variance.
 
 **Kaiser-Meyer-Olkin (KMO) measure:**
 
-![formula](https://latex.codecogs.com/svg.image?KMO%3D%5Cfrac%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%7D%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%2B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20u_%7Bij%7D%5E2%7D)
+![formula](<https://latex.codecogs.com/svg.image?KMO%3D%5Cfrac%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%7D%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%2B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20u_%7Bij%7D%5E2%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?r_%7Bij%7D) are elements of the correlation matrix and ![formula](https://latex.codecogs.com/svg.image?u_%7Bij%7D) are elements of the partial correlation matrix. KMO values above 0.6 are generally considered acceptable for factor analysis.
+where ![formula](<https://latex.codecogs.com/svg.image?r_%7Bij%7D>) are elements of the correlation matrix and ![formula](<https://latex.codecogs.com/svg.image?u_%7Bij%7D>) are elements of the partial correlation matrix. KMO values above 0.6 are generally considered acceptable for factor analysis.
 
 ---
 
@@ -334,15 +334,15 @@ Finds orthogonal components that maximize variance in the data. Reports componen
 
 **Python implementation:** `sklearn.decomposition.PCA`
 
-**Objective:** Find the weight vector ![formula](https://latex.codecogs.com/svg.image?w) that maximizes projected variance:
+**Objective:** Find the weight vector ![formula](<https://latex.codecogs.com/svg.image?w>) that maximizes projected variance:
 
-![formula](https://latex.codecogs.com/svg.image?%5Ctext%7BVar%7D(Xw)%5Cto%5Cmax%5Cquad%5Ctext%7Bsubject%20to%7D%5Cquad%5C%7Cw%5C%7C%3D1)
+![formula](<https://latex.codecogs.com/svg.image?%5Ctext%7BVar%7D(Xw)%5Cto%5Cmax%5Cquad%5Ctext%7Bsubject%20to%7D%5Cquad%5C%7Cw%5C%7C%3D1>)
 
-This is equivalent to finding the eigenvectors of the covariance matrix ![formula](https://latex.codecogs.com/svg.image?%5CSigma%3D%5Cfrac%7B1%7D%7BN-1%7DX%5ETX). The eigenvalues ![formula](https://latex.codecogs.com/svg.image?%5Clambda_1%5Cgeq%5Clambda_2%5Cgeq%5Ccdots) represent the variance explained by each component.
+This is equivalent to finding the eigenvectors of the covariance matrix ![formula](<https://latex.codecogs.com/svg.image?%5CSigma%3D%5Cfrac%7B1%7D%7BN-1%7DX%5ETX>). The eigenvalues ![formula](<https://latex.codecogs.com/svg.image?%5Clambda_1%5Cgeq%5Clambda_2%5Cgeq%5Ccdots>) represent the variance explained by each component.
 
 **Explained variance ratio:**
 
-![formula](https://latex.codecogs.com/svg.image?%5Ctext%7BEVR%7D_k%3D%5Cfrac%7B%5Clambda_k%7D%7B%5Csum_%7Bi%3D1%7D%5E%7Bp%7D%5Clambda_i%7D)
+![formula](<https://latex.codecogs.com/svg.image?%5Ctext%7BEVR%7D_k%3D%5Cfrac%7B%5Clambda_k%7D%7B%5Csum_%7Bi%3D1%7D%5E%7Bp%7D%5Clambda_i%7D>)
 
 ---
 
@@ -354,9 +354,9 @@ Projects high-dimensional data into a lower-dimensional space (typically 2D) whi
 
 **Stress function (Kruskal's Stress-1):**
 
-![formula](https://latex.codecogs.com/svg.image?%5Csigma%3D%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bi%3Cj%7D(d_%7Bij%7D-%5Cdelta_%7Bij%7D)%5E2%7D%7B%5Csum_%7Bi%3Cj%7Dd_%7Bij%7D%5E2%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?%5Csigma%3D%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bi%3Cj%7D(d_%7Bij%7D-%5Cdelta_%7Bij%7D)%5E2%7D%7B%5Csum_%7Bi%3Cj%7Dd_%7Bij%7D%5E2%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?d_%7Bij%7D) is the distance in the reduced space and ![formula](https://latex.codecogs.com/svg.image?%5Cdelta_%7Bij%7D) is the original distance (or a monotonic transformation for non-metric MDS). A stress value below 0.1 is generally considered a good fit.
+where ![formula](<https://latex.codecogs.com/svg.image?d_%7Bij%7D>) is the distance in the reduced space and ![formula](<https://latex.codecogs.com/svg.image?%5Cdelta_%7Bij%7D>) is the original distance (or a monotonic transformation for non-metric MDS). A stress value below 0.1 is generally considered a good fit.
 
 ---
 
@@ -370,15 +370,15 @@ Measures the internal consistency (reliability) of a set of scale items. Reports
 
 **Cronbach's alpha (raw):**
 
-![formula](https://latex.codecogs.com/svg.image?%5Calpha%3D%5Cfrac%7BK%7D%7BK-1%7D%5Cleft(1-%5Cfrac%7B%5Csum_%7Bi%3D1%7D%5E%7BK%7D%5Csigma_%7BY_i%7D%5E2%7D%7B%5Csigma_X%5E2%7D%5Cright))
+![formula](<https://latex.codecogs.com/svg.image?%5Calpha%3D%5Cfrac%7BK%7D%7BK-1%7D%5Cleft(1-%5Cfrac%7B%5Csum_%7Bi%3D1%7D%5E%7BK%7D%5Csigma_%7BY_i%7D%5E2%7D%7B%5Csigma_X%5E2%7D%5Cright)>)
 
-where ![formula](https://latex.codecogs.com/svg.image?K) is the number of items, ![formula](https://latex.codecogs.com/svg.image?%5Csigma_%7BY_i%7D%5E2) is the variance of item i, and ![formula](https://latex.codecogs.com/svg.image?%5Csigma_X%5E2) is the variance of the total score.
+where ![formula](<https://latex.codecogs.com/svg.image?K>) is the number of items, ![formula](<https://latex.codecogs.com/svg.image?%5Csigma_%7BY_i%7D%5E2>) is the variance of item i, and ![formula](<https://latex.codecogs.com/svg.image?%5Csigma_X%5E2>) is the variance of the total score.
 
 **Standardized alpha (based on mean inter-item correlation):**
 
-![formula](https://latex.codecogs.com/svg.image?%5Calpha_%7Bstd%7D%3D%5Cfrac%7BK%5Cbar%7Br%7D%7D%7B1%2B(K-1)%5Cbar%7Br%7D%7D)
+![formula](<https://latex.codecogs.com/svg.image?%5Calpha_%7Bstd%7D%3D%5Cfrac%7BK%5Cbar%7Br%7D%7D%7B1%2B(K-1)%5Cbar%7Br%7D%7D>)
 
-where ![formula](https://latex.codecogs.com/svg.image?%5Cbar%7Br%7D) is the mean of all pairwise Pearson correlations among items.
+where ![formula](<https://latex.codecogs.com/svg.image?%5Cbar%7Br%7D>) is the mean of all pairwise Pearson correlations among items.
 
 | Alpha Range | Interpretation |
 |---|---|
