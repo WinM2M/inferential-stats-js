@@ -500,6 +500,119 @@ describe('InferentialStats: Analysis Method Execution (mocked)', () => {
   });
 });
 
+describe('InferentialStats: Cross-Origin Worker', () => {
+  const originalFetch = globalThis.fetch;
+  const originalCreateObjectURL = globalThis.URL.createObjectURL;
+  const originalRevokeObjectURL = globalThis.URL.revokeObjectURL;
+  const originalLocation = globalThis.location;
+
+  beforeEach(() => {
+    // Mock location to simulate a browser with a specific origin
+    Object.defineProperty(globalThis, 'location', {
+      value: { origin: 'https://example.codepen.dev', href: 'https://example.codepen.dev/' },
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.URL.createObjectURL = originalCreateObjectURL;
+    globalThis.URL.revokeObjectURL = originalRevokeObjectURL;
+    Object.defineProperty(globalThis, 'location', {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
+  });
+
+  it('should fetch worker script and create Blob URL for cross-origin workerUrl', async () => {
+    const fakeBlobUrl = 'blob:https://example.codepen.dev/fake-uuid';
+    let createdBlobType: string | undefined;
+    let revokedUrl: string | undefined;
+
+    // Mock fetch to return a fake worker script
+    globalThis.fetch = (async () => ({
+      ok: true,
+      text: async () => 'self.postMessage({ id: "__worker_ready__", type: "result", data: { ready: true } });',
+    })) as unknown as typeof fetch;
+
+    // Mock URL.createObjectURL
+    globalThis.URL.createObjectURL = ((blob: Blob) => {
+      createdBlobType = blob.type;
+      return fakeBlobUrl;
+    }) as typeof URL.createObjectURL;
+
+    // Mock URL.revokeObjectURL
+    globalThis.URL.revokeObjectURL = ((url: string) => {
+      revokedUrl = url;
+    }) as typeof URL.revokeObjectURL;
+
+    const stats = new InferentialStats({
+      workerUrl: 'https://unpkg.com/@winm2m/inferential-stats-js/dist/stats-worker.js',
+    });
+    await stats.init();
+
+    // Verify Blob was created with correct MIME type
+    expect(createdBlobType).toBe('application/javascript');
+    expect(stats.isInitialized()).toBe(true);
+
+    // Verify Blob URL is revoked on destroy
+    stats.destroy();
+    expect(revokedUrl).toBe(fakeBlobUrl);
+  });
+
+  it('should not use Blob URL for same-origin workerUrl', async () => {
+    let fetchCalled = false;
+
+    globalThis.fetch = (async () => {
+      fetchCalled = true;
+      return { ok: true, text: async () => '' };
+    }) as unknown as typeof fetch;
+
+    // Same-origin URL
+    const stats = new InferentialStats({
+      workerUrl: 'https://example.codepen.dev/stats-worker.js',
+    });
+    await stats.init();
+    stats.destroy();
+
+    // fetch should NOT have been called for same-origin
+    expect(fetchCalled).toBe(false);
+  });
+
+  it('should not use Blob URL for relative workerUrl', async () => {
+    let fetchCalled = false;
+
+    globalThis.fetch = (async () => {
+      fetchCalled = true;
+      return { ok: true, text: async () => '' };
+    }) as unknown as typeof fetch;
+
+    const stats = new InferentialStats({
+      workerUrl: '/worker/stats-worker.js',
+    });
+    await stats.init();
+    stats.destroy();
+
+    expect(fetchCalled).toBe(false);
+  });
+
+  it('should throw error when cross-origin fetch fails', async () => {
+    globalThis.fetch = (async () => ({
+      ok: false,
+      status: 404,
+      statusText: 'Not Found',
+    })) as unknown as typeof fetch;
+
+    const stats = new InferentialStats({
+      workerUrl: 'https://unpkg.com/@winm2m/inferential-stats-js/dist/stats-worker.js',
+    });
+    await expect(stats.init()).rejects.toThrow('Failed to fetch worker script');
+    stats.destroy();
+  });
+});
+
 describe('InferentialStats: Error Handling', () => {
   it('should throw when calling analysis methods before init()', async () => {
     const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
