@@ -126,7 +126,7 @@ stats.destroy();
 
 ## CDN / CodePen Usage
 
-You can use the SDK directly in a browser or CodePen with no build step. The snippet below loads the library from a CDN, fetches the sample dataset from GitHub Pages, and runs both a crosstabs analysis and a one-way ANOVA.
+You can use the SDK directly in a browser or CodePen with no build step. The snippet below loads the library from a CDN, fetches the sample dataset from GitHub Pages, and runs six analyses (one from each major category). Results are rendered as HTML tables.
 
 ```html
 <!DOCTYPE html>
@@ -137,7 +137,16 @@ You can use the SDK directly in a browser or CodePen with no build step. The sni
 </head>
 <body>
   <h1>inferential-stats-js — CDN Demo</h1>
-  <pre id="output">Initializing…</pre>
+  <p id="status">Initializing...</p>
+  <div id="output"></div>
+
+  <style>
+    body { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; margin: 24px; }
+    table { border-collapse: collapse; margin: 12px 0 24px; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; font-size: 14px; }
+    th { background: #f5f5f5; text-align: left; }
+    h2 { margin: 20px 0 8px; font-size: 18px; }
+  </style>
 
   <!-- Load the worker script (global IIFE, no import needed) -->
   <!-- The worker is loaded by URL below, not as a script tag -->
@@ -146,13 +155,59 @@ You can use the SDK directly in a browser or CodePen with no build step. The sni
     // 1. Import the SDK from a CDN
     import { InferentialStats, PROGRESS_EVENT_NAME } from 'https://unpkg.com/@winm2m/inferential-stats-js/dist/index.js';
 
+    const status = document.getElementById('status');
     const output = document.getElementById('output');
-    const log = (msg) => { output.textContent += '\n' + msg; };
+
+    const setStatus = (message) => {
+      if (status) {
+        status.textContent = message;
+      }
+    };
+
+    const renderTable = (title, headers, rows) => {
+      if (!output) return;
+
+      const section = document.createElement('section');
+      const heading = document.createElement('h2');
+      heading.textContent = title;
+      section.appendChild(heading);
+
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      headers.forEach((header) => {
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      rows.forEach((cells) => {
+        const tr = document.createElement('tr');
+        cells.forEach((cell) => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      section.appendChild(table);
+      output.appendChild(section);
+    };
+
+    const renderKeyValueTable = (title, rows) => {
+      renderTable(title, ['Metric', 'Value'], rows);
+    };
+
+    const formatNumber = (value, digits = 4) => Number(value).toFixed(digits);
 
     // 2. Listen for progress events
     window.addEventListener(PROGRESS_EVENT_NAME, (e) => {
       const { stage, progress, message } = e.detail;
-      log(`[${stage}] ${progress}% — ${message}`);
+      setStatus(`[${stage}] ${message} (${progress}%)`);
     });
 
     // 3. Create an instance pointing to the CDN-hosted worker
@@ -163,39 +218,141 @@ You can use the SDK directly in a browser or CodePen with no build step. The sni
     try {
       // 4. Initialize (downloads Pyodide WASM + Python packages)
       await stats.init();
-      log('✅ Initialization complete!');
+      setStatus('Initialization complete. Running analyses...');
 
       // 5. Fetch sample survey data from GitHub Pages
       const response = await fetch(
         'https://winm2m.github.io/inferential-stats-js/sample-survey-data.json'
       );
       const data = await response.json();
-      log(`Loaded ${data.length} rows of survey data.`);
+      setStatus(`Loaded ${data.length} rows. Rendering tables...`);
 
-      // 6. Run Crosstabs (gender × favorite_music)
-      const crosstabResult = await stats.crosstabs({
+      // 6. Descriptive Statistics — Frequencies
+      const frequenciesResult = await stats.frequencies({
         data,
-        rowVariable: 'gender',
-        colVariable: 'favorite_music',
+        variable: 'favorite_music',
       });
-      log('\n— Crosstabs (gender × favorite_music) —');
-      log(`Chi-Square: ${crosstabResult.data.chiSquare.toFixed(4)}`);
-      log(`p-value:    ${crosstabResult.data.pValue.toFixed(4)}`);
-      log(`Cramér's V: ${crosstabResult.data.cramersV.toFixed(4)}`);
+      const frequencyRows = frequenciesResult.data.frequencies
+        .slice(0, 6)
+        .map((item) => [
+          String(item.value),
+          String(item.count),
+          `${item.percentage.toFixed(2)}%`,
+        ]);
+      renderTable(
+        'Descriptive Statistics — Frequencies (favorite_music, top 6)',
+        ['Value', 'Count', 'Percent'],
+        frequencyRows
+      );
 
-      // 7. Run One-Way ANOVA (music_satisfaction by age_group)
+      // 7. Compare Means — One-Way ANOVA
       const anovaResult = await stats.anovaOneway({
         data,
         variable: 'music_satisfaction',
         groupVariable: 'age_group',
       });
-      log('\n— One-Way ANOVA (music_satisfaction by age_group) —');
-      log(`F-statistic: ${anovaResult.data.fStatistic.toFixed(4)}`);
-      log(`p-value:     ${anovaResult.data.pValue.toFixed(4)}`);
-      log(`η² (eta²):   ${anovaResult.data.etaSquared.toFixed(4)}`);
+      renderKeyValueTable('Compare Means — One-Way ANOVA (music_satisfaction by age_group)', [
+        ['F-statistic', anovaResult.data.fStatistic.toFixed(4)],
+        ['p-value', anovaResult.data.pValue.toFixed(4)],
+        ['eta-squared', anovaResult.data.etaSquared.toFixed(4)],
+      ]);
+
+      // 8. Regression — OLS
+      const regressionResult = await stats.linearRegression({
+        data,
+        dependentVariable: 'music_satisfaction',
+        independentVariables: ['weekly_hours_music', 'weekly_hours_movie'],
+      });
+      renderKeyValueTable('Regression — OLS (music_satisfaction ~ weekly_hours_music + weekly_hours_movie)', [
+        ['R-squared', regressionResult.data.rSquared.toFixed(4)],
+        ['Adj. R-squared', regressionResult.data.adjustedRSquared.toFixed(4)],
+        ['F-statistic', regressionResult.data.fStatistic.toFixed(4)],
+        ['F p-value', regressionResult.data.fPValue.toFixed(4)],
+        ['Durbin-Watson', regressionResult.data.durbinWatson.toFixed(4)],
+      ]);
+
+      // 9. Classify — K-Means
+      const kmeansResult = await stats.kmeans({
+        data,
+        variables: ['weekly_hours_music', 'weekly_hours_movie', 'monthly_art_visits'],
+        k: 3,
+        randomState: 42,
+        maxIterations: 100,
+      });
+      const clusterRows = Object.entries(kmeansResult.data.clusterSizes).map(
+        ([cluster, size]) => [`Cluster ${cluster}`, String(size)]
+      );
+      renderKeyValueTable('Classify — K-Means (k=3)', [
+        ['Inertia', kmeansResult.data.inertia.toFixed(2)],
+        ['Iterations', String(kmeansResult.data.iterations)],
+        ...clusterRows,
+      ]);
+
+      // 10. Dimension Reduction — PCA
+      const pcaResult = await stats.pca({
+        data,
+        variables: [
+          'music_satisfaction',
+          'movie_satisfaction',
+          'art_satisfaction',
+          'weekly_hours_music',
+          'weekly_hours_movie',
+          'monthly_art_visits',
+        ],
+        nComponents: 3,
+        standardize: true,
+      });
+      const pcaRows = pcaResult.data.explainedVarianceRatio.map((value, index) => [
+        `PC${index + 1}`,
+        formatNumber(value),
+      ]);
+      renderTable('Dimension Reduction — PCA (top 3 components)', ['Component', 'Explained Variance Ratio'], pcaRows);
+
+      const efaResult = await stats.efa({
+        data,
+        variables: [
+          'music_satisfaction',
+          'movie_satisfaction',
+          'art_satisfaction',
+          'weekly_hours_music',
+          'weekly_hours_movie',
+          'monthly_art_visits',
+        ],
+        nFactors: 3,
+        rotation: 'varimax',
+      });
+      if (efaResult.success) {
+        const efaHeaders = ['Variable', 'Factor 1', 'Factor 2', 'Factor 3'];
+        const efaRows = Object.entries(efaResult.data.loadings).map(([variable, loadings]) => [
+          variable,
+          formatNumber(loadings[0]),
+          formatNumber(loadings[1]),
+          formatNumber(loadings[2]),
+        ]);
+        renderTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', efaHeaders, efaRows);
+      } else {
+        renderKeyValueTable('Dimension Reduction — EFA Loadings (varimax, 3 factors)', [
+          ['Error', efaResult.error ?? 'Unknown error'],
+        ]);
+      }
+
+      // 11. Scale — Cronbach Alpha
+      const alphaResult = await stats.cronbachAlpha({
+        data,
+        items: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
+      });
+      renderKeyValueTable('Scale — Cronbach Alpha (satisfaction items)', [
+        ['Alpha', alphaResult.data.alpha.toFixed(4)],
+        ['Standardized Alpha', alphaResult.data.standardizedAlpha.toFixed(4)],
+        ['Inter-item correlation mean', alphaResult.data.interItemCorrelationMean.toFixed(4)],
+        ['Items', String(alphaResult.data.nItems)],
+        ['Observations', String(alphaResult.data.nObservations)],
+      ]);
+
+      setStatus('All analyses completed.');
 
     } catch (err) {
-      log('❌ Error: ' + err.message);
+      setStatus('Error: ' + err.message);
     } finally {
       stats.destroy();
     }

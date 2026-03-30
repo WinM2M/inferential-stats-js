@@ -6,17 +6,26 @@ export const EFA_PY = `
 import json
 import pandas as pd
 import numpy as np
+import scipy as sp
 from factor_analyzer import FactorAnalyzer
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
 
 def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='minres'):
+    if not hasattr(sp, 'sum'):
+        sp.sum = np.sum
     df = pd.DataFrame(json.loads(data_json))
     variables = json.loads(variables_json)
     
     X = df[variables].apply(pd.to_numeric, errors='coerce').dropna()
     
     # KMO and Bartlett tests
-    kmo_all, kmo_model = calculate_kmo(X)
+    kmo_result = calculate_kmo(X)
+    if isinstance(kmo_result, tuple):
+        kmo_all = kmo_result[0]
+        kmo_model = kmo_result[1] if len(kmo_result) > 1 else kmo_result[0]
+    else:
+        kmo_all = kmo_result
+        kmo_model = kmo_result
     chi2, p_value = calculate_bartlett_sphericity(X)
     
     fa = FactorAnalyzer(n_factors=n_factors, rotation=rotation, method=method)
@@ -27,7 +36,15 @@ def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='mi
     for i, var in enumerate(variables):
         loadings_dict[var] = [round(float(x), 6) for x in loadings[i]]
     
-    ev, v = fa.get_factor_variance()
+    variance_result = fa.get_factor_variance()
+    if isinstance(variance_result, tuple):
+        ev = variance_result[0]
+        v = variance_result[1] if len(variance_result) > 1 else variance_result[0]
+        cumulative = variance_result[2] if len(variance_result) > 2 else None
+    else:
+        ev = variance_result
+        v = variance_result
+        cumulative = None
     
     communalities = fa.get_communalities()
     uniquenesses = fa.get_uniquenesses()
@@ -44,7 +61,7 @@ def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='mi
         'loadings': loadings_dict,
         'eigenvalues': [round(float(x), 6) for x in eigenvalues],
         'variance': [round(float(x), 6) for x in ev],
-        'cumulativeVariance': [round(float(sum(v[:i+1])), 6) for i in range(len(v))],
+        'cumulativeVariance': [round(float(x), 6) for x in cumulative] if cumulative is not None else [round(float(sum(v[:i+1])), 6) for i in range(len(v))],
         'communalities': comm_dict,
         'uniquenesses': uniq_dict,
         'nFactors': n_factors,
