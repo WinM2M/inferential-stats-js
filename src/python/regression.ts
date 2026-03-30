@@ -47,7 +47,7 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
         'residualStdError': round(float(np.sqrt(model.mse_resid)), 6),
         'observations': int(model.nobs),
         'degreesOfFreedom': int(model.df_resid),
-        'durbin_watson': round(dw, 6)
+        'durbinWatson': round(dw, 6)
     })
 `;
 

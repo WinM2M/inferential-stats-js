@@ -24,7 +24,7 @@ export interface LinearRegressionOutput {
   residualStdError: number;
   observations: number;
   degreesOfFreedom: number;
-  durbin_watson: number;
+  durbinWatson: number;
 }
 
 // Binary Logistic Regression
