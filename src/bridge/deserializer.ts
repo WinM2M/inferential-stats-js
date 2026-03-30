@@ -30,21 +30,23 @@ export function deserializeFromBuffer(buffer: ArrayBuffer): Record<string, unkno
 
   for (const col of columns) {
     if (col.dtype === 'string') {
-      const indices = new Int32Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 4; // Int32 = 4 bytes
+      const aligned = new Int32Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: string[] = [];
       for (let i = 0; i < rowCount; i++) {
-        values.push(col.stringTable![indices[i]]);
+        values.push(col.stringTable![aligned[i]]);
       }
       columnData.set(col.name, values);
-      offset += rowCount * 4; // Int32 = 4 bytes
+      offset += byteLen;
     } else {
-      const arr = new Float64Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 8; // Float64 = 8 bytes
+      const aligned = new Float64Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: number[] = [];
       for (let i = 0; i < rowCount; i++) {
-        values.push(arr[i]);
+        values.push(aligned[i]);
       }
       columnData.set(col.name, values);
-      offset += rowCount * 8; // Float64 = 8 bytes
+      offset += byteLen;
     }
   }
 
@@ -82,18 +84,20 @@ export function deserializeToColumns(buffer: ArrayBuffer): {
 
   for (const col of colMeta) {
     if (col.dtype === 'string') {
-      const indices = new Int32Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 4;
+      const indices = new Int32Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: string[] = [];
       for (let i = 0; i < rowCount; i++) {
         values.push(col.stringTable![indices[i]]);
       }
       columns[col.name] = { dtype: 'string', values };
-      offset += rowCount * 4;
+      offset += byteLen;
     } else {
-      const arr = new Float64Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 8;
+      const arr = new Float64Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: number[] = Array.from(arr);
       columns[col.name] = { dtype: 'float64', values };
-      offset += rowCount * 8;
+      offset += byteLen;
     }
   }
 

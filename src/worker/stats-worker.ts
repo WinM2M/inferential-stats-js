@@ -109,18 +109,20 @@ function bufferToJsonString(buffer: ArrayBuffer): string {
 
   for (const col of columns) {
     if (col.dtype === 'string') {
-      const indices = new Int32Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 4;
+      const indices = new Int32Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: string[] = [];
       for (let i = 0; i < rowCount; i++) {
         values.push(col.stringTable![indices[i]]);
       }
       columnData.set(col.name, values);
-      offset += rowCount * 4;
+      offset += byteLen;
     } else {
-      const arr = new Float64Array(buffer, offset, rowCount);
+      const byteLen = rowCount * 8;
+      const arr = new Float64Array(new Uint8Array(buffer, offset, byteLen).slice().buffer);
       const values: number[] = Array.from(arr);
       columnData.set(col.name, values);
-      offset += rowCount * 8;
+      offset += byteLen;
     }
   }
 
