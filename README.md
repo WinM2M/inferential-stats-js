@@ -183,13 +183,13 @@ You can use the SDK directly in a browser or CodePen with no build step. The sni
       log(`p-value:    ${crosstabResult.data.pValue.toFixed(4)}`);
       log(`Cramér's V: ${crosstabResult.data.cramersV.toFixed(4)}`);
 
-      // 7. Run One-Way ANOVA (satisfaction_music by age_group)
+      // 7. Run One-Way ANOVA (music_satisfaction by age_group)
       const anovaResult = await stats.anovaOneway({
         data,
-        variable: 'satisfaction_music',
+        variable: 'music_satisfaction',
         groupVariable: 'age_group',
       });
-      log('\n— One-Way ANOVA (satisfaction_music by age_group) —');
+      log('\n— One-Way ANOVA (music_satisfaction by age_group) —');
       log(`F-statistic: ${anovaResult.data.fStatistic.toFixed(4)}`);
       log(`p-value:     ${anovaResult.data.pValue.toFixed(4)}`);
       log(`η² (eta²):   ${anovaResult.data.etaSquared.toFixed(4)}`);
@@ -617,15 +617,15 @@ This dataset contains **2,000 rows** of simulated survey data generated with a s
 | Column | Type | Description |
 |---|---|---|
 | `id` | integer | Unique respondent ID (1–2000) |
-| `gender` | string | `"Male"` or `"Female"` |
-| `age_group` | string | `"10s"`, `"20s"`, `"30s"`, `"40s"`, `"50s"`, `"60+"` |
+| `gender` | string | `"Male"`, `"Female"`, or `"Other"` |
+| `age_group` | string | `"20s"`, `"30s"`, `"40s"`, `"50s"`, `"60s"` |
 | `nationality` | string | One of several country labels |
 | `favorite_music` | string | Preferred music genre |
 | `favorite_movie` | string | Preferred movie genre |
 | `favorite_art` | string | Preferred art form |
-| `satisfaction_music` | integer (1–5) | Satisfaction with music offerings (Likert scale) |
-| `satisfaction_movie` | integer (1–5) | Satisfaction with movie offerings (Likert scale) |
-| `satisfaction_art` | integer (1–5) | Satisfaction with art offerings (Likert scale) |
+| `music_satisfaction` | integer (1–5) | Satisfaction with music offerings (Likert scale) |
+| `movie_satisfaction` | integer (1–5) | Satisfaction with movie offerings (Likert scale) |
+| `art_satisfaction` | integer (1–5) | Satisfaction with art offerings (Likert scale) |
 | `weekly_hours_music` | float | Weekly hours spent on music |
 | `weekly_hours_movie` | float | Weekly hours spent on movies |
 | `monthly_art_visits` | integer | Number of art gallery visits per month |
