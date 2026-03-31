@@ -42,23 +42,36 @@ Researchers, educators, and data analysts frequently need to perform inferential
 statistical tests---such as t-tests, ANOVA, regression, and factor
 analysis---on survey or experimental data. Traditionally, this requires either
 commercial desktop software such as SPSS [@ibm:spss] or R-based solutions
-[@rcoreteam:2024] that depend on server infrastructure. These approaches raise
-concerns about data privacy (particularly with sensitive survey data), impose
-licensing costs, and create barriers for deployment in resource-constrained
-educational or fieldwork settings where reliable internet connectivity or
-server access cannot be guaranteed.
+[@rcoreteam:2024] that depend on server infrastructure.
+
+Existing JavaScript statistics libraries such as `simple-statistics` and `jStat`
+are limited to basic descriptive statistics and probability distributions; they
+do not support advanced inferential methods such as exploratory factor analysis
+(EFA), binary or multinomial logistic regression, hierarchical clustering, or
+Cronbach's alpha reliability analysis. Server-side API approaches using Python
+or R can provide the full analytical range, but they introduce network latency,
+require server hosting costs, and---critically---necessitate transmitting
+potentially sensitive respondent data to external infrastructure, raising
+significant data privacy concerns. These limitations create a gap for web
+developers who need to embed production-grade inferential statistics into
+browser-based applications without backend dependencies.
 
 `inferential-stats-js` addresses these challenges by executing all statistical
-computation within the user's browser. No data ever leaves the client device,
-ensuring complete data privacy. The library is designed for web application
-developers who need to embed SPSS-equivalent statistical capabilities into
-browser-based tools---such as online survey platforms, educational dashboards,
-or research data portals---without provisioning backend compute resources.
+computation entirely within the user's browser. No data ever leaves the client
+device, ensuring complete data privacy by design. The SDK resolves the three
+core limitations of existing approaches simultaneously: (1) it provides the full
+range of inferential methods absent from JavaScript libraries, (2) it eliminates
+network latency and server hosting costs by running client-side, and (3) it
+guarantees data privacy by keeping all computation local.
 
-The target audience includes: (1) web developers building analytics features
-into browser applications, (2) researchers in the social and behavioral sciences
-who need accessible, privacy-preserving statistical tools, and (3) educators
-creating interactive statistics learning environments.
+The primary target audience for this library is not statisticians, but rather
+**web frontend developers building browser-based survey platforms, marketing
+dashboards, CRM analytics tools, and educational assessment systems**. These
+developers need to integrate professional-grade statistical widgets---such as
+ANOVA result tables, regression summaries, or factor loading matrices---into
+their applications without requiring Python expertise or provisioning backend
+compute resources. The SDK's typed API and familiar async/await patterns are
+designed to fit naturally into modern JavaScript/TypeScript workflows.
 
 # State of the field
 
@@ -120,6 +133,20 @@ each accepting a strongly-typed input object and returning a typed
 on a configurable `EventTarget`, enabling real-time progress bars during
 initialization and computation.
 
+**Known limitations and mitigations.** The Pyodide runtime and its bundled
+Python packages (SciPy, statsmodels, scikit-learn, etc.) incur a one-time
+initial download of approximately 20--30 MB of WebAssembly and data payloads.
+On mobile devices, available memory may further constrain the size of datasets
+that can be analyzed in-browser. However, after the initial load, all subsequent
+analyses execute without network delay, and the Pyodide runtime and packages are
+cached by the browser's standard HTTP caching mechanisms. For data transfer, the
+SDK employs a columnar binary serialization protocol using `ArrayBuffer` and
+`TypedArray` with the Transferable Objects API, minimizing memory duplication
+and defending against browser memory limits. In practice, this architecture
+provides sufficient performance for the data scales typical of social survey
+research, marketing analytics, and educational assessment---commonly ranging
+from hundreds to several thousand observations with tens of variables.
+
 # Research impact statement
 
 `inferential-stats-js` is currently at version 0.1.5 and is available on npm
@@ -132,7 +159,12 @@ The library includes a reproducible sample dataset of 2,000 simulated survey
 responses (generated with a seeded PRNG) that exercises all 16 analysis methods,
 along with a browser-based demo and a CodePen live example. A comprehensive test
 suite with 77 tests verifies SDK functionality including serialization round-trips,
-public API completeness, and all analysis method return types. The package is
+public API completeness, and all analysis method return types. To ensure
+mathematical correctness, the SDK's output values (Chi-square statistics,
+p-values, regression coefficients, factor loadings, etc.) were cross-validated
+against native Python 3.x results produced in a local Jupyter Notebook
+environment using the same sample dataset, confirming numerical agreement to
+four decimal places across all 16 analysis methods. The package is
 distributed with full TypeScript declarations, enabling type-safe integration in
 production applications.
 
