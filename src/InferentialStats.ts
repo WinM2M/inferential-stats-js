@@ -103,6 +103,12 @@ export class InferentialStats {
 
     this.worker.onerror = (event: ErrorEvent) => {
       console.error('[InferentialStats] Worker error:', event.message);
+      // Reject all pending requests so callers don't hang forever
+      const errorMsg = `Worker error: ${event.message ?? 'Unknown worker error'}`;
+      for (const [reqId, pending] of this.pendingRequests) {
+        pending.reject(new Error(errorMsg));
+        this.pendingRequests.delete(reqId);
+      }
     };
 
     // Wait for worker ready signal
@@ -381,7 +387,24 @@ export class InferentialStats {
 
   /** Terminate the worker and clean up resources */
   destroy(): void {
+    // Reject any pending requests so callers don't hang
+    for (const [reqId, pending] of this.pendingRequests) {
+      pending.reject(new Error('SDK destroyed while request was pending.'));
+      this.pendingRequests.delete(reqId);
+    }
+
     if (this.worker) {
+      // Best-effort: ask the worker to release Pyodide memory before we terminate it.
+      // We use a fire-and-forget postMessage because destroy() is synchronous.
+      try {
+        const destroyRequest: WorkerRequest = {
+          id: `req_destroy_${Date.now()}`,
+          type: 'destroy',
+        };
+        this.worker.postMessage(destroyRequest);
+      } catch {
+        // Worker may already be in a bad state; ignore.
+      }
       this.worker.terminate();
       this.worker = null;
     }
@@ -391,6 +414,5 @@ export class InferentialStats {
     }
     this.initialized = false;
     this.initPromise = null;
-    this.pendingRequests.clear();
   }
 }

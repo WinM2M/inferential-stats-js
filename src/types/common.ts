@@ -16,6 +16,7 @@ export interface ProgressDetail {
 /** Worker message types */
 export type WorkerRequestType =
   | 'init'
+  | 'destroy'
   | 'frequencies'
   | 'descriptives'
   | 'crosstabs'

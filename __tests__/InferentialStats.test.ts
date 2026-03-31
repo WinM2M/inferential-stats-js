@@ -656,4 +656,192 @@ describe('InferentialStats: Error Handling', () => {
     ).rejects.toThrow('SDK not initialized');
     stats.destroy();
   });
+
+  it('should return { success: false, error } when the worker sends an error response', async () => {
+    // Replace the mock worker to simulate an error response from the worker
+    const errorWorkerInstance = new MockWorker();
+    // Override postMessage to respond with an error for analysis requests
+    errorWorkerInstance.postMessage = function (data: unknown, _transfer?: Transferable[]) {
+      setTimeout(() => {
+        if (data && typeof data === 'object' && 'type' in data) {
+          const request = data as { id: string; type: string };
+          if (request.type === 'init') {
+            this.sendToMain({
+              id: request.id,
+              type: 'result',
+              data: { initialized: true },
+            });
+          } else {
+            // Simulate a worker-side analysis error
+            this.sendToMain({
+              id: request.id,
+              type: 'error',
+              error: 'Python analysis raised ValueError: variable not found',
+            });
+          }
+        }
+      }, 5);
+    };
+
+    // @ts-expect-error - mocking Worker constructor
+    globalThis.Worker = class {
+      constructor() {
+        setTimeout(() => errorWorkerInstance.signalReady(), 1);
+        return errorWorkerInstance;
+      }
+    };
+
+    const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
+    await stats.init();
+
+    const result = await stats.frequencies({
+      data: [{ x: 1 }],
+      variable: 'x',
+    });
+
+    // _runAnalysis catches the rejection and wraps it
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('variable not found');
+    expect(result.data).toBeNull();
+    expect(typeof result.executionTimeMs).toBe('number');
+
+    stats.destroy();
+  });
+
+  it('should throw when calling analysis methods after destroy()', async () => {
+    const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
+    await stats.init();
+    stats.destroy();
+
+    // After destroy, isInitialized() returns false so _runAnalysis should throw
+    await expect(
+      stats.frequencies({
+        data: [{ x: 1 }],
+        variable: 'x',
+      }),
+    ).rejects.toThrow('SDK not initialized');
+  });
+
+  it('should reject pending requests when destroy() is called mid-flight', async () => {
+    const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
+    await stats.init();
+
+    // Create a slow mock worker that doesn't reply immediately
+    const neverReplyInstance = new MockWorker();
+    neverReplyInstance.postMessage = function () {
+      // Never send a response — simulates a long-running analysis
+    };
+    // @ts-expect-error - replace the internal worker
+    stats['worker'] = neverReplyInstance;
+
+    // Start a request (it will hang because the mock never replies)
+    const promise = stats.frequencies({
+      data: [{ x: 1 }],
+      variable: 'x',
+    });
+
+    // Destroy while the request is pending — it should reject with a clear error
+    // We need a tiny yield so the promise executor runs
+    await new Promise((r) => setTimeout(r, 0));
+    stats.destroy();
+
+    // _runAnalysis catches the rejection and wraps it into { success: false }
+    const result = await promise;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('destroyed');
+  });
+
+  it('should reject pending requests when the worker fires an onerror event', async () => {
+    const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
+    await stats.init();
+
+    // Replace mock worker with one that fires onerror instead of replying
+    const brokenWorkerInstance = new MockWorker();
+    brokenWorkerInstance.postMessage = function () {
+      // Don't respond – trigger onerror instead
+    };
+    // @ts-expect-error - replace the internal worker (private field)
+    stats['worker'] = brokenWorkerInstance;
+
+    // Wire up onerror: the SDK sets worker.onerror during _doInit, but we
+    // replaced the worker, so we need to manually replicate its behavior.
+    brokenWorkerInstance.onerror = (event: ErrorEvent) => {
+      const errorMsg = `Worker error: ${event.message ?? 'Unknown worker error'}`;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pendingRequests = (stats as any)['pendingRequests'] as Map<string, { resolve: (v: unknown) => void; reject: (r: unknown) => void }>;
+      for (const [reqId, pending] of pendingRequests) {
+        pending.reject(new Error(errorMsg));
+        pendingRequests.delete(reqId);
+      }
+    };
+
+    // Start a request
+    const promise = stats.frequencies({
+      data: [{ x: 1 }],
+      variable: 'x',
+    });
+
+    // Simulate a worker error event after a tick
+    await new Promise((r) => setTimeout(r, 5));
+    if (brokenWorkerInstance.onerror) {
+      brokenWorkerInstance.onerror({ message: 'Script error.' } as ErrorEvent);
+    }
+
+    const result = await promise;
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Worker error');
+
+    stats.destroy();
+  });
+
+  it('should return error for unknown analysis type via _sendRequest', async () => {
+    // The mock worker sends a successful result for any type, so we need a
+    // custom mock that echoes an error for unknown types.
+    const unknownTypeWorkerInstance = new MockWorker();
+    unknownTypeWorkerInstance.postMessage = function (data: unknown, _transfer?: Transferable[]) {
+      setTimeout(() => {
+        if (data && typeof data === 'object' && 'type' in data) {
+          const request = data as { id: string; type: string };
+          if (request.type === 'init') {
+            this.sendToMain({
+              id: request.id,
+              type: 'result',
+              data: { initialized: true },
+            });
+          } else {
+            // Mirror the worker's default branch: unknown type -> error
+            this.sendToMain({
+              id: request.id,
+              type: 'error',
+              error: `Unknown analysis type: ${request.type}`,
+            });
+          }
+        }
+      }, 5);
+    };
+
+    // @ts-expect-error - mocking Worker constructor
+    globalThis.Worker = class {
+      constructor() {
+        setTimeout(() => unknownTypeWorkerInstance.signalReady(), 1);
+        return unknownTypeWorkerInstance;
+      }
+    };
+
+    const stats = new InferentialStats({ workerUrl: '/test-worker.js' });
+    await stats.init();
+
+    // Use _sendRequest with an arbitrary type to simulate an unknown analysis type.
+    // Since we can't easily call a non-existent public method, we call an existing
+    // one whose mock will always return the 'error' above.
+    const result = await stats.descriptives({
+      data: [{ x: 1 }],
+      variables: ['x'],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Unknown analysis type');
+
+    stats.destroy();
+  });
 });

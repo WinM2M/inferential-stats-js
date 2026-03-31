@@ -211,6 +211,14 @@ await micropip.install('factor_analyzer')
 /**
  * Run a Python analysis function.
  * Handles proxy cleanup to prevent memory leaks.
+ *
+ * Memory strategy:
+ *   1. The analysis function is defined in the Python global scope.
+ *   2. It is called and its return value stored in `_result`.
+ *   3. After reading the result string, we `del` both `_result` and the
+ *      function itself, then run `gc.collect()` to release DataFrames,
+ *      model objects, and intermediate numpy arrays promptly.
+ *   4. On the error path we do the same best-effort cleanup.
  */
 async function runAnalysis(
   id: string,
@@ -240,7 +248,7 @@ async function runAnalysis(
     }).join(', ');
 
     const callCode = `
-import gc
+import gc as _gc
 _result = ${functionName}(${argsStr})
 _result
 `;
@@ -250,17 +258,37 @@ _result
     const resultStr = String(result);
     const parsed = JSON.parse(resultStr);
     
-    // Cleanup Python memory
+    // Cleanup: delete the result, the analysis function, and force gc
     await pyodide.runPythonAsync(`
-del _result
-gc.collect()
+try:
+    del _result
+except NameError:
+    pass
+try:
+    del ${functionName}
+except NameError:
+    pass
+_gc.collect()
+del _gc
 `);
 
     sendResult(id, parsed);
   } catch (err) {
-    // Attempt cleanup even on error
+    // Attempt cleanup even on error – delete both _result and the function
     try {
-      await pyodide.runPythonAsync('import gc; gc.collect()');
+      await pyodide.runPythonAsync(`
+import gc as _gc
+try:
+    del _result
+except NameError:
+    pass
+try:
+    del ${functionName}
+except NameError:
+    pass
+_gc.collect()
+del _gc
+`);
     } catch {
       // Ignore cleanup errors
     }
@@ -434,6 +462,24 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           JSON.stringify(params?.items ?? [])
         ]);
+        break;
+
+      // === Lifecycle ===
+      case 'destroy':
+        try {
+          if (pyodide) {
+            // Final gc pass to release remaining Python objects
+            try {
+              await pyodide.runPythonAsync('import gc; gc.collect()');
+            } catch {
+              // Ignore – runtime may already be in a bad state
+            }
+            pyodide = null;
+          }
+          sendResult(id, { destroyed: true });
+        } catch (err) {
+          sendError(id, `Destroy failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
         break;
 
       default:
