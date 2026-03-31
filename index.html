@@ -1,0 +1,643 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@winm2m/inferential-stats-js API Documentation - v0.1.5</title><meta name="description" content="Documentation for @winm2m/inferential-stats-js API Documentation"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">@winm2m/inferential-stats-js API Documentation - v0.1.5</a><div id="tsd-toolbar-links"><a href="https://github.com/WinM2M/inferential-stats-js">GitHub</a><a href="https://www.npmjs.com/package/@winm2m/inferential-stats-js">npm</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>@winm2m/inferential-stats-js API Documentation - v0.1.5</h1></div><div class="tsd-panel tsd-typography"><h1 id="winm2minferential-stats-js" class="tsd-anchor-link">@winm2m/inferential-stats-js<a href="#winm2minferential-stats-js" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p><a href="https://github.com/WinM2M/inferential-stats-js/actions/workflows/test.yml"><img src="https://github.com/WinM2M/inferential-stats-js/actions/workflows/test.yml/badge.svg" alt="CI"></a>
+<a href="https://www.npmjs.com/package/@winm2m/inferential-stats-js"><img src="https://img.shields.io/npm/v/@winm2m/inferential-stats-js.svg" alt="npm version"></a>
+<a href="https://github.com/winm2m/inferential-stats-js/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@winm2m/inferential-stats-js.svg" alt="license"></a>
+<a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.7-blue.svg" alt="TypeScript"></a>
+<a href="https://pyodide.org/"><img src="https://img.shields.io/badge/WebAssembly-Pyodide-blueviolet.svg" alt="WebAssembly"></a>
+<a href="https://winm2m.github.io/inferential-stats-js/"><img src="https://img.shields.io/badge/docs-TypeDoc-blue.svg" alt="API Docs"></a></p>
+<p><strong>A headless JavaScript SDK for advanced statistical analysis in the browser using WebAssembly (Pyodide). Performs SPSS-level inferential statistics entirely client-side with no backend required.</strong></p>
+<hr>
+<h2 id="table-of-contents" class="tsd-anchor-link">Table of Contents<a href="#table-of-contents" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li><a href="#architecture-overview">Architecture Overview</a></li>
+<li><a href="#core-analysis-features--mathematical--technical-documentation">Core Analysis Features — Mathematical &amp; Technical Documentation</a>
+<ul>
+<li><a href="#-descriptive-statistics">① Descriptive Statistics</a></li>
+<li><a href="#-compare-means">② Compare Means</a></li>
+<li><a href="#-regression">③ Regression</a></li>
+<li><a href="#-classify">④ Classify</a></li>
+<li><a href="#-dimension-reduction">⑤ Dimension Reduction</a></li>
+<li><a href="#-scale">⑥ Scale</a></li>
+</ul>
+</li>
+<li><a href="#installation">Installation</a></li>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#cdn--codepen-usage">CDN / CodePen Usage</a></li>
+<li><a href="#api-reference">API Reference</a></li>
+<li><a href="#sample-data">Sample Data</a></li>
+<li><a href="#progress-event-handling">Progress Event Handling</a></li>
+<li><a href="#license">License</a></li>
+</ul>
+<hr>
+<h2 id="architecture-overview" class="tsd-anchor-link">Architecture Overview<a href="#architecture-overview" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><code>@winm2m/inferential-stats-js</code> runs <strong>entirely in the browser</strong> — no backend server, no API calls, no data ever leaves the client.</p>
+<pre><code><span class="hl-0">┌─────────────────────────────────────────────────────────┐</span><br/><span class="hl-0">│  </span><span class="hl-1">Main</span><span class="hl-0"> </span><span class="hl-1">Thread</span><span class="hl-0">                                            │</span><br/><span class="hl-0">│  ┌───────────────────────┐     </span><span class="hl-2">postMessage</span><span class="hl-0">()            │</span><br/><span class="hl-0">│  │  </span><span class="hl-1">InferentialStats</span><span class="hl-0"> </span><span class="hl-3">SDK</span><span class="hl-0"> │ ──── </span><span class="hl-1">ArrayBuffer</span><span class="hl-0"> ──────┐     │</span><br/><span class="hl-0">│  │  (</span><span class="hl-3">ESM</span><span class="hl-0"> / </span><span class="hl-3">CJS</span><span class="hl-0">)          │     (</span><span class="hl-1">Transferable</span><span class="hl-0">)     │     │</span><br/><span class="hl-0">│  └───────────────────────┘                        ▼     │</span><br/><span class="hl-0">│                                 ┌─────────────────────┐ │</span><br/><span class="hl-0">│                                 │  </span><span class="hl-1">Web</span><span class="hl-0"> </span><span class="hl-1">Worker</span><span class="hl-0">         │ │</span><br/><span class="hl-0">│                                 │  ┌────────────────┐ │ │</span><br/><span class="hl-0">│                                 │  │  </span><span class="hl-1">Pyodide</span><span class="hl-0"> </span><span class="hl-3">WASM</span><span class="hl-0">  │ │ │</span><br/><span class="hl-0">│                                 │  │  ┌───────────┐ │ │ │</span><br/><span class="hl-0">│                                 │  │  │  </span><span class="hl-1">Python</span><span class="hl-0">   │ │ │ │</span><br/><span class="hl-0">│                                 │  │  │  </span><span class="hl-1">Runtime</span><span class="hl-0">  │ │ │ │</span><br/><span class="hl-0">│                                 │  │  └───────────┘ │ │ │</span><br/><span class="hl-0">│                                 │  └────────────────┘ │ │</span><br/><span class="hl-0">│                                 └─────────────────────┘ │</span><br/><span class="hl-0">└─────────────────────────────────────────────────────────┘</span>
+</code><button>Copy</button></pre>
+
+<h3 id="key-design-principles" class="tsd-anchor-link">Key Design Principles<a href="#key-design-principles" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Principle</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>100 % Client-Side</strong></td>
+<td>Statistical computation runs entirely in-browser via WebAssembly. No network requests to any analytics server.</td>
+</tr>
+<tr>
+<td><strong>Web Worker Isolation</strong></td>
+<td>All heavy computation is offloaded to a dedicated Web Worker, keeping the main thread responsive and the UI jank-free.</td>
+</tr>
+<tr>
+<td><strong>ArrayBuffer / TypedArray Transfer</strong></td>
+<td>Data is serialized into a columnar binary format (Float64Array, Int32Array, dictionary-encoded strings) and transferred to the worker using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Transferable_objects">Transferable Objects</a> API for near-zero-copy performance.</td>
+</tr>
+<tr>
+<td><strong>Pyodide WASM Runtime</strong></td>
+<td>The worker loads <a href="https://pyodide.org/">Pyodide</a> — a full CPython interpreter compiled to WebAssembly — along with pandas, SciPy, statsmodels, scikit-learn, and factor_analyzer.</td>
+</tr>
+<tr>
+<td><strong>Progress Events</strong></td>
+<td>Initialization and computation stages emit <code>CustomEvent</code> progress events on a configurable <code>EventTarget</code>, enabling real-time progress bars.</td>
+</tr>
+<tr>
+<td><strong>Dual Module Format</strong></td>
+<td>Ships as both ESM (<code>dist/index.js</code>) and CommonJS (<code>dist/index.cjs</code>) with full TypeScript declarations.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="core-analysis-features-mathematical--technical-documentation" class="tsd-anchor-link">Core Analysis Features — Mathematical &amp; Technical Documentation<a href="#core-analysis-features-mathematical--technical-documentation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>This section documents the mathematical foundations and internal Python implementations of all 16 analyses.</p>
+<blockquote>
+<p><strong>Note on math rendering:</strong> Equations are rendered as images so they display correctly on npm.</p>
+</blockquote>
+<hr>
+<h3 id="①-descriptive-statistics" class="tsd-anchor-link">① Descriptive Statistics<a href="#①-descriptive-statistics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="frequencies" class="tsd-anchor-link">Frequencies<a href="#frequencies" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Computes a frequency distribution for a categorical variable, including absolute counts, relative percentages, and cumulative percentages.</p>
+<p><strong>Python implementation:</strong> <code>pandas.Series.value_counts(normalize=True)</code></p>
+<p><strong>Relative frequency:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?f_i%3D%5Cfrac%7Bn_i%7D%7BN%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?n_i" alt="formula"> is the count of category <img src="https://latex.codecogs.com/svg.image?i" alt="formula"> and <img src="https://latex.codecogs.com/svg.image?N" alt="formula"> is the total number of observations. Cumulative percentage is the running sum of <img src="https://latex.codecogs.com/svg.image?f_i%5Ctimes%20100" alt="formula">.</p>
+<hr>
+<h4 id="descriptives" class="tsd-anchor-link">Descriptives<a href="#descriptives" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Produces summary statistics for one or more numeric variables: count, mean, standard deviation, min, max, quartiles (Q1, Q2, Q3), skewness, and kurtosis.</p>
+<p><strong>Python implementation:</strong> <code>pandas.DataFrame.describe()</code>, <code>scipy.stats.skew</code>, <code>scipy.stats.kurtosis</code></p>
+<p><strong>Arithmetic mean:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Cbar%7Bx%7D%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7Dx_i" alt="formula"></p>
+<p><strong>Sample standard deviation (Bessel-corrected):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?s%3D%5Csqrt%7B%5Cfrac%7B1%7D%7BN-1%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5E2%7D" alt="formula"></p>
+<p><strong>Skewness (Fisher):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?g_1%3D%5Cfrac%7Bm_3%7D%7Bm_2%5E%7B3%2F2%7D%7D%2C%5Cquad%20m_k%3D%5Cfrac%7B1%7D%7BN%7D%5Csum_%7Bi%3D1%7D%5E%7BN%7D(x_i-%5Cbar%7Bx%7D)%5Ek" alt="formula"></p>
+<p><strong>Excess kurtosis (Fisher):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?g_2%3D%5Cfrac%7Bm_4%7D%7Bm_2%5E2%7D-3" alt="formula"></p>
+<hr>
+<h4 id="crosstabs" class="tsd-anchor-link">Crosstabs<a href="#crosstabs" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Cross-tabulates two categorical variables and tests for independence using Pearson's Chi-square test. Reports observed and expected counts, row/column/total percentages, and Cramér's V as an effect-size measure.</p>
+<p><strong>Python implementation:</strong> <code>pandas.crosstab</code>, <code>scipy.stats.chi2_contingency</code></p>
+<p><strong>Pearson's Chi-square statistic:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Cchi%5E2%3D%5Csum%5Cfrac%7B(O_%7Bij%7D-E_%7Bij%7D)%5E2%7D%7BE_%7Bij%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?O_%7Bij%7D" alt="formula"> is the observed frequency in cell (<img src="https://latex.codecogs.com/svg.image?i%2C%20j" alt="formula">) and <img src="https://latex.codecogs.com/svg.image?E_%7Bij%7D%3D%5Cfrac%7BR_i%5Ccdot%20C_j%7D%7BN%7D" alt="formula"> is the expected frequency under independence.</p>
+<p><strong>Cramér's V:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?V%3D%5Csqrt%7B%5Cfrac%7B%5Cchi%5E2%7D%7BN%5Ccdot(k-1)%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?k%3D%5Cmin(%5Ctext%7Brows%7D%2C%5Ctext%7Bcols%7D)" alt="formula">.</p>
+<hr>
+<h3 id="②-compare-means" class="tsd-anchor-link">② Compare Means<a href="#②-compare-means" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="independent-samples-t-test" class="tsd-anchor-link">Independent-Samples T-Test<a href="#independent-samples-t-test" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Compares the means of a numeric variable between two independent groups. Automatically reports results for both equal-variance and unequal-variance (Welch's) assumptions. Includes Levene's test for equality of variances.</p>
+<p><strong>Python implementation:</strong> <code>scipy.stats.ttest_ind</code>, <code>scipy.stats.levene</code></p>
+<p><strong>T-statistic (equal variance assumed):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BX%7D_1-%5Cbar%7BX%7D_2%7D%7BS_p%5Csqrt%7B%5Cfrac%7B1%7D%7Bn_1%7D%2B%5Cfrac%7B1%7D%7Bn_2%7D%7D%7D" alt="formula"></p>
+<p><strong>Pooled standard deviation:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?S_p%3D%5Csqrt%7B%5Cfrac%7B(n_1-1)s_1%5E2%2B(n_2-1)s_2%5E2%7D%7Bn_1%2Bn_2-2%7D%7D" alt="formula"></p>
+<p><strong>Degrees of freedom:</strong> <img src="https://latex.codecogs.com/svg.image?df%3Dn_1%2Bn_2-2" alt="formula"></p>
+<p>When Levene's test is significant (<img src="https://latex.codecogs.com/svg.image?p%3C0.05" alt="formula">), Welch's t-test is recommended, which uses the Welch–Satterthwaite approximation for degrees of freedom.</p>
+<hr>
+<h4 id="paired-samples-t-test" class="tsd-anchor-link">Paired-Samples T-Test<a href="#paired-samples-t-test" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Tests whether the mean difference between two paired measurements is significantly different from zero.</p>
+<p><strong>Python implementation:</strong> <code>scipy.stats.ttest_rel</code></p>
+<p><strong>T-statistic:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?t%3D%5Cfrac%7B%5Cbar%7BD%7D%7D%7BS_D%2F%5Csqrt%7Bn%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?%5Cbar%7BD%7D%3D%5Cfrac%7B1%7D%7Bn%7D%5Csum_%7Bi%3D1%7D%5E%7Bn%7D(X_%7B1i%7D-X_%7B2i%7D)" alt="formula"> is the mean difference and <img src="https://latex.codecogs.com/svg.image?S_D" alt="formula"> is the standard deviation of the differences.</p>
+<p><strong>Degrees of freedom:</strong> <img src="https://latex.codecogs.com/svg.image?df%3Dn-1" alt="formula"></p>
+<hr>
+<h4 id="one-way-anova" class="tsd-anchor-link">One-Way ANOVA<a href="#one-way-anova" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Tests whether the means of a numeric variable differ significantly across three or more groups.</p>
+<p><strong>Python implementation:</strong> <code>scipy.stats.f_oneway</code></p>
+<p><strong>F-statistic:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?F%3D%5Cfrac%7BMS_%7Bbetween%7D%7D%7BMS_%7Bwithin%7D%7D" alt="formula"></p>
+<p><strong>Sum of Squares Between Groups:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?SS_%7Bbetween%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7Dn_j(%5Cbar%7BX%7D_j-%5Cbar%7BX%7D)%5E2" alt="formula"></p>
+<p><strong>Sum of Squares Within Groups:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?SS_%7Bwithin%7D%3D%5Csum_%7Bj%3D1%7D%5E%7Bk%7D%5Csum_%7Bi%3D1%7D%5E%7Bn_j%7D(X_%7Bij%7D-%5Cbar%7BX%7D_j)%5E2" alt="formula"></p>
+<p><strong>Mean Squares:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?MS_%7Bbetween%7D%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7Bk-1%7D%2C%5Cquad%20MS_%7Bwithin%7D%3D%5Cfrac%7BSS_%7Bwithin%7D%7D%7BN-k%7D" alt="formula"></p>
+<p><strong>Effect size (Eta-squared):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Ceta%5E2%3D%5Cfrac%7BSS_%7Bbetween%7D%7D%7BSS_%7Btotal%7D%7D" alt="formula"></p>
+<hr>
+<h4 id="post-hoc-tukey-hsd" class="tsd-anchor-link">Post-hoc Tukey HSD<a href="#post-hoc-tukey-hsd" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Performs pairwise comparisons of group means following a significant ANOVA result using the Studentized Range distribution.</p>
+<p><strong>Python implementation:</strong> <code>statsmodels.stats.multicomp.pairwise_tukeyhsd</code></p>
+<p><strong>Studentized range statistic:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?q%3D%5Cfrac%7B%5Cbar%7BX%7D_i-%5Cbar%7BX%7D_j%7D%7B%5Csqrt%7BMS_W%2Fn%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?MS_W" alt="formula"> is the within-group mean square from the ANOVA and <img src="https://latex.codecogs.com/svg.image?n" alt="formula"> is the harmonic mean of group sizes. The critical <img src="https://latex.codecogs.com/svg.image?q" alt="formula"> value is obtained from the Studentized Range distribution with <img src="https://latex.codecogs.com/svg.image?k" alt="formula"> groups and <img src="https://latex.codecogs.com/svg.image?N-k" alt="formula"> degrees of freedom.</p>
+<hr>
+<h3 id="③-regression" class="tsd-anchor-link">③ Regression<a href="#③-regression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="linear-regression-ols" class="tsd-anchor-link">Linear Regression (OLS)<a href="#linear-regression-ols" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Fits an Ordinary Least Squares regression model with one or more independent variables. Reports regression coefficients, standard errors, t-statistics, p-values, confidence intervals, <img src="https://latex.codecogs.com/svg.image?R%5E2" alt="formula">, adjusted <img src="https://latex.codecogs.com/svg.image?R%5E2" alt="formula">, F-test, and the Durbin-Watson statistic for autocorrelation detection.</p>
+<p><strong>Python implementation:</strong> <code>statsmodels.api.OLS</code></p>
+<p><strong>Model:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?Y%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p%2B%5Cepsilon" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?%5Cepsilon%5Csim%20N(0%2C%5Csigma%5E2)" alt="formula">.</p>
+<p><strong>OLS estimator:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Chat%7B%5Cbeta%7D%3D(X%5ETX)%5E%7B-1%7DX%5ETY" alt="formula"></p>
+<p><strong>Coefficient of determination:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?R%5E2%3D1-%5Cfrac%7BSS_%7Bres%7D%7D%7BSS_%7Btot%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?SS_%7Bres%7D%3D%5Csum(Y_i-%5Chat%7BY%7D_i)%5E2" alt="formula"> and <img src="https://latex.codecogs.com/svg.image?SS_%7Btot%7D%3D%5Csum(Y_i-%5Cbar%7BY%7D)%5E2" alt="formula">.</p>
+<hr>
+<h4 id="binary-logistic-regression" class="tsd-anchor-link">Binary Logistic Regression<a href="#binary-logistic-regression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Models the probability of a binary outcome as a function of one or more independent variables. Reports coefficients (log-odds), odds ratios, z-statistics, p-values, pseudo-<img src="https://latex.codecogs.com/svg.image?R%5E2" alt="formula">, AIC, and BIC.</p>
+<p><strong>Python implementation:</strong> <code>statsmodels.discrete.discrete_model.Logit</code></p>
+<p><strong>Logit link function:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7Bp%7D%7B1-p%7D%5Cright)%3D%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p" alt="formula"></p>
+<p><strong>Predicted probability:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?P(Y%3D1%7CX)%3D%5Cfrac%7B1%7D%7B1%2Be%5E%7B-(%5Cbeta_0%2B%5Cbeta_1X_1%2B%5Ccdots%2B%5Cbeta_pX_p)%7D%7D" alt="formula"></p>
+<p>Coefficients are estimated by Maximum Likelihood Estimation (MLE). The odds ratio for predictor j is <img src="https://latex.codecogs.com/svg.image?e%5E%7B%5Cbeta_j%7D" alt="formula">.</p>
+<hr>
+<h4 id="multinomial-logistic-regression" class="tsd-anchor-link">Multinomial Logistic Regression<a href="#multinomial-logistic-regression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Extends binary logistic regression to outcomes with more than two unordered categories. One category is designated as the reference; the model estimates log-odds of each other category relative to the reference.</p>
+<p><strong>Python implementation:</strong> <code>sklearn.linear_model.LogisticRegression(multi_class='multinomial')</code></p>
+<p><strong>Log-odds relative to reference category <img src="https://latex.codecogs.com/svg.image?K" alt="formula">:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Cln%5Cleft(%5Cfrac%7BP(Y%3Dk)%7D%7BP(Y%3DK)%7D%5Cright)%3D%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p" alt="formula"></p>
+<p>for each category <img src="https://latex.codecogs.com/svg.image?k%5Cneq%20K" alt="formula">.</p>
+<p><strong>Predicted probability via softmax:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?P(Y%3Dk%7CX)%3D%5Cfrac%7Be%5E%7B%5Cbeta_%7Bk0%7D%2B%5Cbeta_%7Bk1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bkp%7DX_p%7D%7D%7B%5Csum_%7Bj%3D1%7D%5E%7BK%7De%5E%7B%5Cbeta_%7Bj0%7D%2B%5Cbeta_%7Bj1%7DX_1%2B%5Ccdots%2B%5Cbeta_%7Bjp%7DX_p%7D%7D" alt="formula"></p>
+<hr>
+<h3 id="④-classify" class="tsd-anchor-link">④ Classify<a href="#④-classify" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="k-means-clustering" class="tsd-anchor-link">K-Means Clustering<a href="#k-means-clustering" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Partitions observations into <img src="https://latex.codecogs.com/svg.image?K" alt="formula"> clusters by iteratively assigning points to the nearest centroid and updating centroids until convergence.</p>
+<p><strong>Python implementation:</strong> <code>sklearn.cluster.KMeans</code></p>
+<p><strong>Objective function (inertia):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?J%3D%5Csum_%7Bj%3D1%7D%5E%7BK%7D%5Csum_%7Bi%5Cin%20C_j%7D%5C%7Cx_i-%5Cmu_j%5C%7C%5E2" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?C_j" alt="formula"> is the set of observations in cluster j and <img src="https://latex.codecogs.com/svg.image?%5Cmu_j" alt="formula"> is the centroid. The algorithm minimizes J using Lloyd's algorithm (Expectation-Maximization style).</p>
+<hr>
+<h4 id="hierarchical-agglomerative-clustering" class="tsd-anchor-link">Hierarchical (Agglomerative) Clustering<a href="#hierarchical-agglomerative-clustering" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Builds a hierarchy of clusters using a bottom-up approach. Supports Ward, complete, average, and single linkage methods. Returns a full linkage matrix and dendrogram data for visualization.</p>
+<p><strong>Python implementation:</strong> <code>scipy.cluster.hierarchy.linkage</code>, <code>scipy.cluster.hierarchy.fcluster</code></p>
+<p><strong>Ward's minimum variance method</strong> (default):</p>
+<p><img src="https://latex.codecogs.com/svg.image?%5CDelta(A%2CB)%3D%5Cfrac%7Bn_A%20n_B%7D%7Bn_A%2Bn_B%7D%5C%7C%5Cbar%7Bx%7D_A-%5Cbar%7Bx%7D_B%5C%7C%5E2" alt="formula"></p>
+<p>At each step, the pair of clusters (A, B) that produces the smallest increase in total within-cluster variance is merged. Ward's method tends to produce compact, equally sized clusters.</p>
+<hr>
+<h3 id="⑤-dimension-reduction" class="tsd-anchor-link">⑤ Dimension Reduction<a href="#⑤-dimension-reduction" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="exploratory-factor-analysis-efa" class="tsd-anchor-link">Exploratory Factor Analysis (EFA)<a href="#exploratory-factor-analysis-efa" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Discovers latent factors underlying a set of observed variables. Supports varimax, promax, oblimin, and no rotation. Reports factor loadings, communalities, eigenvalues, KMO measure of sampling adequacy, and Bartlett's test of sphericity.</p>
+<p><strong>Python implementation:</strong> <code>factor_analyzer.FactorAnalyzer(rotation='varimax')</code> — installed at runtime via <code>micropip</code></p>
+<p><strong>Factor model:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?X%3D%5CLambda%20F%2B%5Cepsilon" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?X" alt="formula"> is the observed variable vector, <img src="https://latex.codecogs.com/svg.image?%5CLambda" alt="formula"> is the matrix of factor loadings, <img src="https://latex.codecogs.com/svg.image?F" alt="formula"> is the vector of latent factors, and <img src="https://latex.codecogs.com/svg.image?%5Cepsilon" alt="formula"> is the unique variance.</p>
+<p><strong>Kaiser-Meyer-Olkin (KMO) measure:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?KMO%3D%5Cfrac%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%7D%7B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20r_%7Bij%7D%5E2%2B%5Csum%5Csum_%7Bi%5Cneq%20j%7D%20u_%7Bij%7D%5E2%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?r_%7Bij%7D" alt="formula"> are elements of the correlation matrix and <img src="https://latex.codecogs.com/svg.image?u_%7Bij%7D" alt="formula"> are elements of the partial correlation matrix. KMO values above 0.6 are generally considered acceptable for factor analysis.</p>
+<hr>
+<h4 id="principal-component-analysis-pca" class="tsd-anchor-link">Principal Component Analysis (PCA)<a href="#principal-component-analysis-pca" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Finds orthogonal components that maximize variance in the data. Reports component loadings, explained variance, cumulative variance ratios, and singular values. Optionally standardizes the input.</p>
+<p><strong>Python implementation:</strong> <code>sklearn.decomposition.PCA</code></p>
+<p><strong>Objective:</strong> Find the weight vector <img src="https://latex.codecogs.com/svg.image?w" alt="formula"> that maximizes projected variance:</p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Ctext%7BVar%7D(Xw)%5Cto%5Cmax%5Cquad%5Ctext%7Bsubject%20to%7D%5Cquad%5C%7Cw%5C%7C%3D1" alt="formula"></p>
+<p>This is equivalent to finding the eigenvectors of the covariance matrix <img src="https://latex.codecogs.com/svg.image?%5CSigma%3D%5Cfrac%7B1%7D%7BN-1%7DX%5ETX" alt="formula">. The eigenvalues <img src="https://latex.codecogs.com/svg.image?%5Clambda_1%5Cgeq%5Clambda_2%5Cgeq%5Ccdots" alt="formula"> represent the variance explained by each component.</p>
+<p><strong>Explained variance ratio:</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Ctext%7BEVR%7D_k%3D%5Cfrac%7B%5Clambda_k%7D%7B%5Csum_%7Bi%3D1%7D%5E%7Bp%7D%5Clambda_i%7D" alt="formula"></p>
+<hr>
+<h4 id="multidimensional-scaling-mds" class="tsd-anchor-link">Multidimensional Scaling (MDS)<a href="#multidimensional-scaling-mds" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Projects high-dimensional data into a lower-dimensional space (typically 2D) while preserving pairwise distances. Supports both metric and non-metric MDS.</p>
+<p><strong>Python implementation:</strong> <code>sklearn.manifold.MDS</code></p>
+<p><strong>Stress function (Kruskal's Stress-1):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Csigma%3D%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bi%3Cj%7D(d_%7Bij%7D-%5Cdelta_%7Bij%7D)%5E2%7D%7B%5Csum_%7Bi%3Cj%7Dd_%7Bij%7D%5E2%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?d_%7Bij%7D" alt="formula"> is the distance in the reduced space and <img src="https://latex.codecogs.com/svg.image?%5Cdelta_%7Bij%7D" alt="formula"> is the original distance (or a monotonic transformation for non-metric MDS). A stress value below 0.1 is generally considered a good fit.</p>
+<hr>
+<h3 id="⑥-scale" class="tsd-anchor-link">⑥ Scale<a href="#⑥-scale" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="cronbachs-alpha" class="tsd-anchor-link">Cronbach's Alpha<a href="#cronbachs-alpha" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Measures the internal consistency (reliability) of a set of scale items. Reports raw alpha, standardized alpha, item-total correlations, and alpha-if-item-deleted for diagnostic purposes.</p>
+<p><strong>Python implementation:</strong> Custom implementation using <code>pandas</code> covariance matrix operations</p>
+<p><strong>Cronbach's alpha (raw):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Calpha%3D%5Cfrac%7BK%7D%7BK-1%7D%5Cleft(1-%5Cfrac%7B%5Csum_%7Bi%3D1%7D%5E%7BK%7D%5Csigma_%7BY_i%7D%5E2%7D%7B%5Csigma_X%5E2%7D%5Cright)" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?K" alt="formula"> is the number of items, <img src="https://latex.codecogs.com/svg.image?%5Csigma_%7BY_i%7D%5E2" alt="formula"> is the variance of item i, and <img src="https://latex.codecogs.com/svg.image?%5Csigma_X%5E2" alt="formula"> is the variance of the total score.</p>
+<p><strong>Standardized alpha (based on mean inter-item correlation):</strong></p>
+<p><img src="https://latex.codecogs.com/svg.image?%5Calpha_%7Bstd%7D%3D%5Cfrac%7BK%5Cbar%7Br%7D%7D%7B1%2B(K-1)%5Cbar%7Br%7D%7D" alt="formula"></p>
+<p>where <img src="https://latex.codecogs.com/svg.image?%5Cbar%7Br%7D" alt="formula"> is the mean of all pairwise Pearson correlations among items.</p>
+<table>
+<thead>
+<tr>
+<th>Alpha Range</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>≥ 0.9</td>
+<td>Excellent</td>
+</tr>
+<tr>
+<td>0.8 – 0.9</td>
+<td>Good</td>
+</tr>
+<tr>
+<td>0.7 – 0.8</td>
+<td>Acceptable</td>
+</tr>
+<tr>
+<td>0.6 – 0.7</td>
+<td>Questionable</td>
+</tr>
+<tr>
+<td>&lt; 0.6</td>
+<td>Poor</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="bash"><span class="hl-2">npm</span><span class="hl-0"> </span><span class="hl-4">install</span><span class="hl-0"> </span><span class="hl-4">@winm2m/inferential-stats-js</span>
+</code><button type="button">Copy</button></pre>
+
+<blockquote>
+<p><strong>Peer dependency (optional):</strong> If you want explicit control over the Pyodide version, install <code>pyodide</code> (&gt;= 0.26.0) as a peer dependency. Otherwise the SDK loads Pyodide from the jsDelivr CDN automatically.</p>
+</blockquote>
+<hr>
+<h2 id="quick-start" class="tsd-anchor-link">Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="typescript"><span class="hl-5">import</span><span class="hl-0"> { </span><span class="hl-1">InferentialStats</span><span class="hl-0">, </span><span class="hl-1">PROGRESS_EVENT_NAME</span><span class="hl-0"> } </span><span class="hl-5">from</span><span class="hl-0"> </span><span class="hl-4">&#39;@winm2m/inferential-stats-js&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-6">// 1. Listen for initialization progress</span><br/><span class="hl-1">window</span><span class="hl-0">.</span><span class="hl-2">addEventListener</span><span class="hl-0">(</span><span class="hl-3">PROGRESS_EVENT_NAME</span><span class="hl-0">, (</span><span class="hl-1">e</span><span class="hl-0">: </span><span class="hl-7">Event</span><span class="hl-0">) </span><span class="hl-8">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-8">const</span><span class="hl-0"> { </span><span class="hl-3">stage</span><span class="hl-0">, </span><span class="hl-3">progress</span><span class="hl-0">, </span><span class="hl-3">message</span><span class="hl-0"> } = (</span><span class="hl-1">e</span><span class="hl-0"> </span><span class="hl-5">as</span><span class="hl-0"> </span><span class="hl-7">CustomEvent</span><span class="hl-0">).</span><span class="hl-1">detail</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">console</span><span class="hl-0">.</span><span class="hl-2">log</span><span class="hl-0">(</span><span class="hl-4">`[</span><span class="hl-8">${</span><span class="hl-1">stage</span><span class="hl-8">}</span><span class="hl-4">] </span><span class="hl-8">${</span><span class="hl-1">progress</span><span class="hl-8">}</span><span class="hl-4">% — </span><span class="hl-8">${</span><span class="hl-1">message</span><span class="hl-8">}</span><span class="hl-4">`</span><span class="hl-0">);</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-6">// 2. Create an instance (pass the URL to the bundled worker)</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">stats</span><span class="hl-0"> = </span><span class="hl-8">new</span><span class="hl-0"> </span><span class="hl-2">InferentialStats</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-1">workerUrl:</span><span class="hl-0"> </span><span class="hl-8">new</span><span class="hl-0"> </span><span class="hl-2">URL</span><span class="hl-0">(</span><span class="hl-4">&#39;@winm2m/inferential-stats-js/worker&#39;</span><span class="hl-0">, </span><span class="hl-5">import</span><span class="hl-0">.</span><span class="hl-1">meta</span><span class="hl-0">.</span><span class="hl-1">url</span><span class="hl-0">).</span><span class="hl-1">href</span><span class="hl-0">,</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-6">// 3. Initialize (loads Pyodide + Python packages inside the worker)</span><br/><span class="hl-5">await</span><span class="hl-0"> </span><span class="hl-1">stats</span><span class="hl-0">.</span><span class="hl-2">init</span><span class="hl-0">();</span><br/><br/><span class="hl-6">// 4. Prepare your data</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">data</span><span class="hl-0"> = [</span><br/><span class="hl-0">  { </span><span class="hl-1">group:</span><span class="hl-0"> </span><span class="hl-4">&#39;A&#39;</span><span class="hl-0">, </span><span class="hl-1">score:</span><span class="hl-0"> </span><span class="hl-9">85</span><span class="hl-0"> },</span><br/><span class="hl-0">  { </span><span class="hl-1">group:</span><span class="hl-0"> </span><span class="hl-4">&#39;A&#39;</span><span class="hl-0">, </span><span class="hl-1">score:</span><span class="hl-0"> </span><span class="hl-9">90</span><span class="hl-0"> },</span><br/><span class="hl-0">  { </span><span class="hl-1">group:</span><span class="hl-0"> </span><span class="hl-4">&#39;B&#39;</span><span class="hl-0">, </span><span class="hl-1">score:</span><span class="hl-0"> </span><span class="hl-9">78</span><span class="hl-0"> },</span><br/><span class="hl-0">  { </span><span class="hl-1">group:</span><span class="hl-0"> </span><span class="hl-4">&#39;B&#39;</span><span class="hl-0">, </span><span class="hl-1">score:</span><span class="hl-0"> </span><span class="hl-9">82</span><span class="hl-0"> },</span><br/><span class="hl-0">  </span><span class="hl-6">// ... more rows</span><br/><span class="hl-0">];</span><br/><br/><span class="hl-6">// 5. Run an analysis</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">result</span><span class="hl-0"> = </span><span class="hl-5">await</span><span class="hl-0"> </span><span class="hl-1">stats</span><span class="hl-0">.</span><span class="hl-2">anovaOneway</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-1">data</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">variable:</span><span class="hl-0"> </span><span class="hl-4">&#39;score&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">groupVariable:</span><span class="hl-0"> </span><span class="hl-4">&#39;group&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-1">console</span><span class="hl-0">.</span><span class="hl-2">log</span><span class="hl-0">(</span><span class="hl-1">result</span><span class="hl-0">);</span><br/><span class="hl-6">// {</span><br/><span class="hl-6">//   success: true,</span><br/><span class="hl-6">//   data: { fStatistic: ..., pValue: ..., groupStats: [...], ... },</span><br/><span class="hl-6">//   executionTimeMs: 42</span><br/><span class="hl-6">// }</span><br/><br/><span class="hl-6">// 6. Clean up when done</span><br/><span class="hl-1">stats</span><span class="hl-0">.</span><span class="hl-2">destroy</span><span class="hl-0">();</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="cdn-codepen-usage" class="tsd-anchor-link">CDN / CodePen Usage<a href="#cdn-codepen-usage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>You can use the SDK directly in a browser or CodePen with no build step. The full demo code is identical to the local page below (except for CDN import paths).</p>
+<ul>
+<li><strong>Local demo source:</strong> <code>src/dev/demo.html</code></li>
+<li><strong>CodePen live demo:</strong> <a href="https://codepen.io/editor/YoungjuneKwon/pen/019d3c97-35c0-743c-ad43-78e02225b008">https://codepen.io/editor/YoungjuneKwon/pen/019d3c97-35c0-743c-ad43-78e02225b008</a></li>
+</ul>
+<hr>
+<h2 id="api-reference" class="tsd-anchor-link">API Reference<a href="#api-reference" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>All analysis methods are async and return <code>Promise&lt;AnalysisResult&lt;T&gt;&gt;</code>:</p>
+<pre><code class="typescript"><span class="hl-8">interface</span><span class="hl-0"> </span><span class="hl-7">AnalysisResult</span><span class="hl-0">&lt;</span><span class="hl-7">T</span><span class="hl-0">&gt; {</span><br/><span class="hl-0">  </span><span class="hl-1">success</span><span class="hl-0">: </span><span class="hl-7">boolean</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">data</span><span class="hl-0">: </span><span class="hl-7">T</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">error</span><span class="hl-0">?: </span><span class="hl-7">string</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">executionTimeMs</span><span class="hl-0">: </span><span class="hl-7">number</span><span class="hl-0">;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="lifecycle-methods" class="tsd-anchor-link">Lifecycle Methods<a href="#lifecycle-methods" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>new InferentialStats(config)</code></td>
+<td>Create an instance. <code>config.workerUrl</code> is required. Optional: <code>config.pyodideUrl</code>, <code>config.eventTarget</code>.</td>
+</tr>
+<tr>
+<td><code>init(): Promise&lt;void&gt;</code></td>
+<td>Load Pyodide and install Python packages inside the Web Worker.</td>
+</tr>
+<tr>
+<td><code>isInitialized(): boolean</code></td>
+<td>Returns <code>true</code> if the worker is ready.</td>
+</tr>
+<tr>
+<td><code>destroy(): void</code></td>
+<td>Terminate the Web Worker and release resources.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="analysis-methods-16-total" class="tsd-anchor-link">Analysis Methods (16 total)<a href="#analysis-methods-16-total" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="descriptive-statistics" class="tsd-anchor-link">Descriptive Statistics<a href="#descriptive-statistics" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>frequencies(input)</code></td>
+<td><code>FrequenciesInput</code> → <code>FrequenciesOutput</code></td>
+<td>Frequency distribution and relative percentages for a categorical variable.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>descriptives(input)</code></td>
+<td><code>DescriptivesInput</code> → <code>DescriptivesOutput</code></td>
+<td>Summary statistics (mean, std, min, max, quartiles, skewness, kurtosis) for numeric variables.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>crosstabs(input)</code></td>
+<td><code>CrosstabsInput</code> → <code>CrosstabsOutput</code></td>
+<td>Cross-tabulation with observed/expected counts, Chi-square test, and Cramér's V.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="compare-means" class="tsd-anchor-link">Compare Means<a href="#compare-means" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td><code>ttestIndependent(input)</code></td>
+<td><code>TTestIndependentInput</code> → <code>TTestIndependentOutput</code></td>
+<td>Independent-samples t-test with Levene's equality-of-variances test.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>ttestPaired(input)</code></td>
+<td><code>TTestPairedInput</code> → <code>TTestPairedOutput</code></td>
+<td>Paired-samples t-test for dependent observations.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>anovaOneway(input)</code></td>
+<td><code>AnovaInput</code> → <code>AnovaOutput</code></td>
+<td>One-way ANOVA with group descriptives and eta-squared effect size.</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>posthocTukey(input)</code></td>
+<td><code>PostHocInput</code> → <code>PostHocOutput</code></td>
+<td>Post-hoc Tukey HSD pairwise comparisons following ANOVA.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="regression" class="tsd-anchor-link">Regression<a href="#regression" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>8</td>
+<td><code>linearRegression(input)</code></td>
+<td><code>LinearRegressionInput</code> → <code>LinearRegressionOutput</code></td>
+<td>OLS linear regression with coefficients, R², F-test, and Durbin-Watson statistic.</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>logisticBinary(input)</code></td>
+<td><code>LogisticBinaryInput</code> → <code>LogisticBinaryOutput</code></td>
+<td>Binary logistic regression with odds ratios, pseudo-R², and model fit statistics.</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>logisticMultinomial(input)</code></td>
+<td><code>MultinomialLogisticInput</code> → <code>MultinomialLogisticOutput</code></td>
+<td>Multinomial logistic regression with per-category coefficients and odds ratios.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="classify" class="tsd-anchor-link">Classify<a href="#classify" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>11</td>
+<td><code>kmeans(input)</code></td>
+<td><code>KMeansInput</code> → <code>KMeansOutput</code></td>
+<td>K-Means clustering with cluster centers, labels, and inertia.</td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>hierarchicalCluster(input)</code></td>
+<td><code>HierarchicalClusterInput</code> → <code>HierarchicalClusterOutput</code></td>
+<td>Agglomerative hierarchical clustering with linkage matrix and dendrogram data.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="dimension-reduction" class="tsd-anchor-link">Dimension Reduction<a href="#dimension-reduction" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>13</td>
+<td><code>efa(input)</code></td>
+<td><code>EFAInput</code> → <code>EFAOutput</code></td>
+<td>Exploratory Factor Analysis with rotation, KMO, and Bartlett's test.</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>pca(input)</code></td>
+<td><code>PCAInput</code> → <code>PCAOutput</code></td>
+<td>Principal Component Analysis with loadings and explained variance.</td>
+</tr>
+<tr>
+<td>15</td>
+<td><code>mds(input)</code></td>
+<td><code>MDSInput</code> → <code>MDSOutput</code></td>
+<td>Multidimensional Scaling with stress value and coordinate output.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="scale" class="tsd-anchor-link">Scale<a href="#scale" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Method</th>
+<th>Input → Output</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16</td>
+<td><code>cronbachAlpha(input)</code></td>
+<td><code>CronbachAlphaInput</code> → <code>CronbachAlphaOutput</code></td>
+<td>Reliability analysis with Cronbach's alpha, item-total correlations, and alpha-if-deleted.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="sample-data" class="tsd-anchor-link">Sample Data<a href="#sample-data" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The repository includes a ready-to-use sample dataset at <code>docs/sample-survey-data.json</code>, also hosted on GitHub Pages at:</p>
+<pre><code><span class="hl-10">https</span><span class="hl-0">:</span><span class="hl-6">//winm2m.github.io/inferential-stats-js/sample-survey-data.json</span>
+</code><button>Copy</button></pre>
+
+<p>This dataset contains <strong>2,000 rows</strong> of simulated survey data generated with a seeded pseudo-random number generator for full reproducibility.</p>
+<h3 id="schema" class="tsd-anchor-link">Schema<a href="#schema" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>integer</td>
+<td>Unique respondent ID (1–2000)</td>
+</tr>
+<tr>
+<td><code>gender</code></td>
+<td>string</td>
+<td><code>&quot;Male&quot;</code>, <code>&quot;Female&quot;</code>, or <code>&quot;Other&quot;</code></td>
+</tr>
+<tr>
+<td><code>age_group</code></td>
+<td>string</td>
+<td><code>&quot;20s&quot;</code>, <code>&quot;30s&quot;</code>, <code>&quot;40s&quot;</code>, <code>&quot;50s&quot;</code>, <code>&quot;60s&quot;</code></td>
+</tr>
+<tr>
+<td><code>nationality</code></td>
+<td>string</td>
+<td>One of several country labels</td>
+</tr>
+<tr>
+<td><code>favorite_music</code></td>
+<td>string</td>
+<td>Preferred music genre</td>
+</tr>
+<tr>
+<td><code>favorite_movie</code></td>
+<td>string</td>
+<td>Preferred movie genre</td>
+</tr>
+<tr>
+<td><code>favorite_art</code></td>
+<td>string</td>
+<td>Preferred art form</td>
+</tr>
+<tr>
+<td><code>music_satisfaction</code></td>
+<td>integer (1–5)</td>
+<td>Satisfaction with music offerings (Likert scale)</td>
+</tr>
+<tr>
+<td><code>movie_satisfaction</code></td>
+<td>integer (1–5)</td>
+<td>Satisfaction with movie offerings (Likert scale)</td>
+</tr>
+<tr>
+<td><code>art_satisfaction</code></td>
+<td>integer (1–5)</td>
+<td>Satisfaction with art offerings (Likert scale)</td>
+</tr>
+<tr>
+<td><code>weekly_hours_music</code></td>
+<td>float</td>
+<td>Weekly hours spent on music</td>
+</tr>
+<tr>
+<td><code>weekly_hours_movie</code></td>
+<td>float</td>
+<td>Weekly hours spent on movies</td>
+</tr>
+<tr>
+<td><code>monthly_art_visits</code></td>
+<td>integer</td>
+<td>Number of art gallery visits per month</td>
+</tr>
+</tbody>
+</table>
+<p>This dataset is suitable for exercising every analysis method in the SDK.</p>
+<hr>
+<h2 id="progress-event-handling" class="tsd-anchor-link">Progress Event Handling<a href="#progress-event-handling" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>During <code>init()</code>, the SDK dispatches <code>CustomEvent</code>s to report progress through multiple stages (loading Pyodide, installing Python packages, etc.). You can use these events to drive a progress bar or loading indicator.</p>
+<h3 id="event-name" class="tsd-anchor-link">Event Name<a href="#event-name" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>The event name is exported as the constant <code>PROGRESS_EVENT_NAME</code> (value: <code>'inferential-stats-progress'</code>).</p>
+<h3 id="event-detail" class="tsd-anchor-link">Event Detail<a href="#event-detail" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-8">interface</span><span class="hl-0"> </span><span class="hl-7">ProgressDetail</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-1">stage</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;       </span><span class="hl-6">// Current stage identifier (e.g. &quot;pyodide&quot;, &quot;packages&quot;)</span><br/><span class="hl-0">  </span><span class="hl-1">progress</span><span class="hl-0">: </span><span class="hl-7">number</span><span class="hl-0">;    </span><span class="hl-6">// Percentage complete (0–100)</span><br/><span class="hl-0">  </span><span class="hl-1">message</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;     </span><span class="hl-6">// Human-readable status message</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="example-full-progress-listener" class="tsd-anchor-link">Example: Full Progress Listener<a href="#example-full-progress-listener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="typescript"><span class="hl-5">import</span><span class="hl-0"> { </span><span class="hl-1">InferentialStats</span><span class="hl-0">, </span><span class="hl-1">PROGRESS_EVENT_NAME</span><span class="hl-0"> } </span><span class="hl-5">from</span><span class="hl-0"> </span><span class="hl-4">&#39;@winm2m/inferential-stats-js&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-6">// You can target any EventTarget — window, document, or a custom one.</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">eventTarget</span><span class="hl-0"> = </span><span class="hl-1">window</span><span class="hl-0">;</span><br/><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">stats</span><span class="hl-0"> = </span><span class="hl-8">new</span><span class="hl-0"> </span><span class="hl-2">InferentialStats</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-1">workerUrl:</span><span class="hl-0"> </span><span class="hl-4">&#39;/dist/stats-worker.js&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">eventTarget</span><span class="hl-0">, </span><span class="hl-6">// Progress events will be dispatched here</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-6">// Register the listener BEFORE calling init()</span><br/><span class="hl-1">eventTarget</span><span class="hl-0">.</span><span class="hl-2">addEventListener</span><span class="hl-0">(</span><span class="hl-3">PROGRESS_EVENT_NAME</span><span class="hl-0">, ((</span><span class="hl-1">event</span><span class="hl-0">: </span><span class="hl-7">CustomEvent</span><span class="hl-0">) </span><span class="hl-8">=&gt;</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-8">const</span><span class="hl-0"> { </span><span class="hl-3">stage</span><span class="hl-0">, </span><span class="hl-3">progress</span><span class="hl-0">, </span><span class="hl-3">message</span><span class="hl-0"> } = </span><span class="hl-1">event</span><span class="hl-0">.</span><span class="hl-1">detail</span><span class="hl-0"> </span><span class="hl-5">as</span><span class="hl-0"> {</span><br/><span class="hl-0">    </span><span class="hl-1">stage</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">progress</span><span class="hl-0">: </span><span class="hl-7">number</span><span class="hl-0">;</span><br/><span class="hl-0">    </span><span class="hl-1">message</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;</span><br/><span class="hl-0">  };</span><br/><br/><span class="hl-0">  </span><span class="hl-6">// Update a progress bar</span><br/><span class="hl-0">  </span><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">progressBar</span><span class="hl-0"> = </span><span class="hl-1">document</span><span class="hl-0">.</span><span class="hl-2">getElementById</span><span class="hl-0">(</span><span class="hl-4">&#39;progress-bar&#39;</span><span class="hl-0">) </span><span class="hl-5">as</span><span class="hl-0"> </span><span class="hl-7">HTMLProgressElement</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">progressBar</span><span class="hl-0">.</span><span class="hl-1">value</span><span class="hl-0"> = </span><span class="hl-1">progress</span><span class="hl-0">;</span><br/><span class="hl-0">  </span><span class="hl-1">progressBar</span><span class="hl-0">.</span><span class="hl-1">max</span><span class="hl-0"> = </span><span class="hl-9">100</span><span class="hl-0">;</span><br/><br/><span class="hl-0">  </span><span class="hl-6">// Update a status label</span><br/><span class="hl-0">  </span><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-3">statusLabel</span><span class="hl-0"> = </span><span class="hl-1">document</span><span class="hl-0">.</span><span class="hl-2">getElementById</span><span class="hl-0">(</span><span class="hl-4">&#39;status&#39;</span><span class="hl-0">);</span><br/><span class="hl-0">  </span><span class="hl-5">if</span><span class="hl-0"> (</span><span class="hl-1">statusLabel</span><span class="hl-0">) {</span><br/><span class="hl-0">    </span><span class="hl-1">statusLabel</span><span class="hl-0">.</span><span class="hl-1">textContent</span><span class="hl-0"> = </span><span class="hl-4">`[</span><span class="hl-8">${</span><span class="hl-1">stage</span><span class="hl-8">}</span><span class="hl-4">] </span><span class="hl-8">${</span><span class="hl-1">message</span><span class="hl-8">}</span><span class="hl-4"> (</span><span class="hl-8">${</span><span class="hl-1">progress</span><span class="hl-8">}</span><span class="hl-4">%)`</span><span class="hl-0">;</span><br/><span class="hl-0">  }</span><br/><br/><span class="hl-0">  </span><span class="hl-1">console</span><span class="hl-0">.</span><span class="hl-2">log</span><span class="hl-0">(</span><span class="hl-4">`[</span><span class="hl-8">${</span><span class="hl-1">stage</span><span class="hl-8">}</span><span class="hl-4">] </span><span class="hl-8">${</span><span class="hl-1">progress</span><span class="hl-8">}</span><span class="hl-4">% — </span><span class="hl-8">${</span><span class="hl-1">message</span><span class="hl-8">}</span><span class="hl-4">`</span><span class="hl-0">);</span><br/><span class="hl-0">}) </span><span class="hl-5">as</span><span class="hl-0"> </span><span class="hl-7">EventListener</span><span class="hl-0">);</span><br/><br/><span class="hl-6">// Start initialization — progress events will fire throughout</span><br/><span class="hl-5">await</span><span class="hl-0"> </span><span class="hl-1">stats</span><span class="hl-0">.</span><span class="hl-2">init</span><span class="hl-0">();</span><br/><span class="hl-1">console</span><span class="hl-0">.</span><span class="hl-2">log</span><span class="hl-0">(</span><span class="hl-4">&#39;Ready!&#39;</span><span class="hl-0">);</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="typical-progress-sequence" class="tsd-anchor-link">Typical Progress Sequence<a href="#typical-progress-sequence" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Progress</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pyodide</code></td>
+<td>0</td>
+<td>Loading Pyodide runtime…</td>
+</tr>
+<tr>
+<td><code>pyodide</code></td>
+<td>30</td>
+<td>Pyodide runtime loaded</td>
+</tr>
+<tr>
+<td><code>packages</code></td>
+<td>40</td>
+<td>Installing pandas…</td>
+</tr>
+<tr>
+<td><code>packages</code></td>
+<td>55</td>
+<td>Installing scipy…</td>
+</tr>
+<tr>
+<td><code>packages</code></td>
+<td>70</td>
+<td>Installing statsmodels…</td>
+</tr>
+<tr>
+<td><code>packages</code></td>
+<td>80</td>
+<td>Installing scikit-learn…</td>
+</tr>
+<tr>
+<td><code>packages</code></td>
+<td>90</td>
+<td>Installing factor_analyzer…</td>
+</tr>
+<tr>
+<td><code>ready</code></td>
+<td>100</td>
+<td>All packages installed. Ready.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="license" class="tsd-anchor-link">License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><a href="media/LICENSE">MIT</a> © 2026 WinM2M</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#winm2minferential-stats-js"><span>@winm2m/inferential-<wbr/>stats-<wbr/>js</span></a><ul><li><a href="#table-of-contents"><span>Table of <wbr/>Contents</span></a></li><li><a href="#architecture-overview"><span>Architecture <wbr/>Overview</span></a></li><li><ul><li><a href="#key-design-principles"><span>Key <wbr/>Design <wbr/>Principles</span></a></li></ul></li><li><a href="#core-analysis-features-mathematical--technical-documentation"><span>Core <wbr/>Analysis <wbr/>Features — <wbr/>Mathematical &amp; <wbr/>Technical <wbr/>Documentation</span></a></li><li><ul><li><a href="#①-descriptive-statistics"><span>① <wbr/>Descriptive <wbr/>Statistics</span></a></li><li><ul><li><a href="#frequencies"><span>Frequencies</span></a></li><li><a href="#descriptives"><span>Descriptives</span></a></li><li><a href="#crosstabs"><span>Crosstabs</span></a></li></ul></li><li><a href="#②-compare-means"><span>② <wbr/>Compare <wbr/>Means</span></a></li><li><ul><li><a href="#independent-samples-t-test"><span>Independent-<wbr/>Samples <wbr/>T-<wbr/>Test</span></a></li><li><a href="#paired-samples-t-test"><span>Paired-<wbr/>Samples <wbr/>T-<wbr/>Test</span></a></li><li><a href="#one-way-anova"><span>One-<wbr/>Way <wbr/>ANOVA</span></a></li><li><a href="#post-hoc-tukey-hsd"><span>Post-<wbr/>hoc <wbr/>Tukey <wbr/>HSD</span></a></li></ul></li><li><a href="#③-regression"><span>③ <wbr/>Regression</span></a></li><li><ul><li><a href="#linear-regression-ols"><span>Linear <wbr/>Regression (<wbr/>OLS)</span></a></li><li><a href="#binary-logistic-regression"><span>Binary <wbr/>Logistic <wbr/>Regression</span></a></li><li><a href="#multinomial-logistic-regression"><span>Multinomial <wbr/>Logistic <wbr/>Regression</span></a></li></ul></li><li><a href="#④-classify"><span>④ <wbr/>Classify</span></a></li><li><ul><li><a href="#k-means-clustering"><span>K-<wbr/>Means <wbr/>Clustering</span></a></li><li><a href="#hierarchical-agglomerative-clustering"><span>Hierarchical (<wbr/>Agglomerative) <wbr/>Clustering</span></a></li></ul></li><li><a href="#⑤-dimension-reduction"><span>⑤ <wbr/>Dimension <wbr/>Reduction</span></a></li><li><ul><li><a href="#exploratory-factor-analysis-efa"><span>Exploratory <wbr/>Factor <wbr/>Analysis (<wbr/>EFA)</span></a></li><li><a href="#principal-component-analysis-pca"><span>Principal <wbr/>Component <wbr/>Analysis (<wbr/>PCA)</span></a></li><li><a href="#multidimensional-scaling-mds"><span>Multidimensional <wbr/>Scaling (<wbr/>MDS)</span></a></li></ul></li><li><a href="#⑥-scale"><span>⑥ <wbr/>Scale</span></a></li><li><ul><li><a href="#cronbachs-alpha"><span>Cronbach&#39;s <wbr/>Alpha</span></a></li></ul></li></ul></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><a href="#cdn-codepen-usage"><span>CDN / <wbr/>Code<wbr/>Pen <wbr/>Usage</span></a></li><li><a href="#api-reference"><span>API <wbr/>Reference</span></a></li><li><ul><li><a href="#lifecycle-methods"><span>Lifecycle <wbr/>Methods</span></a></li><li><a href="#analysis-methods-16-total"><span>Analysis <wbr/>Methods (16 total)</span></a></li><li><ul><li><a href="#descriptive-statistics"><span>Descriptive <wbr/>Statistics</span></a></li><li><a href="#compare-means"><span>Compare <wbr/>Means</span></a></li><li><a href="#regression"><span>Regression</span></a></li><li><a href="#classify"><span>Classify</span></a></li><li><a href="#dimension-reduction"><span>Dimension <wbr/>Reduction</span></a></li><li><a href="#scale"><span>Scale</span></a></li></ul></li></ul></li><li><a href="#sample-data"><span>Sample <wbr/>Data</span></a></li><li><ul><li><a href="#schema"><span>Schema</span></a></li></ul></li><li><a href="#progress-event-handling"><span>Progress <wbr/>Event <wbr/>Handling</span></a></li><li><ul><li><a href="#event-name"><span>Event <wbr/>Name</span></a></li><li><a href="#event-detail"><span>Event <wbr/>Detail</span></a></li><li><a href="#example-full-progress-listener"><span>Example: <wbr/>Full <wbr/>Progress <wbr/>Listener</span></a></li><li><a href="#typical-progress-sequence"><span>Typical <wbr/>Progress <wbr/>Sequence</span></a></li></ul></li><li><a href="#license"><span>License</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/WinM2M/inferential-stats-js" class="tsd-nav-link">GitHub</a><a href="https://www.npmjs.com/package/@winm2m/inferential-stats-js" class="tsd-nav-link">npm</a></nav><nav class="tsd-navigation"><a href="modules.html">@winm2m/inferential-stats-js API Documentation - v0.1.5</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
