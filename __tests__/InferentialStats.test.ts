@@ -15,6 +15,25 @@
 import { InferentialStats, PROGRESS_EVENT_NAME } from '../src/index';
 import type { WorkerResponse } from '../src/types/common';
 
+if (typeof globalThis.CustomEvent === 'undefined') {
+  class NodeCustomEvent<T = unknown> extends Event implements CustomEvent<T> {
+    detail: T;
+
+    constructor(type: string, params?: CustomEventInit<T>) {
+      super(type, params);
+      this.detail = params?.detail as T;
+    }
+
+    initCustomEvent(): void {}
+  }
+
+  Object.defineProperty(globalThis, 'CustomEvent', {
+    value: NodeCustomEvent,
+    writable: true,
+    configurable: true,
+  });
+}
+
 // ─── Mock Worker ────────────────────────────────────────────────────────────
 
 type MessageHandler = ((event: MessageEvent) => void) | null;
