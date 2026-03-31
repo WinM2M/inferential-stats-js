@@ -27,8 +27,8 @@ bibliography: paper.bib
 advanced inferential statistical analysis entirely within a web browser, requiring
 no backend server. The library leverages WebAssembly through Pyodide
 [@pyodide:2021] to execute a full CPython runtime in-browser, along with
-established scientific Python libraries including pandas [@mckinney:2010], SciPy
-[@virtanen:2020], statsmodels [@seabold:2010], scikit-learn [@pedregosa:2011],
+established scientific Python libraries including pandas [@mckinney:2010; @pandas:zenodo], SciPy
+[@virtanen:2020], statsmodels [@seabold:2010], scikit-learn [@pedregosa:2011; @buitinck:2013],
 and factor\_analyzer [@biggs:2024]. All computation is offloaded to a dedicated
 Web Worker to keep the main thread responsive, and data is transferred using the
 Transferable Objects API for near-zero-copy performance. The SDK ships as both
@@ -73,6 +73,24 @@ their applications without requiring Python expertise or provisioning backend
 compute resources. The SDK's typed API and familiar async/await patterns are
 designed to fit naturally into modern JavaScript/TypeScript workflows.
 
+Beyond commercial web development, the library is also directly relevant to
+**social science and psychology researchers** who collect and analyze sensitive
+human-subject data. Institutional Review Boards (IRBs) increasingly require
+that personally identifiable information (PII) be handled in accordance with
+regulations such as the EU General Data Protection Regulation (GDPR) and the
+U.S. Health Insurance Portability and Accountability Act (HIPAA). When
+researchers use server-side analysis platforms, survey responses---which may
+include health indicators, demographic information, or psychometric
+scores---must traverse network infrastructure and reside on third-party servers,
+creating compliance obligations around data processing agreements, encryption in
+transit, and data residency. `inferential-stats-js` eliminates these risks
+entirely: because all computation executes within the respondent's or
+researcher's own browser, no data is transmitted to any external server at any
+point. This zero-data-egress architecture makes the library particularly
+suitable for pilot studies, classroom research exercises, and fieldwork contexts
+where secure server infrastructure may be unavailable or prohibitively expensive
+to provision.
+
 # State of the field
 
 Several JavaScript statistics libraries exist, but they occupy a different niche.
@@ -82,6 +100,21 @@ such as ANOVA with post-hoc tests, logistic regression, factor analysis, or
 hierarchical clustering. `stdlib` [@stdlib:2024] offers a comprehensive numerical
 computing library for JavaScript but requires assembling individual low-level
 functions rather than providing a unified analysis-oriented API.
+
+To illustrate the gap concretely: none of the existing JavaScript libraries
+provide Varimax-rotated exploratory factor analysis, Tukey HSD or Games-Howell
+post-hoc tests for one-way ANOVA, multinomial logistic regression, or
+Ward-linkage hierarchical clustering with dendrogram data. These methods require
+sophisticated numerical routines---eigenvalue decomposition, orthogonal rotation,
+iteratively reweighted least squares, and agglomerative linkage
+algorithms---that depend on a well-tested linear algebra and optimization
+substrate. Reimplementing such routines from scratch in JavaScript would be both
+error-prone and academically unverifiable: a novel JS implementation of Varimax
+rotation, for example, would lack the citation trail and peer-reviewed
+validation history that SciPy [@virtanen:2020] and statsmodels [@seabold:2010]
+have accumulated over more than a decade. By contrast, executing these
+established Python/C/Fortran implementations via WebAssembly preserves their
+full numerical fidelity while making them accessible in the browser environment.
 
 Server-side solutions using Python or R can provide the full range of inferential
 statistics, but they require backend infrastructure, introduce network latency,
@@ -158,7 +191,7 @@ that respondent data never leaves the client device.
 The library includes a reproducible sample dataset of 2,000 simulated survey
 responses (generated with a seeded PRNG) that exercises all 16 analysis methods,
 along with a browser-based demo and a CodePen live example. A comprehensive test
-suite with 77 tests verifies SDK functionality including serialization round-trips,
+suite with 82 tests verifies SDK functionality including serialization round-trips,
 public API completeness, and all analysis method return types. To ensure
 mathematical correctness, the SDK's output values (Chi-square statistics,
 p-values, regression coefficients, factor loadings, etc.) were cross-validated
@@ -199,7 +232,7 @@ spanning the following areas:
 2. *Documentation:* Initial comprehensive README with API documentation and
    mathematical formulas (commit `eec7d32`), and corrections to match actual
    data schema (commit `a49f9cb`)
-3. *Test suite:* Jest test infrastructure with 77 tests covering bridge
+3. *Test suite:* Jest test infrastructure with 82 tests covering bridge
    serialization, public API exports, and all 16 analysis methods (commit
    `8dca5b9`)
 4. *Bug fixes:* TypedArray alignment fix for `Float64Array`/`Int32Array`

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as below."
+authors:
+  - family-names: "Kwon"
+    given-names: "Youngjune"
+    email: "yjkwon@winm2m.com"
+title: "inferential-stats-js: A WebAssembly-based Serverless Engine for Advanced Statistical Analysis in the Browser"
+version: 1.0.0
+date-released: 2026-03-31
+url: "https://github.com/winm2m/inferential-stats-js"
