@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "@winm2m/inferential-stats-js API Documentation",
+  "readme": "README.md",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "githubPages": true,
+  "navigationLinks": {
+    "GitHub": "https://github.com/WinM2M/inferential-stats-js",
+    "npm": "https://www.npmjs.com/package/@winm2m/inferential-stats-js"
+  }
+}
