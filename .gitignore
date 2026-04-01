@@ -140,3 +140,5 @@ vite.config.ts.timestamp-*
 
 # TypeDoc generated API docs (built by CI)
 docs/api/
+
+.prompts/**
