@@ -31,6 +31,9 @@
     "url": "https://github.com/WinM2M/inferential-stats-js/issues"
   },
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
