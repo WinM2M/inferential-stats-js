@@ -56,3 +56,6 @@ export type {
 // Export bridge utilities for advanced users
 export { serializeToBuffer, getTransferables } from './bridge/serializer';
 export { deserializeFromBuffer, deserializeToColumns } from './bridge/deserializer';
+
+// SPSS (.sav) utility
+export { readSavFile } from './sav';
