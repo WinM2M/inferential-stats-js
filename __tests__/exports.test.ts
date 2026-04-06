@@ -18,6 +18,7 @@ import {
   getTransferables,
   deserializeFromBuffer,
   deserializeToColumns,
+  readSavFile,
 } from '../src/index';
 
 // Import types to verify they exist (compile-time check)
@@ -90,6 +91,10 @@ describe('Public exports', () => {
     expect(typeof getTransferables).toBe('function');
     expect(typeof deserializeFromBuffer).toBe('function');
     expect(typeof deserializeToColumns).toBe('function');
+  });
+
+  it('should export readSavFile utility', () => {
+    expect(typeof readSavFile).toBe('function');
   });
 });
 
