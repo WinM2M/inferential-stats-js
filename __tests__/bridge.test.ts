@@ -10,6 +10,7 @@
  */
 
 import { serializeToBuffer, getTransferables } from '../src/bridge/serializer';
+import { serializeToColumnarPayload, getColumnarTransferables } from '../src/bridge/columnar-serializer';
 import { deserializeFromBuffer, deserializeToColumns } from '../src/bridge/deserializer';
 
 describe('Bridge: Serializer', () => {
@@ -63,6 +64,54 @@ describe('Bridge: Serializer', () => {
     const buffer = serializeToBuffer([{ a: 1 }]);
     const transferables = getTransferables(buffer);
     expect(transferables).toEqual([buffer]);
+  });
+});
+
+describe('Bridge: ColumnarSerializer', () => {
+  it('should serialize numeric columns as Float64Array', () => {
+    const payload = serializeToColumnarPayload([
+      { score: 85, age: 21 },
+      { score: 90, age: 22 },
+    ]);
+
+    expect(payload.rowCount).toBe(2);
+    expect(payload.columns.score).toBeInstanceOf(Float64Array);
+    expect(Array.from(payload.columns.score)).toEqual([85, 90]);
+    expect(payload.mappings.score).toBeNull();
+  });
+
+  it('should label-encode categorical columns and keep mappings', () => {
+    const payload = serializeToColumnarPayload([
+      { gender: 'Male' },
+      { gender: 'Female' },
+      { gender: 'Male' },
+    ]);
+
+    expect(Array.from(payload.columns.gender)).toEqual([0, 1, 0]);
+    expect(payload.mappings.gender).toEqual({ 0: 'Male', 1: 'Female' });
+  });
+
+  it('should normalize missing values to NaN', () => {
+    const payload = serializeToColumnarPayload([
+      { score: null, group: '' },
+      { score: undefined, group: 'A' },
+    ]);
+
+    expect(Number.isNaN(payload.columns.score[0])).toBe(true);
+    expect(Number.isNaN(payload.columns.score[1])).toBe(true);
+    expect(Number.isNaN(payload.columns.group[0])).toBe(true);
+    expect(payload.columns.group[1]).toBe(0);
+  });
+
+  it('should return typed array buffers as transferables', () => {
+    const payload = serializeToColumnarPayload([
+      { x: 1, y: 2 },
+    ]);
+
+    const transferables = getColumnarTransferables(payload);
+    expect(transferables).toHaveLength(2);
+    expect(transferables).toContain(payload.columns.x.buffer);
+    expect(transferables).toContain(payload.columns.y.buffer);
   });
 });
 
