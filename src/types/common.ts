@@ -37,7 +37,7 @@ export type WorkerRequestType =
 export interface WorkerRequest {
   id: string;
   type: WorkerRequestType;
-  payload?: ArrayBuffer;
+  payload?: ArrayBuffer | ColumnarPayload;
   params?: Record<string, unknown>;
 }
 
@@ -60,4 +60,10 @@ export interface ColumnMeta {
 export interface BinaryFrameHeader {
   rowCount: number;
   columns: ColumnMeta[];
+}
+
+export interface ColumnarPayload {
+  rowCount: number;
+  columns: Record<string, Float64Array>;
+  mappings: Record<string, Record<number, string> | null>;
 }

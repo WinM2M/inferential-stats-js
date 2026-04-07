@@ -1,4 +1,4 @@
-import { serializeToBuffer, getTransferables } from './bridge/serializer';
+import { serializeToColumnarPayload, getColumnarTransferables } from './bridge/columnar-serializer';
 import type {
   WorkerRequest, WorkerResponse, WorkerRequestType, ProgressDetail, AnalysisResult,
 } from './types/common';
@@ -234,10 +234,10 @@ export class InferentialStats {
       const request: WorkerRequest = { id, type, params };
 
       if (data && data.length > 0) {
-        // Serialize to ArrayBuffer for efficient transfer
-        const buffer = serializeToBuffer(data);
-        request.payload = buffer;
-        this.worker!.postMessage(request, getTransferables(buffer));
+        // Serialize to columnar TypedArrays for efficient transfer
+        const payload = serializeToColumnarPayload(data);
+        request.payload = payload;
+        this.worker!.postMessage(request, getColumnarTransferables(payload));
       } else {
         this.worker!.postMessage(request);
       }

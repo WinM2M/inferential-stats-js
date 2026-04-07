@@ -60,6 +60,7 @@
     "generate-data": "node scripts/generate-mock-data.js",
     "pretest": "npm run build",
     "test": "vitest",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "pretest:ci": "npm run build",
     "test:ci": "vitest run",
     "docs": "typedoc",
@@ -69,16 +70,16 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/jest": "^30.0.0",
+    "@vitest/browser": "^3.2.4",
     "jest": "^30.3.0",
+    "playwright": "^1.54.2",
     "rollup": "^4.34.0",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.0",
     "typedoc": "^0.28.18",
     "typescript": "^5.7.0",
-    "vitest": "^3.2.4",
-    "@vitest/browser": "^3.2.4",
-    "playwright": "^1.54.2"
+    "vitest": "^3.2.4"
   },
   "peerDependencies": {
     "pyodide": ">=0.26.0"
@@ -87,5 +88,8 @@
     "pyodide": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "sav-reader": "^2.0.8"
   }
 }

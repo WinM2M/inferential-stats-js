@@ -44,7 +44,7 @@ describe('InferentialStats browser e2e', () => {
       data,
       variable: 'favorite_music',
     });
-    expect(frequencies.success).toBe(true);
+    expect(frequencies.success, frequencies.error).toBe(true);
     expectNonZeroFiniteNumber(frequencies.data.frequencies[0]?.percentage, 'frequencies.percentage');
     expectNonZeroFiniteNumber(frequencies.data.frequencies[0]?.cumulativePercentage, 'frequencies.cumulativePercentage');
 

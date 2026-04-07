@@ -49,9 +49,29 @@ import {
   CRONBACH_ALPHA_PY
 } from '../python/scale';
 
-import type { WorkerRequest, WorkerResponse, ProgressDetail, BinaryFrameHeader } from '../types/common';
+import type {
+  WorkerRequest,
+  WorkerResponse,
+  ProgressDetail,
+  BinaryFrameHeader,
+  ColumnarPayload,
+} from '../types/common';
 
 let pyodide: PyodideInterface | null = null;
+const COLUMNAR_DATA_SENTINEL = '__INFERENTIAL_STATS_COLUMNAR__';
+const FRAME_GLOBAL_NAME = '__columnar_df__';
+
+const DATAFRAME_HELPERS_PY = `
+import json
+import pandas as pd
+
+_COLUMNAR_SENTINEL = '${COLUMNAR_DATA_SENTINEL}'
+
+def load_dataframe(data_json):
+    if data_json == _COLUMNAR_SENTINEL and '${FRAME_GLOBAL_NAME}' in globals():
+        return globals()['${FRAME_GLOBAL_NAME}']
+    return pd.DataFrame(json.loads(data_json))
+`;
 
 /**
  * Send progress update to main thread
@@ -137,6 +157,58 @@ function bufferToJsonString(buffer: ArrayBuffer): string {
   }
 
   return JSON.stringify(rows);
+}
+
+function isColumnarPayload(payload: unknown): payload is ColumnarPayload {
+  if (!payload || typeof payload !== 'object' || payload instanceof ArrayBuffer) {
+    return false;
+  }
+
+  const candidate = payload as Partial<ColumnarPayload>;
+  return !!candidate.columns && !!candidate.mappings;
+}
+
+async function prepareColumnarDataFrame(payload: ColumnarPayload): Promise<void> {
+  if (!pyodide) return;
+
+  pyodide.globals.set('__js_columns__', payload.columns);
+  pyodide.globals.set('__js_mappings__', payload.mappings);
+  pyodide.globals.set('__js_column_names__', Object.keys(payload.columns));
+
+  await pyodide.runPythonAsync(`
+import pandas as pd
+
+js_columns = globals()['__js_columns__']
+js_mappings = globals()['__js_mappings__']
+column_names = globals()['__js_column_names__']
+
+columns_dict = js_columns.to_py() if hasattr(js_columns, 'to_py') else js_columns
+mappings_dict = js_mappings.to_py() if hasattr(js_mappings, 'to_py') else js_mappings
+column_names = column_names.to_py() if hasattr(column_names, 'to_py') else column_names
+
+frame_dict = {}
+for column_name in column_names:
+    frame_dict[column_name] = columns_dict[column_name]
+
+df = pd.DataFrame(frame_dict)
+
+for column_name in column_names:
+    mapping = mappings_dict[column_name]
+    if mapping is None:
+        continue
+
+    mapping_dict = mapping.to_py() if hasattr(mapping, 'to_py') else mapping
+    normalized_mapping = {}
+    for key, label in mapping_dict.items():
+        try:
+            normalized_mapping[float(key)] = label
+        except (TypeError, ValueError):
+            continue
+
+    df[column_name] = df[column_name].map(normalized_mapping)
+
+globals()['${FRAME_GLOBAL_NAME}'] = df
+`);
 }
 
 /**
@@ -232,8 +304,13 @@ async function runAnalysis(
   }
 
   try {
+    const preparedPythonCode = `${DATAFRAME_HELPERS_PY}\n${pythonCode.replace(
+      /pd\.DataFrame\(json\.loads\(data_json\)\)/g,
+      'load_dataframe(data_json)'
+    )}`;
+
     // Load the Python function
-    await pyodide.runPythonAsync(pythonCode);
+    await pyodide.runPythonAsync(preparedPythonCode);
     
     // Build the function call
     const argsStr = args.map(a => {
@@ -268,6 +345,15 @@ try:
     del ${functionName}
 except NameError:
     pass
+try:
+    del ${FRAME_GLOBAL_NAME}
+except NameError:
+    pass
+for _global_name in ('__js_columns__', '__js_mappings__', '__js_column_names__'):
+    try:
+        del globals()[_global_name]
+    except KeyError:
+        pass
 _gc.collect()
 del _gc
 `);
@@ -286,6 +372,15 @@ try:
     del ${functionName}
 except NameError:
     pass
+try:
+    del ${FRAME_GLOBAL_NAME}
+except NameError:
+    pass
+for _global_name in ('__js_columns__', '__js_mappings__', '__js_column_names__'):
+    try:
+        del globals()[_global_name]
+    except KeyError:
+        pass
 _gc.collect()
 del _gc
 `);
@@ -307,6 +402,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     let dataJson = '[]';
     if (payload && payload instanceof ArrayBuffer && payload.byteLength > 0) {
       dataJson = bufferToJsonString(payload);
+    } else if (isColumnarPayload(payload) && payload.rowCount > 0) {
+      await prepareColumnarDataFrame(payload);
+      dataJson = COLUMNAR_DATA_SENTINEL;
     } else if (params?.data) {
       dataJson = JSON.stringify(params.data);
     }
