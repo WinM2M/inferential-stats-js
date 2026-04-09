@@ -5,6 +5,7 @@
 
 export const FREQUENCIES_PY = `
 import json
+import math
 import pandas as pd
 
 def run_frequencies(data_json, variable):
@@ -21,8 +22,17 @@ def run_frequencies(data_json, variable):
         count = int(counts[val])
         pct = float(pcts[val])
         cum_pct += pct
+
+        # NaN represents missing / empty values
+        if isinstance(val, float) and math.isnan(val):
+            display_value = None
+        elif not isinstance(val, (int, float)):
+            display_value = str(val)
+        else:
+            display_value = val
+
         freqs.append({
-            'value': str(val) if not isinstance(val, (int, float)) else val,
+            'value': display_value,
             'count': count,
             'percentage': round(pct, 4),
             'cumulativePercentage': round(cum_pct, 4)
