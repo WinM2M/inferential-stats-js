@@ -35,6 +35,13 @@ export interface PCAInput {
   sortBySize?: boolean;
 }
 
+export interface PCAVarianceRow {
+  component: number;
+  eigenvalue: number;
+  variancePercent: number;
+  cumulativePercent: number;
+}
+
 export interface PCAOutput {
   components: number[][];
   eigenvalues?: number[];
@@ -44,10 +51,16 @@ export interface PCAOutput {
   loadings: Record<string, number[]>;
   communalities?: Record<string, number>;
   sortedLoadings?: Array<{ variable: string; dominantComponent: number; dominantLoading: number; loadings: number[] }>;
+  totalVarianceExplained?: {
+    initial: PCAVarianceRow[];
+    extraction: PCAVarianceRow[];
+    rotation: PCAVarianceRow[];
+  };
   rotation?: string;
   sortBySize?: boolean;
   singularValues: number[];
   nComponents: number;
+  variables?: string[];
 }
 
 // MDS

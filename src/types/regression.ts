@@ -16,13 +16,32 @@ export interface RegressionCoefficient {
   confidenceInterval: [number, number];
 }
 
+export interface RegressionModelSummary {
+  r: number;
+  rSquared: number;
+  adjustedRSquared: number;
+  stdErrorOfEstimate: number;
+}
+
+export interface RegressionAnovaRow {
+  source: 'Regression' | 'Residual' | 'Total';
+  sumOfSquares: number;
+  df: number;
+  meanSquare: number | null;
+  fStatistic: number | null;
+  pValue: number | null;
+}
+
+export interface RegressionAnovaTable {
+  dependentVariable: string;
+  rows: RegressionAnovaRow[];
+}
+
 export interface LinearRegressionOutput {
   rSquared: number;
   adjustedRSquared: number;
-  modelSummary?: {
-    rSquared: number;
-    adjustedRSquared: number;
-  };
+  modelSummary?: RegressionModelSummary;
+  anova?: RegressionAnovaTable;
   fStatistic: number;
   fPValue: number;
   coefficients: RegressionCoefficient[];

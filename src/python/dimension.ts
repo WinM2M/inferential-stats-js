@@ -123,25 +123,91 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
 
     dominant_indices = np.argmax(np.abs(rotated), axis=1)
     dominant_values = np.take_along_axis(np.abs(rotated), dominant_indices.reshape(-1, 1), axis=1).reshape(-1)
-    sorted_indices = np.argsort(-dominant_values) if sort_by_size else np.arange(len(variables))
+    # SPSS-style "Sort by size": group variables by their dominant component
+    # (ascending component index) and, within each group, sort by descending
+    # absolute loading magnitude.  This is the canonical SPSS Factor / PCA
+    # ordering described in Field (2018) and the SPSS Statistics manual.
+    if sort_by_size:
+        order_keys = list(zip(
+            dominant_indices.tolist(),
+            (-dominant_values).tolist(),
+            list(range(len(variables)))
+        ))
+        order_keys.sort()
+        sorted_indices = np.array([key[2] for key in order_keys], dtype=int)
+    else:
+        sorted_indices = np.arange(len(variables))
 
+    # loadings keyed by ORIGINAL variable order (component matrix display)
     loadings = {}
     communalities = {}
-    sorted_loadings = []
-    for idx in sorted_indices:
+    for idx in range(len(variables)):
         var = variables[idx]
         row = [round(float(x), 6) for x in rotated[idx].tolist()]
         loadings[var] = row
         communalities[var] = round(float(np.sum(np.square(rotated[idx]))), 6)
+
+    sorted_loadings = []
+    for idx in sorted_indices:
+        var = variables[idx]
+        row = [round(float(x), 6) for x in rotated[idx].tolist()]
         sorted_loadings.append({
             'variable': var,
             'dominantComponent': int(dominant_indices[idx] + 1),
             'dominantLoading': round(float(dominant_values[idx]), 6),
             'loadings': row
         })
-    
+
     cum_var = np.cumsum(pca.explained_variance_ratio_)
-    
+
+    # Total Variance Explained:
+    # - Initial eigenvalues: every component from full unrotated PCA
+    # - Extraction sums of squared loadings: selected (kept) components' eigenvalues
+    # - Rotation sums of squared loadings: per-component sum of squared rotated loadings
+    total_variance = float(np.sum(eigenvalues)) if len(eigenvalues) > 0 else 0.0
+    initial_rows = []
+    for i, ev in enumerate(eigenvalues):
+        pct = (float(ev) / total_variance * 100.0) if total_variance > 0 else 0.0
+        initial_rows.append({
+            'component': i + 1,
+            'eigenvalue': round(float(ev), 6),
+            'variancePercent': round(pct, 6)
+        })
+    # cumulative
+    cum = 0.0
+    for row in initial_rows:
+        cum += row['variancePercent']
+        row['cumulativePercent'] = round(cum, 6)
+
+    extraction_rows = []
+    cum = 0.0
+    for i in range(n_components):
+        ev = float(eigenvalues[i]) if i < len(eigenvalues) else 0.0
+        pct = (ev / total_variance * 100.0) if total_variance > 0 else 0.0
+        cum += pct
+        extraction_rows.append({
+            'component': i + 1,
+            'eigenvalue': round(ev, 6),
+            'variancePercent': round(pct, 6),
+            'cumulativePercent': round(cum, 6)
+        })
+
+    rotation_rows = []
+    if rotation == 'varimax' and n_components > 0:
+        # sum of squared rotated loadings per component
+        rot_ssq = np.sum(np.square(rotated), axis=0)
+        cum = 0.0
+        for i in range(n_components):
+            ev = float(rot_ssq[i])
+            pct = (ev / total_variance * 100.0) if total_variance > 0 else 0.0
+            cum += pct
+            rotation_rows.append({
+                'component': i + 1,
+                'eigenvalue': round(ev, 6),
+                'variancePercent': round(pct, 6),
+                'cumulativePercent': round(cum, 6)
+            })
+
     return json.dumps({
         'components': [[round(float(x), 6) for x in row] for row in transformed.tolist()],
         'eigenvalues': [round(float(x), 6) for x in eigenvalues],
@@ -151,10 +217,16 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         'loadings': loadings,
         'communalities': communalities,
         'sortedLoadings': sorted_loadings,
+        'totalVarianceExplained': {
+            'initial': initial_rows,
+            'extraction': extraction_rows,
+            'rotation': rotation_rows
+        },
         'rotation': rotation,
         'sortBySize': bool(sort_by_size),
         'singularValues': [round(float(x), 6) for x in pca.singular_values_],
-        'nComponents': n_components
+        'nComponents': n_components,
+        'variables': list(variables)
     })
 `;
 

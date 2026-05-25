@@ -155,22 +155,73 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
             })
     
     dw = float(sm.stats.stattools.durbin_watson(model.resid))
-    
-    return json.dumps({
-        'rSquared': round(float(model.rsquared), 6),
-        'adjustedRSquared': round(float(model.rsquared_adj), 6),
-        'modelSummary': {
-            'rSquared': round(float(model.rsquared), 6),
-            'adjustedRSquared': round(float(model.rsquared_adj), 6)
+
+    # Model Summary (SPSS-style): R, R², Adjusted R², Std. Error of the Estimate
+    r_squared = float(model.rsquared)
+    adj_r_squared = float(model.rsquared_adj)
+    r_value = float(np.sqrt(max(r_squared, 0.0)))
+    std_error_estimate = float(np.sqrt(model.mse_resid))
+
+    # ANOVA table: Regression / Residual / Total
+    ss_regression = float(model.ess)
+    ss_residual = float(model.ssr)
+    ss_total = float(model.centered_tss)
+    df_regression = int(model.df_model)
+    df_residual = int(model.df_resid)
+    df_total = df_regression + df_residual
+    ms_regression = ss_regression / df_regression if df_regression > 0 else 0.0
+    ms_residual = ss_residual / df_residual if df_residual > 0 else 0.0
+    f_value = float(model.fvalue) if np.isfinite(model.fvalue) else 0.0
+    f_pvalue = float(model.f_pvalue) if np.isfinite(model.f_pvalue) else 0.0
+
+    anova_rows = [
+        {
+            'source': 'Regression',
+            'sumOfSquares': round(ss_regression, 6),
+            'df': df_regression,
+            'meanSquare': round(ms_regression, 6),
+            'fStatistic': round(f_value, 6),
+            'pValue': f_pvalue
         },
-        'fStatistic': round(float(model.fvalue), 6),
-        'fPValue': float(model.f_pvalue),
+        {
+            'source': 'Residual',
+            'sumOfSquares': round(ss_residual, 6),
+            'df': df_residual,
+            'meanSquare': round(ms_residual, 6),
+            'fStatistic': None,
+            'pValue': None
+        },
+        {
+            'source': 'Total',
+            'sumOfSquares': round(ss_total, 6),
+            'df': df_total,
+            'meanSquare': None,
+            'fStatistic': None,
+            'pValue': None
+        }
+    ]
+
+    return json.dumps({
+        'rSquared': round(r_squared, 6),
+        'adjustedRSquared': round(adj_r_squared, 6),
+        'modelSummary': {
+            'r': round(r_value, 6),
+            'rSquared': round(r_squared, 6),
+            'adjustedRSquared': round(adj_r_squared, 6),
+            'stdErrorOfEstimate': round(std_error_estimate, 6)
+        },
+        'anova': {
+            'dependentVariable': str(dependent),
+            'rows': anova_rows
+        },
+        'fStatistic': round(f_value, 6),
+        'fPValue': f_pvalue,
         'coefficients': coefficients,
         'standardizedCoefficients': standardized_coefficients,
         'multicollinearity': multicollinearity,
         'selectedVariables': selected_vars,
         'method': method,
-        'residualStdError': round(float(np.sqrt(model.mse_resid)), 6),
+        'residualStdError': round(std_error_estimate, 6),
         'observations': int(model.nobs),
         'degreesOfFreedom': int(model.df_resid),
         'durbinWatson': round(dw, 6)
