@@ -615,7 +615,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, EFA_PY, "run_efa", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          String(params?.nFactors ?? 2),
+          "None",
           String(params?.rotation ?? "varimax"),
           String(params?.method ?? "minres"),
         ]);

@@ -2,7 +2,11 @@
 export interface EFAInput {
   data: Record<string, unknown>[];
   variables: string[];
-  nFactors: number;
+  /**
+   * @deprecated Factor count is auto-selected by Kaiser criterion
+   * (eigenvalue >= 1). Provided values are ignored.
+   */
+  nFactors?: number;
   rotation?: 'varimax' | 'promax' | 'oblimin' | 'none';
   method?: 'minres' | 'ml' | 'principal';
 }

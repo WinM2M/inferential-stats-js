@@ -10,7 +10,7 @@ import scipy as sp
 from factor_analyzer import FactorAnalyzer
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
 
-def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='minres'):
+def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', method='minres'):
     if not hasattr(sp, 'sum'):
         sp.sum = np.sum
     df = pd.DataFrame(json.loads(data_json))
@@ -28,6 +28,14 @@ def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='mi
         kmo_model = kmo_result
     chi2, p_value = calculate_bartlett_sphericity(X)
     
+    # Auto-select number of factors by Kaiser criterion (eigenvalue >= 1)
+    raw_eigenvalues = FactorAnalyzer(rotation=None, method=method).fit(X).get_eigenvalues()[0]
+    valid_eigenvalues = [float(x) for x in raw_eigenvalues if np.isfinite(x)]
+    auto_n_factors = sum(1 for x in valid_eigenvalues if x >= 1.0)
+    if auto_n_factors <= 0:
+        auto_n_factors = 1
+    n_factors = min(auto_n_factors, len(variables))
+
     fa = FactorAnalyzer(n_factors=n_factors, rotation=rotation, method=method)
     fa.fit(X)
     
@@ -55,7 +63,7 @@ def run_efa(data_json, variables_json, n_factors, rotation='varimax', method='mi
         comm_dict[var] = round(float(communalities[i]), 6)
         uniq_dict[var] = round(float(uniquenesses[i]), 6)
     
-    eigenvalues = fa.get_eigenvalues()[0]
+    eigenvalues = raw_eigenvalues
     
     return json.dumps({
         'loadings': loadings_dict,
