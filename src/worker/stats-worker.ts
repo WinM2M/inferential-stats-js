@@ -553,6 +553,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           String(params?.dependentVariable ?? ""),
           JSON.stringify(params?.independentVariables ?? []),
           String(params?.addConstant !== false ? "True" : "False"),
+          String(params?.method ?? "stepwise"),
         ]);
         break;
 
@@ -627,6 +628,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           JSON.stringify(params?.variables ?? []),
           params?.nComponents != null ? String(params.nComponents) : "None",
           String(params?.standardize !== false ? "True" : "False"),
+          String(params?.rotation ?? "varimax"),
+          String(params?.sortBySize !== false ? "True" : "False"),
         ]);
         break;
 

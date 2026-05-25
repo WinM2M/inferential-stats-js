@@ -31,14 +31,21 @@ export interface PCAInput {
   variables: string[];
   nComponents?: number;
   standardize?: boolean;
+  rotation?: 'varimax' | 'none';
+  sortBySize?: boolean;
 }
 
 export interface PCAOutput {
   components: number[][];
+  eigenvalues?: number[];
   explainedVariance: number[];
   explainedVarianceRatio: number[];
   cumulativeVarianceRatio: number[];
   loadings: Record<string, number[]>;
+  communalities?: Record<string, number>;
+  sortedLoadings?: Array<{ variable: string; dominantComponent: number; dominantLoading: number; loadings: number[] }>;
+  rotation?: string;
+  sortBySize?: boolean;
   singularValues: number[];
   nComponents: number;
 }

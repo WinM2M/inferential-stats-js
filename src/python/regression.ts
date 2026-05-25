@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
-def run_linear_regression(data_json, dependent, independents_json, add_constant=True):
+def run_linear_regression(data_json, dependent, independents_json, add_constant=True, method='stepwise'):
     df = pd.DataFrame(json.loads(data_json))
     independents = json.loads(independents_json)
     
@@ -19,10 +19,83 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
     y = y[mask]
     X = X[mask]
     
-    if add_constant:
-        X = sm.add_constant(X)
-    
-    model = sm.OLS(y, X).fit()
+    def fit_model(selected_vars):
+        X_selected = X[selected_vars].copy() if len(selected_vars) > 0 else pd.DataFrame(index=X.index)
+        if add_constant:
+            X_selected = sm.add_constant(X_selected, has_constant='add')
+        return sm.OLS(y, X_selected).fit()
+
+    selected_vars = list(independents)
+    if method == 'forward':
+        selected_vars = []
+        candidates = list(independents)
+        while candidates:
+            pvals = []
+            for var in candidates:
+                try:
+                    model_try = fit_model(selected_vars + [var])
+                    pvals.append((float(model_try.pvalues.get(var, 1.0)), var))
+                except Exception:
+                    continue
+            if not pvals:
+                break
+            best_p, best_var = min(pvals, key=lambda x: x[0])
+            if best_p < 0.05:
+                selected_vars.append(best_var)
+                candidates.remove(best_var)
+            else:
+                break
+    elif method == 'backward':
+        selected_vars = list(independents)
+        while len(selected_vars) > 1:
+            model_try = fit_model(selected_vars)
+            pvals = model_try.pvalues.drop('const', errors='ignore')
+            worst_var = pvals.idxmax()
+            worst_p = float(pvals.max())
+            if worst_p > 0.1:
+                selected_vars.remove(worst_var)
+            else:
+                break
+    elif method == 'stepwise':
+        selected_vars = []
+        candidates = list(independents)
+        changed = True
+        while changed:
+            changed = False
+            # forward step
+            pvals = []
+            for var in candidates:
+                try:
+                    model_try = fit_model(selected_vars + [var])
+                    pvals.append((float(model_try.pvalues.get(var, 1.0)), var))
+                except Exception:
+                    continue
+            if pvals:
+                best_p, best_var = min(pvals, key=lambda x: x[0])
+                if best_p < 0.05:
+                    selected_vars.append(best_var)
+                    candidates.remove(best_var)
+                    changed = True
+
+            # backward cleanup
+            if selected_vars:
+                model_try = fit_model(selected_vars)
+                selected_pvals = model_try.pvalues.drop('const', errors='ignore')
+                if not selected_pvals.empty:
+                    worst_var = selected_pvals.idxmax()
+                    worst_p = float(selected_pvals.max())
+                    if worst_p > 0.1:
+                        selected_vars.remove(worst_var)
+                        if worst_var not in candidates:
+                            candidates.append(worst_var)
+                        changed = True
+
+        if not selected_vars and independents:
+            selected_vars = [independents[0]]
+    else:
+        selected_vars = list(independents)
+
+    model = fit_model(selected_vars)
     
     coefficients = []
     for i, name in enumerate(model.params.index):
@@ -35,15 +108,68 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
             'pValue': float(model.pvalues.iloc[i]),
             'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)]
         })
+
+    standardized_coefficients = []
+    y_std = float(np.std(y, ddof=0))
+    for i, name in enumerate(model.params.index):
+        if name == 'const':
+            standardized_coefficients.append({
+                'variable': str(name),
+                'coefficient': 0.0,
+                'stdError': round(float(model.bse.iloc[i]), 6),
+                'tStatistic': round(float(model.tvalues.iloc[i]), 6),
+                'pValue': float(model.pvalues.iloc[i]),
+                'confidenceInterval': [0.0, 0.0]
+            })
+            continue
+        x_std = float(np.std(X[name], ddof=0))
+        beta = 0.0 if y_std == 0 else float(model.params[name]) * x_std / y_std
+        ci = model.conf_int().loc[name]
+        standardized_coefficients.append({
+            'variable': str(name),
+            'coefficient': round(beta, 6),
+            'stdError': round(float(model.bse[name]), 6),
+            'tStatistic': round(float(model.tvalues[name]), 6),
+            'pValue': float(model.pvalues[name]),
+            'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)]
+        })
+
+    multicollinearity = []
+    if len(selected_vars) > 0:
+        corr = X[selected_vars].corr().values
+        for idx, var in enumerate(selected_vars):
+            vif = None
+            try:
+                if len(selected_vars) == 1:
+                    vif = 1.0
+                else:
+                    r2 = float(sm.OLS(X[selected_vars].iloc[:, idx], sm.add_constant(X[selected_vars].drop(columns=[var]), has_constant='add')).fit().rsquared)
+                    vif = np.inf if r2 >= 0.999999 else 1.0 / max(1.0 - r2, 1e-12)
+            except Exception:
+                vif = np.nan
+            tolerance = 0.0 if (not np.isfinite(vif) or vif == 0) else 1.0 / float(vif)
+            multicollinearity.append({
+                'variable': var,
+                'tolerance': round(float(tolerance), 6),
+                'vif': round(float(vif), 6) if np.isfinite(vif) else None
+            })
     
     dw = float(sm.stats.stattools.durbin_watson(model.resid))
     
     return json.dumps({
         'rSquared': round(float(model.rsquared), 6),
         'adjustedRSquared': round(float(model.rsquared_adj), 6),
+        'modelSummary': {
+            'rSquared': round(float(model.rsquared), 6),
+            'adjustedRSquared': round(float(model.rsquared_adj), 6)
+        },
         'fStatistic': round(float(model.fvalue), 6),
         'fPValue': float(model.f_pvalue),
         'coefficients': coefficients,
+        'standardizedCoefficients': standardized_coefficients,
+        'multicollinearity': multicollinearity,
+        'selectedVariables': selected_vars,
+        'method': method,
         'residualStdError': round(float(np.sqrt(model.mse_resid)), 6),
         'observations': int(model.nobs),
         'degreesOfFreedom': int(model.df_resid),

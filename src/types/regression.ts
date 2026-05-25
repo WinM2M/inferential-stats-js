@@ -4,6 +4,7 @@ export interface LinearRegressionInput {
   dependentVariable: string;
   independentVariables: string[];
   addConstant?: boolean; // default true
+  method?: 'stepwise' | 'enter' | 'forward' | 'backward';
 }
 
 export interface RegressionCoefficient {
@@ -18,9 +19,17 @@ export interface RegressionCoefficient {
 export interface LinearRegressionOutput {
   rSquared: number;
   adjustedRSquared: number;
+  modelSummary?: {
+    rSquared: number;
+    adjustedRSquared: number;
+  };
   fStatistic: number;
   fPValue: number;
   coefficients: RegressionCoefficient[];
+  standardizedCoefficients?: RegressionCoefficient[];
+  multicollinearity?: Array<{ variable: string; tolerance: number; vif: number }>;
+  selectedVariables?: string[];
+  method?: 'stepwise' | 'enter' | 'forward' | 'backward';
   residualStdError: number;
   observations: number;
   degreesOfFreedom: number;

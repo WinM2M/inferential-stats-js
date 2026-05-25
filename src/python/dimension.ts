@@ -86,8 +86,9 @@ import pandas as pd
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from factor_analyzer.rotator import Rotator
 
-def run_pca(data_json, variables_json, n_components=None, standardize=True):
+def run_pca(data_json, variables_json, n_components=None, standardize=True, rotation='varimax', sort_by_size=True):
     df = pd.DataFrame(json.loads(data_json))
     variables = json.loads(variables_json)
     
@@ -99,24 +100,59 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True):
     else:
         X_scaled = X.values
     
+    full_pca = PCA(n_components=min(len(variables), len(X_scaled)))
+    full_pca.fit(X_scaled)
+    eigenvalues = [float(x) for x in full_pca.explained_variance_]
+
     if n_components is None:
-        n_components = min(len(variables), len(X_scaled))
-    
+        auto_n = sum(1 for value in eigenvalues if value >= 1.0)
+        if auto_n <= 0:
+            auto_n = 1
+        n_components = min(auto_n, len(variables), len(X_scaled))
+    else:
+        n_components = min(int(n_components), len(variables), len(X_scaled))
+
     pca = PCA(n_components=n_components)
     transformed = pca.fit_transform(X_scaled)
-    
+
+    raw_loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
+    if rotation == 'varimax':
+        rotated = Rotator(method='varimax').fit_transform(raw_loadings)
+    else:
+        rotated = raw_loadings
+
+    dominant_indices = np.argmax(np.abs(rotated), axis=1)
+    dominant_values = np.take_along_axis(np.abs(rotated), dominant_indices.reshape(-1, 1), axis=1).reshape(-1)
+    sorted_indices = np.argsort(-dominant_values) if sort_by_size else np.arange(len(variables))
+
     loadings = {}
-    for i, var in enumerate(variables):
-        loadings[var] = [round(float(x), 6) for x in pca.components_[:, i]]
+    communalities = {}
+    sorted_loadings = []
+    for idx in sorted_indices:
+        var = variables[idx]
+        row = [round(float(x), 6) for x in rotated[idx].tolist()]
+        loadings[var] = row
+        communalities[var] = round(float(np.sum(np.square(rotated[idx]))), 6)
+        sorted_loadings.append({
+            'variable': var,
+            'dominantComponent': int(dominant_indices[idx] + 1),
+            'dominantLoading': round(float(dominant_values[idx]), 6),
+            'loadings': row
+        })
     
     cum_var = np.cumsum(pca.explained_variance_ratio_)
     
     return json.dumps({
         'components': [[round(float(x), 6) for x in row] for row in transformed.tolist()],
+        'eigenvalues': [round(float(x), 6) for x in eigenvalues],
         'explainedVariance': [round(float(x), 6) for x in pca.explained_variance_],
         'explainedVarianceRatio': [round(float(x), 6) for x in pca.explained_variance_ratio_],
         'cumulativeVarianceRatio': [round(float(x), 6) for x in cum_var],
         'loadings': loadings,
+        'communalities': communalities,
+        'sortedLoadings': sorted_loadings,
+        'rotation': rotation,
+        'sortBySize': bool(sort_by_size),
         'singularValues': [round(float(x), 6) for x in pca.singular_values_],
         'nComponents': n_components
     })
