@@ -395,6 +395,8 @@ describe('Type exports (compile-time verification)', () => {
       item: 'q1',
       itemMean: 3.8,
       itemStd: 0.9,
+      scaleMeanIfItemDeleted: 7.2,
+      scaleStdIfItemDeleted: 1.4,
       correctedItemTotalCorrelation: 0.72,
       alphaIfItemDeleted: 0.81,
     };
