@@ -35,6 +35,7 @@ declare function loadPyodide(
 
 // Import Python code strings - these will be inlined by the bundler
 // For the worker bundle, we import them directly
+import { encodePythonArg, type PythonArg } from "./python-arg";
 import {
   FREQUENCIES_PY,
   DESCRIPTIVES_PY,
@@ -359,7 +360,7 @@ async function runAnalysis(
   id: string,
   pythonCode: string,
   functionName: string,
-  args: string[],
+  args: PythonArg[],
 ): Promise<void> {
   if (!pyodide) {
     sendError(id, "Pyodide is not initialized. Call init() first.");
@@ -376,23 +377,8 @@ async function runAnalysis(
     await pyodide.runPythonAsync(preparedPythonCode);
 
     // Build the function call
-    const argsStr = args
-      .map((a) => {
-        // If it looks like a raw Python expression (number, bool), pass as-is
-        if (
-          /^[-+]?\d+(\.\d+)?$/.test(a) ||
-          a === "True" ||
-          a === "False" ||
-          a === "None"
-        ) {
-          return a;
-        }
-        // Otherwise, wrap as a Python string
-        // Escape backslashes and single quotes
-        const escaped = a.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        return `'${escaped}'`;
-      })
-      .join(", ");
+    // 타입을 보고 정한다. 생김새로 짐작하지 않는다 — 그게 #8 의 원인이었다.
+    const argsStr = args.map(encodePythonArg).join(", ");
 
     const callCode = `
 import gc as _gc
@@ -516,8 +502,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.variable ?? ""),
           String(params?.groupVariable ?? ""),
-          String(params?.group1Value ?? ""),
-          String(params?.group2Value ?? ""),
+          // 집단값은 사용자 데이터의 값이다. 변수명과 달리 문자열이라는 보장이 없고,
+          // 문자열이라면 문자열 그대로 도착해야 한다. (#8)
+          (params?.group1Value ?? null) as PythonArg,
+          (params?.group2Value ?? null) as PythonArg,
         ]);
         break;
 

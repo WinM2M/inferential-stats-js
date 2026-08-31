@@ -13,6 +13,20 @@ def run_ttest_independent(data_json, variable, group_variable, group1_value, gro
     
     g1 = pd.to_numeric(df[df[group_variable] == group1_value][variable], errors='coerce').dropna()
     g2 = pd.to_numeric(df[df[group_variable] == group2_value][variable], errors='coerce').dropna()
+
+    # 빈 집단으로 계속 가면 평균과 분산이 NaN 이 되고, Welch 자유도는 0 으로 나눈다.
+    # 그래도 함수는 형태가 멀쩡한 객체를 돌려주기 때문에, 부르는 쪽은 정상 결과와
+    # 구별할 수 없다. 실제로 임베더 화면에 "표를 그릴 수 없다" 로만 나타났다. (#8)
+    # 무엇이 안 맞았는지 이름을 대고 멈춘다.
+    for label, value, group in (('group1Value', group1_value, g1), ('group2Value', group2_value, g2)):
+        if len(group) > 0:
+            continue
+        present = df[group_variable].dropna().unique().tolist()[:10]
+        raise ValueError(
+            f"No usable rows for {label}={value!r} in column {group_variable!r}. "
+            f"Values present: {present}. "
+            f"Note that '1' and 1 are different values."
+        )
     
     # Levene's test for equality of variances
     levene_stat, levene_p = stats.levene(g1, g2)
