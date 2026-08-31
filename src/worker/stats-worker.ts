@@ -35,6 +35,7 @@ declare function loadPyodide(
 
 // Import Python code strings - these will be inlined by the bundler
 // For the worker bundle, we import them directly
+import { encodePythonArg, type PythonArg } from "./python-arg";
 import {
   FREQUENCIES_PY,
   DESCRIPTIVES_PY,
@@ -359,7 +360,7 @@ async function runAnalysis(
   id: string,
   pythonCode: string,
   functionName: string,
-  args: string[],
+  args: PythonArg[],
 ): Promise<void> {
   if (!pyodide) {
     sendError(id, "Pyodide is not initialized. Call init() first.");
@@ -376,23 +377,8 @@ async function runAnalysis(
     await pyodide.runPythonAsync(preparedPythonCode);
 
     // Build the function call
-    const argsStr = args
-      .map((a) => {
-        // If it looks like a raw Python expression (number, bool), pass as-is
-        if (
-          /^[-+]?\d+(\.\d+)?$/.test(a) ||
-          a === "True" ||
-          a === "False" ||
-          a === "None"
-        ) {
-          return a;
-        }
-        // Otherwise, wrap as a Python string
-        // Escape backslashes and single quotes
-        const escaped = a.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-        return `'${escaped}'`;
-      })
-      .join(", ");
+    // 타입을 보고 정한다. 생김새로 짐작하지 않는다 — 그게 #8 의 원인이었다.
+    const argsStr = args.map(encodePythonArg).join(", ");
 
     const callCode = `
 import gc as _gc
@@ -516,8 +502,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.variable ?? ""),
           String(params?.groupVariable ?? ""),
-          String(params?.group1Value ?? ""),
-          String(params?.group2Value ?? ""),
+          // 집단값은 사용자 데이터의 값이다. 변수명과 달리 문자열이라는 보장이 없고,
+          // 문자열이라면 문자열 그대로 도착해야 한다. (#8)
+          (params?.group1Value ?? null) as PythonArg,
+          (params?.group2Value ?? null) as PythonArg,
         ]);
         break;
 
@@ -542,7 +530,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.variable ?? ""),
           String(params?.groupVariable ?? ""),
-          String(params?.alpha ?? 0.05),
+          Number(params?.alpha ?? 0.05),
         ]);
         break;
 
@@ -552,7 +540,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.dependentVariable ?? ""),
           JSON.stringify(params?.independentVariables ?? []),
-          String(params?.addConstant !== false ? "True" : "False"),
+          params?.addConstant !== false,
           String(params?.method ?? "stepwise"),
         ]);
         break;
@@ -562,7 +550,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.dependentVariable ?? ""),
           JSON.stringify(params?.independentVariables ?? []),
-          String(params?.addConstant !== false ? "True" : "False"),
+          params?.addConstant !== false,
         ]);
         break;
 
@@ -575,9 +563,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             dataJson,
             String(params?.dependentVariable ?? ""),
             JSON.stringify(params?.independentVariables ?? []),
-            params?.referenceCategory != null
-              ? String(params.referenceCategory)
-              : "None",
+            // 참조 범주는 데이터의 값이다. 숫자일 수도 문자열일 수도 있으니 그대로 넘긴다. (#8)
+            ((params?.referenceCategory ?? null) as PythonArg),
           ],
         );
         break;
@@ -587,9 +574,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, KMEANS_PY, "run_kmeans", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          String(params?.k ?? 3),
-          String(params?.maxIterations ?? 300),
-          String(params?.randomState ?? 42),
+          Number(params?.k ?? 3),
+          Number(params?.maxIterations ?? 300),
+          Number(params?.randomState ?? 42),
         ]);
         break;
 
@@ -603,10 +590,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             JSON.stringify(params?.variables ?? []),
             String(params?.method ?? "ward"),
             String(params?.metric ?? "euclidean"),
-            params?.nClusters != null ? String(params.nClusters) : "None",
-            params?.distanceThreshold != null
-              ? String(params.distanceThreshold)
-              : "None",
+            (params?.nClusters != null ? Number(params.nClusters) : null),
+            (params?.distanceThreshold != null ? Number(params.distanceThreshold) : null),
           ],
         );
         break;
@@ -616,7 +601,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, EFA_PY, "run_efa", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          "None",
+          null,
           String(params?.rotation ?? "varimax"),
           String(params?.method ?? "minres"),
         ]);
@@ -626,10 +611,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, PCA_PY, "run_pca", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          params?.nComponents != null ? String(params.nComponents) : "None",
-          String(params?.standardize !== false ? "True" : "False"),
+          (params?.nComponents != null ? Number(params.nComponents) : null),
+          params?.standardize !== false,
           String(params?.rotation ?? "varimax"),
-          String(params?.sortBySize !== false ? "True" : "False"),
+          params?.sortBySize !== false,
         ]);
         break;
 
@@ -637,10 +622,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, MDS_PY, "run_mds", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          String(params?.nComponents ?? 2),
-          String(params?.metric !== false ? "True" : "False"),
-          String(params?.maxIterations ?? 300),
-          String(params?.randomState ?? 42),
+          Number(params?.nComponents ?? 2),
+          params?.metric !== false,
+          Number(params?.maxIterations ?? 300),
+          Number(params?.randomState ?? 42),
         ]);
         break;
 
