@@ -530,7 +530,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.variable ?? ""),
           String(params?.groupVariable ?? ""),
-          String(params?.alpha ?? 0.05),
+          Number(params?.alpha ?? 0.05),
         ]);
         break;
 
@@ -540,7 +540,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.dependentVariable ?? ""),
           JSON.stringify(params?.independentVariables ?? []),
-          String(params?.addConstant !== false ? "True" : "False"),
+          params?.addConstant !== false,
           String(params?.method ?? "stepwise"),
         ]);
         break;
@@ -550,7 +550,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.dependentVariable ?? ""),
           JSON.stringify(params?.independentVariables ?? []),
-          String(params?.addConstant !== false ? "True" : "False"),
+          params?.addConstant !== false,
         ]);
         break;
 
@@ -563,9 +563,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             dataJson,
             String(params?.dependentVariable ?? ""),
             JSON.stringify(params?.independentVariables ?? []),
-            params?.referenceCategory != null
-              ? String(params.referenceCategory)
-              : "None",
+            // 참조 범주는 데이터의 값이다. 숫자일 수도 문자열일 수도 있으니 그대로 넘긴다. (#8)
+            ((params?.referenceCategory ?? null) as PythonArg),
           ],
         );
         break;
@@ -575,9 +574,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, KMEANS_PY, "run_kmeans", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          String(params?.k ?? 3),
-          String(params?.maxIterations ?? 300),
-          String(params?.randomState ?? 42),
+          Number(params?.k ?? 3),
+          Number(params?.maxIterations ?? 300),
+          Number(params?.randomState ?? 42),
         ]);
         break;
 
@@ -591,10 +590,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
             JSON.stringify(params?.variables ?? []),
             String(params?.method ?? "ward"),
             String(params?.metric ?? "euclidean"),
-            params?.nClusters != null ? String(params.nClusters) : "None",
-            params?.distanceThreshold != null
-              ? String(params.distanceThreshold)
-              : "None",
+            (params?.nClusters != null ? Number(params.nClusters) : null),
+            (params?.distanceThreshold != null ? Number(params.distanceThreshold) : null),
           ],
         );
         break;
@@ -604,7 +601,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, EFA_PY, "run_efa", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          "None",
+          null,
           String(params?.rotation ?? "varimax"),
           String(params?.method ?? "minres"),
         ]);
@@ -614,10 +611,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, PCA_PY, "run_pca", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          params?.nComponents != null ? String(params.nComponents) : "None",
-          String(params?.standardize !== false ? "True" : "False"),
+          (params?.nComponents != null ? Number(params.nComponents) : null),
+          params?.standardize !== false,
           String(params?.rotation ?? "varimax"),
-          String(params?.sortBySize !== false ? "True" : "False"),
+          params?.sortBySize !== false,
         ]);
         break;
 
@@ -625,10 +622,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, MDS_PY, "run_mds", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          String(params?.nComponents ?? 2),
-          String(params?.metric !== false ? "True" : "False"),
-          String(params?.maxIterations ?? 300),
-          String(params?.randomState ?? 42),
+          Number(params?.nComponents ?? 2),
+          params?.metric !== false,
+          Number(params?.maxIterations ?? 300),
+          Number(params?.randomState ?? 42),
         ]);
         break;
 
