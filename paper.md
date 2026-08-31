@@ -8,8 +8,8 @@ tags:
   - survey research
   - privacy
 authors:
-  # TODO(제출 전): ORCID 필수. https://orcid.org 에서 발급받아 `orcid:` 줄을 추가할 것.
   - name: Youngjune Kwon
+    orcid: 0009-0002-9286-9629
     affiliation: 1
 affiliations:
   - name: WinM2M Inc., Republic of Korea
