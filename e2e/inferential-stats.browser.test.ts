@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { InferentialStats } from '../src/index';
+import { InferentialStats, PROGRESS_EVENT_NAME } from '../src/index';
+import type { ProgressDetail } from '../src/index';
 
 const workerUrl = new URL('../dist/stats-worker.js', import.meta.url).href;
 
@@ -16,9 +17,14 @@ describe('InferentialStats browser e2e', () => {
   let data: SurveyRow[];
   let binaryData: SurveyRow[];
   let sampledData: SurveyRow[];
+  const progressEvents: ProgressDetail[] = [];
 
   beforeAll(async () => {
-    stats = new InferentialStats({ workerUrl });
+    const eventTarget = new EventTarget();
+    eventTarget.addEventListener(PROGRESS_EVENT_NAME, (event) => {
+      progressEvents.push((event as CustomEvent<ProgressDetail>).detail);
+    });
+    stats = new InferentialStats({ workerUrl, eventTarget });
     await stats.init();
 
     const response = await fetch('/docs/sample-survey-data.json');
@@ -219,5 +225,20 @@ describe('InferentialStats browser e2e', () => {
     expect(cronbachAlpha.success).toBe(true);
     expectNonZeroFiniteNumber(cronbachAlpha.data.alpha, 'cronbachAlpha.alpha');
     expectNonZeroFiniteNumber(cronbachAlpha.data.standardizedAlpha, 'cronbachAlpha.standardizedAlpha');
+  });
+
+  it('reports progress while an analysis runs, not only while Pyodide loads', async () => {
+    // init 구간에는 진행 이벤트가 있었고 실행 구간에는 없었다(#10). 실제 워커로 확인한다.
+    expect(progressEvents.some((e) => e.stage === 'init')).toBe(true);
+
+    progressEvents.length = 0;
+    await stats.descriptives({ data, variables: ['music_satisfaction'] });
+
+    const analysis = progressEvents.filter((e) => e.stage === 'analysis');
+    expect(analysis.length, 'an analysis emits progress of its own').toBeGreaterThanOrEqual(2);
+    expect(analysis[0].progress).toBe(0);
+    expect(analysis[analysis.length - 1].progress).toBe(100);
+    // 사람이 읽을 문구가 실려야 호스트가 그대로 띄울 수 있다.
+    expect(analysis[0].message).toMatch(/run_descriptives/);
   });
 });

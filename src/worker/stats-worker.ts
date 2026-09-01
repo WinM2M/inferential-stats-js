@@ -107,6 +107,15 @@ def load_dataframe(data_json):
 `;
 
 /**
+ * `ProgressDetail.stage` for the execution phase.
+ *
+ * `"init"` is the other value the worker emits. Kept as a plain string rather than a union
+ * because `stage` is typed `string` in the public API and narrowing it would break anyone
+ * comparing it (#10).
+ */
+const ANALYSIS_STAGE = "analysis";
+
+/**
  * Send progress update to main thread
  */
 function sendProgress(
@@ -367,6 +376,11 @@ async function runAnalysis(
     return;
   }
 
+  // 실행이 시작됐다는 사실 자체를 알린다. 여기까지 진행 이벤트는 init 경로에만 있었고,
+  // 워커가 준비된 뒤로는 결과가 나올 때까지 아무 신호가 없었다(#10). 계산이 몇 초씩
+  // 걸리는 데이터에서 호스트 UI 가 보여줄 것이 없다는 뜻이다.
+  sendProgress(id, ANALYSIS_STAGE, 0, `Running ${functionName}...`);
+
   try {
     const preparedPythonCode = `${DATAFRAME_HELPERS_PY}\n${pythonCode.replace(
       /pd\.DataFrame\(json\.loads\(data_json\)\)/g,
@@ -414,6 +428,9 @@ _gc.collect()
 del _gc
 `);
 
+    // 끝났다는 것도 알린다. 이벤트만 구독해도 스피너를 껐다 켤 수 있어야 한다 —
+    // 프로미스 상태를 따로 좇게 만들면 결국 구독자마다 같은 코드를 다시 쓴다.
+    sendProgress(id, ANALYSIS_STAGE, 100, `${functionName} finished`);
     sendResult(id, parsed);
   } catch (err) {
     // Attempt cleanup even on error – delete both _result and the function
