@@ -574,11 +574,36 @@
 <p>This dataset is suitable for exercising every analysis method in the SDK.</p>
 <hr>
 <h2 id="progress-event-handling" class="tsd-anchor-link">Progress Event Handling<a href="#progress-event-handling" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
-<p>During <code>init()</code>, the SDK dispatches <code>CustomEvent</code>s to report progress through multiple stages (loading Pyodide, installing Python packages, etc.). You can use these events to drive a progress bar or loading indicator.</p>
+<p>The SDK dispatches <code>CustomEvent</code>s to report progress. You can use these events to drive a progress bar or loading indicator.</p>
+<p>Two phases emit them:</p>
+<table>
+<thead>
+<tr>
+<th><code>stage</code></th>
+<th>When</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;init&quot;</code></td>
+<td>During <code>init()</code> — loading Pyodide, installing Python packages</td>
+<td>0 → 100 across several steps</td>
+</tr>
+<tr>
+<td><code>&quot;analysis&quot;</code></td>
+<td>Around every analysis call</td>
+<td><code>0</code> when execution starts, <code>100</code> when it finishes</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>analysis</code> stage means a host can drive a spinner from events alone, without also
+tracking promise state. On a large dataset the computation itself takes seconds, and before
+these events there was no signal during that window.</p>
 <h3 id="event-name" class="tsd-anchor-link">Event Name<a href="#event-name" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
 <p>The event name is exported as the constant <code>PROGRESS_EVENT_NAME</code> (value: <code>'inferential-stats-progress'</code>).</p>
 <h3 id="event-detail" class="tsd-anchor-link">Event Detail<a href="#event-detail" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
-<pre><code class="typescript"><span class="hl-8">interface</span><span class="hl-0"> </span><span class="hl-7">ProgressDetail</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-1">stage</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;       </span><span class="hl-6">// Current stage identifier (e.g. &quot;pyodide&quot;, &quot;packages&quot;)</span><br/><span class="hl-0">  </span><span class="hl-1">progress</span><span class="hl-0">: </span><span class="hl-7">number</span><span class="hl-0">;    </span><span class="hl-6">// Percentage complete (0–100)</span><br/><span class="hl-0">  </span><span class="hl-1">message</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;     </span><span class="hl-6">// Human-readable status message</span><br/><span class="hl-0">}</span>
+<pre><code class="typescript"><span class="hl-8">interface</span><span class="hl-0"> </span><span class="hl-7">ProgressDetail</span><span class="hl-0"> {</span><br/><span class="hl-0">  </span><span class="hl-1">stage</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;       </span><span class="hl-6">// &quot;init&quot; while loading, &quot;analysis&quot; while a computation runs</span><br/><span class="hl-0">  </span><span class="hl-1">progress</span><span class="hl-0">: </span><span class="hl-7">number</span><span class="hl-0">;    </span><span class="hl-6">// Percentage complete (0–100)</span><br/><span class="hl-0">  </span><span class="hl-1">message</span><span class="hl-0">: </span><span class="hl-7">string</span><span class="hl-0">;     </span><span class="hl-6">// Human-readable status message</span><br/><span class="hl-0">}</span>
 </code><button type="button">Copy</button></pre>
 
 <h3 id="example-full-progress-listener" class="tsd-anchor-link">Example: Full Progress Listener<a href="#example-full-progress-listener" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
