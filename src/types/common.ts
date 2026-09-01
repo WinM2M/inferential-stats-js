@@ -8,6 +8,17 @@ export interface AnalysisResult<T> {
 
 /** Progress event detail */
 export interface ProgressDetail {
+  /**
+   * Which phase the update is about.
+   *
+   * `"init"` — loading Pyodide and installing packages, once per worker.
+   * `"analysis"` — an analysis is executing. Emitted at 0 when it starts and 100 when it
+   * finishes, so a host can drive a spinner from events alone rather than also tracking
+   * promise state.
+   *
+   * Left as `string` rather than a union: narrowing it would break callers that compare
+   * against their own constants.
+   */
   stage: string;
   progress: number; // 0-100
   message: string;

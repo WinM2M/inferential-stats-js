@@ -565,7 +565,18 @@ This dataset is suitable for exercising every analysis method in the SDK.
 
 ## Progress Event Handling
 
-During `init()`, the SDK dispatches `CustomEvent`s to report progress through multiple stages (loading Pyodide, installing Python packages, etc.). You can use these events to drive a progress bar or loading indicator.
+The SDK dispatches `CustomEvent`s to report progress. You can use these events to drive a progress bar or loading indicator.
+
+Two phases emit them:
+
+| `stage` | When | Values |
+|---|---|---|
+| `"init"` | During `init()` — loading Pyodide, installing Python packages | 0 → 100 across several steps |
+| `"analysis"` | Around every analysis call | `0` when execution starts, `100` when it finishes |
+
+The `analysis` stage means a host can drive a spinner from events alone, without also
+tracking promise state. On a large dataset the computation itself takes seconds, and before
+these events there was no signal during that window.
 
 ### Event Name
 
@@ -575,7 +586,7 @@ The event name is exported as the constant `PROGRESS_EVENT_NAME` (value: `'infer
 
 ```typescript
 interface ProgressDetail {
-  stage: string;       // Current stage identifier (e.g. "pyodide", "packages")
+  stage: string;       // "init" while loading, "analysis" while a computation runs
   progress: number;    // Percentage complete (0–100)
   message: string;     // Human-readable status message
 }
