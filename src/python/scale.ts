@@ -66,21 +66,21 @@ def run_cronbach_alpha(data_json, items_json):
 
         item_analysis.append({
             'item': item,
-            'itemMean': round(float(item_col.mean()), 6),
-            'itemStd': round(float(item_col.std(ddof=1)), 6),
-            'scaleMeanIfItemDeleted': round(scale_mean_if_deleted, 6),
-            'scaleStdIfItemDeleted': round(scale_std_if_deleted, 6),
-            'correctedItemTotalCorrelation': round(citc, 6),
-            'alphaIfItemDeleted': round(float(alpha_deleted), 6)
+            'itemMean': float(item_col.mean()),
+            'itemStd': float(item_col.std(ddof=1)),
+            'scaleMeanIfItemDeleted': scale_mean_if_deleted,
+            'scaleStdIfItemDeleted': scale_std_if_deleted,
+            'correctedItemTotalCorrelation': citc,
+            'alphaIfItemDeleted': float(alpha_deleted)
         })
 
     return json.dumps({
-        'alpha': round(float(alpha), 6),
-        'standardizedAlpha': round(float(std_alpha), 6),
+        'alpha': float(alpha),
+        'standardizedAlpha': float(std_alpha),
         'nItems': n_items,
         'nObservations': n_obs,
         'itemAnalysis': item_analysis,
-        'interItemCorrelationMean': round(float(mean_r), 6),
+        'interItemCorrelationMean': float(mean_r),
         'caseProcessing': {
             'valid': n_valid,
             'excluded': n_excluded,
@@ -88,10 +88,10 @@ def run_cronbach_alpha(data_json, items_json):
         },
         'scaleStatistics': {
             'nItems': n_items,
-            'mean': round(scale_mean, 6),
-            'std': round(scale_std, 6),
-            'minimum': round(scale_min, 6),
-            'maximum': round(scale_max, 6)
+            'mean': scale_mean,
+            'std': scale_std,
+            'minimum': scale_min,
+            'maximum': scale_max
         }
     })
 `;

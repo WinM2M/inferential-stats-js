@@ -34,8 +34,8 @@ def run_frequencies(data_json, variable):
         freqs.append({
             'value': display_value,
             'count': count,
-            'percentage': round(pct, 4),
-            'cumulativePercentage': round(cum_pct, 4)
+            'percentage': pct,
+            'cumulativePercentage': cum_pct
         })
     
     return json.dumps({
@@ -61,15 +61,15 @@ def run_descriptives(data_json, variables_json):
         results.append({
             'variable': var,
             'count': int(desc['count']),
-            'mean': round(float(desc['mean']), 6),
-            'std': round(float(desc['std']), 6),
-            'min': round(float(desc['min']), 6),
-            'max': round(float(desc['max']), 6),
-            'q25': round(float(desc['25%']), 6),
-            'q50': round(float(desc['50%']), 6),
-            'q75': round(float(desc['75%']), 6),
-            'skewness': round(float(sp_stats.skew(col)), 6),
-            'kurtosis': round(float(sp_stats.kurtosis(col)), 6)
+            'mean': float(desc['mean']),
+            'std': float(desc['std']),
+            'min': float(desc['min']),
+            'max': float(desc['max']),
+            'q25': float(desc['25%']),
+            'q50': float(desc['50%']),
+            'q75': float(desc['75%']),
+            'skewness': float(sp_stats.skew(col)),
+            'kurtosis': float(sp_stats.kurtosis(col))
         })
     
     return json.dumps({'statistics': results})
@@ -107,10 +107,10 @@ def run_crosstabs(data_json, row_variable, col_variable):
                 'row': rl,
                 'col': cl,
                 'observed': obs,
-                'expected': round(exp, 4),
-                'rowPercentage': round(obs / float(row_sums.iloc[i]) * 100, 4) if row_sums.iloc[i] > 0 else 0,
-                'colPercentage': round(obs / float(col_sums.iloc[j]) * 100, 4) if col_sums.iloc[j] > 0 else 0,
-                'totalPercentage': round(obs / float(total) * 100, 4) if total > 0 else 0
+                'expected': exp,
+                'rowPercentage': obs / float(row_sums.iloc[i]) * 100 if row_sums.iloc[i] > 0 else 0,
+                'colPercentage': obs / float(col_sums.iloc[j]) * 100 if col_sums.iloc[j] > 0 else 0,
+                'totalPercentage': obs / float(total) * 100 if total > 0 else 0
             })
     
     return json.dumps({
@@ -119,9 +119,9 @@ def run_crosstabs(data_json, row_variable, col_variable):
         'table': table,
         'rowLabels': row_labels,
         'colLabels': col_labels,
-        'chiSquare': round(float(chi2), 6),
+        'chiSquare': float(chi2),
         'degreesOfFreedom': int(dof),
         'pValue': float(p),
-        'cramersV': round(cramers_v, 6)
+        'cramersV': cramers_v
     })
 `;

@@ -28,7 +28,7 @@ def run_kmeans(data_json, variables_json, k, max_iterations=300, random_state=42
     for i in range(k):
         center = {}
         for j, var in enumerate(variables):
-            center[var] = round(float(centers_original[i, j]), 6)
+            center[var] = float(centers_original[i, j])
         centers.append({'cluster': i, 'center': center})
     
     unique, counts = np.unique(labels, return_counts=True)
@@ -37,7 +37,7 @@ def run_kmeans(data_json, variables_json, k, max_iterations=300, random_state=42
     return json.dumps({
         'labels': [int(l) for l in labels],
         'centers': centers,
-        'inertia': round(float(model.inertia_), 6),
+        'inertia': float(model.inertia_),
         'iterations': int(model.n_iter_),
         'clusterSizes': cluster_sizes
     })
@@ -80,9 +80,12 @@ def run_hierarchical_cluster(data_json, variables_json, method='ward', metric='e
     return json.dumps({
         'labels': [int(l) for l in labels],
         'nClusters': len(unique),
-        'linkageMatrix': [[round(float(x), 6) for x in row] for row in Z.tolist()],
+        'linkageMatrix': [[float(x) for x in row] for row in Z.tolist()],
         'clusterSizes': cluster_sizes,
         'dendrogramData': {
+            # icoord/dcoord are drawing coordinates for the dendrogram, not
+            # statistics, so rounding them is a size saving rather than a loss of
+            # information. Everything that *is* a statistic returns full precision.
             'icoord': [[round(float(x), 4) for x in row] for row in dend['icoord']],
             'dcoord': [[round(float(x), 4) for x in row] for row in dend['dcoord']],
             'leaves': [int(x) for x in dend['leaves']]
