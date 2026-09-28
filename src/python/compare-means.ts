@@ -59,22 +59,22 @@ def run_ttest_independent(data_json, variable, group_variable, group1_value, gro
     
     def make_result(t_stat, df_val, p_val, ci):
         return {
-            'tStatistic': round(float(t_stat), 6),
-            'degreesOfFreedom': round(float(df_val), 6),
+            'tStatistic': float(t_stat),
+            'degreesOfFreedom': float(df_val),
             'pValue': float(p_val),
-            'meanDifference': round(mean_diff, 6),
-            'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)],
-            'group1Mean': round(float(g1.mean()), 6),
-            'group1Std': round(float(g1.std(ddof=1)), 6),
+            'meanDifference': mean_diff,
+            'confidenceInterval': [float(ci[0]), float(ci[1])],
+            'group1Mean': float(g1.mean()),
+            'group1Std': float(g1.std(ddof=1)),
             'group1N': n1,
-            'group2Mean': round(float(g2.mean()), 6),
-            'group2Std': round(float(g2.std(ddof=1)), 6),
+            'group2Mean': float(g2.mean()),
+            'group2Std': float(g2.std(ddof=1)),
             'group2N': n2
         }
     
     return json.dumps({
         'leveneTest': {
-            'statistic': round(float(levene_stat), 6),
+            'statistic': float(levene_stat),
             'pValue': float(levene_p),
             'equalVariance': bool(equal_var)
         },
@@ -111,14 +111,14 @@ def run_ttest_paired(data_json, variable1, variable2):
     ci = stats.t.interval(0.95, n-1, loc=mean_diff, scale=se)
     
     return json.dumps({
-        'tStatistic': round(float(t_stat), 6),
+        'tStatistic': float(t_stat),
         'degreesOfFreedom': n - 1,
         'pValue': float(p_val),
-        'meanDifference': round(mean_diff, 6),
-        'stdDifference': round(std_diff, 6),
-        'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)],
-        'mean1': round(float(v1.mean()), 6),
-        'mean2': round(float(v2.mean()), 6),
+        'meanDifference': mean_diff,
+        'stdDifference': std_diff,
+        'confidenceInterval': [float(ci[0]), float(ci[1])],
+        'mean1': float(v1.mean()),
+        'mean2': float(v2.mean()),
         'n': n
     })
 `;
@@ -163,21 +163,21 @@ def run_anova_oneway(data_json, variable, group_variable):
         group_stats.append({
             'group': name,
             'n': len(arr),
-            'mean': round(float(arr.mean()), 6),
-            'std': round(float(arr.std(ddof=1)), 6)
+            'mean': float(arr.mean()),
+            'std': float(arr.std(ddof=1))
         })
     
     return json.dumps({
-        'fStatistic': round(float(f_stat), 6),
+        'fStatistic': float(f_stat),
         'pValue': float(p_val),
         'degreesOfFreedomBetween': df_between,
         'degreesOfFreedomWithin': df_within,
-        'sumOfSquaresBetween': round(float(ss_between), 6),
-        'sumOfSquaresWithin': round(float(ss_within), 6),
-        'meanSquareBetween': round(float(ms_between), 6),
-        'meanSquareWithin': round(float(ms_within), 6),
+        'sumOfSquaresBetween': float(ss_between),
+        'sumOfSquaresWithin': float(ss_within),
+        'meanSquareBetween': float(ms_between),
+        'meanSquareWithin': float(ms_within),
         'groupStats': group_stats,
-        'etaSquared': round(float(eta_sq), 6)
+        'etaSquared': float(eta_sq)
     })
 `;
 
@@ -201,10 +201,10 @@ def run_posthoc_tukey(data_json, variable, group_variable, alpha=0.05):
         comparisons.append({
             'group1': str(row[0]),
             'group2': str(row[1]),
-            'meanDifference': round(float(row[2]), 6),
-            'pValue': round(float(row[3]), 6),
-            'lowerCI': round(float(row[4]), 6),
-            'upperCI': round(float(row[5]), 6),
+            'meanDifference': float(row[2]),
+            'pValue': float(row[3]),
+            'lowerCI': float(row[4]),
+            'upperCI': float(row[5]),
             'reject': bool(row[6])
         })
     

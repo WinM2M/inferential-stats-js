@@ -42,7 +42,7 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
     loadings = fa.loadings_
     loadings_dict = {}
     for i, var in enumerate(variables):
-        loadings_dict[var] = [round(float(x), 6) for x in loadings[i]]
+        loadings_dict[var] = [float(x) for x in loadings[i]]
     
     variance_result = fa.get_factor_variance()
     if isinstance(variance_result, tuple):
@@ -60,22 +60,22 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
     comm_dict = {}
     uniq_dict = {}
     for i, var in enumerate(variables):
-        comm_dict[var] = round(float(communalities[i]), 6)
-        uniq_dict[var] = round(float(uniquenesses[i]), 6)
+        comm_dict[var] = float(communalities[i])
+        uniq_dict[var] = float(uniquenesses[i])
     
     eigenvalues = raw_eigenvalues
     
     return json.dumps({
         'loadings': loadings_dict,
-        'eigenvalues': [round(float(x), 6) for x in eigenvalues],
-        'variance': [round(float(x), 6) for x in ev],
-        'cumulativeVariance': [round(float(x), 6) for x in cumulative] if cumulative is not None else [round(float(sum(v[:i+1])), 6) for i in range(len(v))],
+        'eigenvalues': [float(x) for x in eigenvalues],
+        'variance': [float(x) for x in ev],
+        'cumulativeVariance': [float(x) for x in cumulative] if cumulative is not None else [float(sum(v[:i+1])) for i in range(len(v))],
         'communalities': comm_dict,
         'uniquenesses': uniq_dict,
         'nFactors': n_factors,
         'rotation': rotation,
-        'kmo': round(float(kmo_model), 6),
-        'bartlettChi2': round(float(chi2), 6),
+        'kmo': float(kmo_model),
+        'bartlettChi2': float(chi2),
         'bartlettPValue': float(p_value)
     })
 `;
@@ -143,18 +143,18 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
     communalities = {}
     for idx in range(len(variables)):
         var = variables[idx]
-        row = [round(float(x), 6) for x in rotated[idx].tolist()]
+        row = [float(x) for x in rotated[idx].tolist()]
         loadings[var] = row
-        communalities[var] = round(float(np.sum(np.square(rotated[idx]))), 6)
+        communalities[var] = float(np.sum(np.square(rotated[idx])))
 
     sorted_loadings = []
     for idx in sorted_indices:
         var = variables[idx]
-        row = [round(float(x), 6) for x in rotated[idx].tolist()]
+        row = [float(x) for x in rotated[idx].tolist()]
         sorted_loadings.append({
             'variable': var,
             'dominantComponent': int(dominant_indices[idx] + 1),
-            'dominantLoading': round(float(dominant_values[idx]), 6),
+            'dominantLoading': float(dominant_values[idx]),
             'loadings': row
         })
 
@@ -170,14 +170,14 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         pct = (float(ev) / total_variance * 100.0) if total_variance > 0 else 0.0
         initial_rows.append({
             'component': i + 1,
-            'eigenvalue': round(float(ev), 6),
-            'variancePercent': round(pct, 6)
+            'eigenvalue': float(ev),
+            'variancePercent': pct
         })
     # cumulative
     cum = 0.0
     for row in initial_rows:
         cum += row['variancePercent']
-        row['cumulativePercent'] = round(cum, 6)
+        row['cumulativePercent'] = cum
 
     extraction_rows = []
     cum = 0.0
@@ -187,9 +187,9 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         cum += pct
         extraction_rows.append({
             'component': i + 1,
-            'eigenvalue': round(ev, 6),
-            'variancePercent': round(pct, 6),
-            'cumulativePercent': round(cum, 6)
+            'eigenvalue': ev,
+            'variancePercent': pct,
+            'cumulativePercent': cum
         })
 
     rotation_rows = []
@@ -203,17 +203,17 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
             cum += pct
             rotation_rows.append({
                 'component': i + 1,
-                'eigenvalue': round(ev, 6),
-                'variancePercent': round(pct, 6),
-                'cumulativePercent': round(cum, 6)
+                'eigenvalue': ev,
+                'variancePercent': pct,
+                'cumulativePercent': cum
             })
 
     return json.dumps({
-        'components': [[round(float(x), 6) for x in row] for row in transformed.tolist()],
-        'eigenvalues': [round(float(x), 6) for x in eigenvalues],
-        'explainedVariance': [round(float(x), 6) for x in pca.explained_variance_],
-        'explainedVarianceRatio': [round(float(x), 6) for x in pca.explained_variance_ratio_],
-        'cumulativeVarianceRatio': [round(float(x), 6) for x in cum_var],
+        'components': [[float(x) for x in row] for row in transformed.tolist()],
+        'eigenvalues': [float(x) for x in eigenvalues],
+        'explainedVariance': [float(x) for x in pca.explained_variance_],
+        'explainedVarianceRatio': [float(x) for x in pca.explained_variance_ratio_],
+        'cumulativeVarianceRatio': [float(x) for x in cum_var],
         'loadings': loadings,
         'communalities': communalities,
         'sortedLoadings': sorted_loadings,
@@ -224,7 +224,7 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         },
         'rotation': rotation,
         'sortBySize': bool(sort_by_size),
-        'singularValues': [round(float(x), 6) for x in pca.singular_values_],
+        'singularValues': [float(x) for x in pca.singular_values_],
         'nComponents': n_components,
         'variables': list(variables)
     })
@@ -250,8 +250,8 @@ def run_mds(data_json, variables_json, n_components=2, metric=True, max_iteratio
     coords = mds.fit_transform(X_scaled)
     
     return json.dumps({
-        'coordinates': [[round(float(x), 6) for x in row] for row in coords.tolist()],
-        'stress': round(float(mds.stress_), 6),
+        'coordinates': [[float(x) for x in row] for row in coords.tolist()],
+        'stress': float(mds.stress_),
         'nComponents': n_components
     })
 `;

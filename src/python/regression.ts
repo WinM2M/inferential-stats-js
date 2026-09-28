@@ -102,11 +102,11 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
         ci = model.conf_int().iloc[i]
         coefficients.append({
             'variable': str(name),
-            'coefficient': round(float(model.params.iloc[i]), 6),
-            'stdError': round(float(model.bse.iloc[i]), 6),
-            'tStatistic': round(float(model.tvalues.iloc[i]), 6),
+            'coefficient': float(model.params.iloc[i]),
+            'stdError': float(model.bse.iloc[i]),
+            'tStatistic': float(model.tvalues.iloc[i]),
             'pValue': float(model.pvalues.iloc[i]),
-            'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)]
+            'confidenceInterval': [float(ci[0]), float(ci[1])]
         })
 
     standardized_coefficients = []
@@ -116,8 +116,8 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
             standardized_coefficients.append({
                 'variable': str(name),
                 'coefficient': 0.0,
-                'stdError': round(float(model.bse.iloc[i]), 6),
-                'tStatistic': round(float(model.tvalues.iloc[i]), 6),
+                'stdError': float(model.bse.iloc[i]),
+                'tStatistic': float(model.tvalues.iloc[i]),
                 'pValue': float(model.pvalues.iloc[i]),
                 'confidenceInterval': [0.0, 0.0]
             })
@@ -127,11 +127,11 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
         ci = model.conf_int().loc[name]
         standardized_coefficients.append({
             'variable': str(name),
-            'coefficient': round(beta, 6),
-            'stdError': round(float(model.bse[name]), 6),
-            'tStatistic': round(float(model.tvalues[name]), 6),
+            'coefficient': beta,
+            'stdError': float(model.bse[name]),
+            'tStatistic': float(model.tvalues[name]),
             'pValue': float(model.pvalues[name]),
-            'confidenceInterval': [round(float(ci[0]), 6), round(float(ci[1]), 6)]
+            'confidenceInterval': [float(ci[0]), float(ci[1])]
         })
 
     multicollinearity = []
@@ -150,8 +150,8 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
             tolerance = 0.0 if (not np.isfinite(vif) or vif == 0) else 1.0 / float(vif)
             multicollinearity.append({
                 'variable': var,
-                'tolerance': round(float(tolerance), 6),
-                'vif': round(float(vif), 6) if np.isfinite(vif) else None
+                'tolerance': float(tolerance),
+                'vif': float(vif) if np.isfinite(vif) else None
             })
     
     dw = float(sm.stats.stattools.durbin_watson(model.resid))
@@ -177,23 +177,23 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
     anova_rows = [
         {
             'source': 'Regression',
-            'sumOfSquares': round(ss_regression, 6),
+            'sumOfSquares': ss_regression,
             'df': df_regression,
-            'meanSquare': round(ms_regression, 6),
-            'fStatistic': round(f_value, 6),
+            'meanSquare': ms_regression,
+            'fStatistic': f_value,
             'pValue': f_pvalue
         },
         {
             'source': 'Residual',
-            'sumOfSquares': round(ss_residual, 6),
+            'sumOfSquares': ss_residual,
             'df': df_residual,
-            'meanSquare': round(ms_residual, 6),
+            'meanSquare': ms_residual,
             'fStatistic': None,
             'pValue': None
         },
         {
             'source': 'Total',
-            'sumOfSquares': round(ss_total, 6),
+            'sumOfSquares': ss_total,
             'df': df_total,
             'meanSquare': None,
             'fStatistic': None,
@@ -202,29 +202,29 @@ def run_linear_regression(data_json, dependent, independents_json, add_constant=
     ]
 
     return json.dumps({
-        'rSquared': round(r_squared, 6),
-        'adjustedRSquared': round(adj_r_squared, 6),
+        'rSquared': r_squared,
+        'adjustedRSquared': adj_r_squared,
         'modelSummary': {
-            'r': round(r_value, 6),
-            'rSquared': round(r_squared, 6),
-            'adjustedRSquared': round(adj_r_squared, 6),
-            'stdErrorOfEstimate': round(std_error_estimate, 6)
+            'r': r_value,
+            'rSquared': r_squared,
+            'adjustedRSquared': adj_r_squared,
+            'stdErrorOfEstimate': std_error_estimate
         },
         'anova': {
             'dependentVariable': str(dependent),
             'rows': anova_rows
         },
-        'fStatistic': round(f_value, 6),
+        'fStatistic': f_value,
         'fPValue': f_pvalue,
         'coefficients': coefficients,
         'standardizedCoefficients': standardized_coefficients,
         'multicollinearity': multicollinearity,
         'selectedVariables': selected_vars,
         'method': method,
-        'residualStdError': round(std_error_estimate, 6),
+        'residualStdError': std_error_estimate,
         'observations': int(model.nobs),
         'degreesOfFreedom': int(model.df_resid),
-        'durbinWatson': round(dw, 6)
+        'durbinWatson': dw
     })
 `;
 
@@ -256,21 +256,21 @@ def run_logistic_binary(data_json, dependent, independents_json, add_constant=Tr
         coef = float(model.params.iloc[i])
         coefficients.append({
             'variable': str(name),
-            'coefficient': round(coef, 6),
-            'stdError': round(float(model.bse.iloc[i]), 6),
-            'zStatistic': round(float(model.tvalues.iloc[i]), 6),
+            'coefficient': coef,
+            'stdError': float(model.bse.iloc[i]),
+            'zStatistic': float(model.tvalues.iloc[i]),
             'pValue': float(model.pvalues.iloc[i]),
-            'oddsRatio': round(float(np.exp(coef)), 6),
-            'confidenceInterval': [round(float(ci.iloc[i, 0]), 6), round(float(ci.iloc[i, 1]), 6)]
+            'oddsRatio': float(np.exp(coef)),
+            'confidenceInterval': [float(ci.iloc[i, 0]), float(ci.iloc[i, 1])]
         })
     
     return json.dumps({
         'coefficients': coefficients,
-        'pseudoRSquared': round(float(model.prsquared), 6),
-        'logLikelihood': round(float(model.llf), 6),
+        'pseudoRSquared': float(model.prsquared),
+        'logLikelihood': float(model.llf),
         'llrPValue': float(model.llr_pvalue),
-        'aic': round(float(model.aic), 6),
-        'bic': round(float(model.bic), 6),
+        'aic': float(model.aic),
+        'bic': float(model.bic),
         'observations': int(model.nobs),
         'convergence': bool(model.mle_retvals['converged'])
     })
@@ -324,11 +324,11 @@ def run_logistic_multinomial(data_json, dependent, independents_json, reference_
             coefficients.append({
                 'category': str(cat),
                 'variable': var_name,
-                'coefficient': round(coef, 6),
+                'coefficient': coef,
                 'stdError': 0.0,
                 'zStatistic': 0.0,
                 'pValue': 0.0,
-                'oddsRatio': round(float(np.exp(coef)), 6),
+                'oddsRatio': float(np.exp(coef)),
                 'confidenceInterval': [0.0, 0.0]
             })
     
@@ -341,11 +341,11 @@ def run_logistic_multinomial(data_json, dependent, independents_json, reference_
     
     return json.dumps({
         'coefficients': coefficients,
-        'pseudoRSquared': round(float(model.score(X, y_numeric)), 6),
-        'logLikelihood': round(ll, 6),
+        'pseudoRSquared': float(model.score(X, y_numeric)),
+        'logLikelihood': ll,
         'llrPValue': 0.0,
-        'aic': round(float(aic), 6),
-        'bic': round(float(bic_val), 6),
+        'aic': float(aic),
+        'bic': float(bic_val),
         'categories': [str(c) for c in categories],
         'referenceCategory': ref,
         'observations': int(len(y))

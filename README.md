@@ -27,6 +27,7 @@
 - [API Reference](#api-reference)
 - [Sample Data](#sample-data)
 - [Progress Event Handling](#progress-event-handling)
+- [Numerical Accuracy](#numerical-accuracy)
 - [License](#license)
 
 ---
@@ -644,6 +645,51 @@ console.log('Ready!');
 | `packages` | 80 | Installing scikit-learn… |
 | `packages` | 90 | Installing factor_analyzer… |
 | `ready` | 100 | All packages installed. Ready. |
+
+---
+
+## Numerical Accuracy
+
+### Results are returned at full precision
+
+Every statistic comes back as an unrounded IEEE-754 double. **Formatting is the consumer's job** —
+the number of digits to show depends on the reporting convention at the point of display (APA asks
+for three decimals in most tables, and for `p < .001` rather than a rounded p-value), and the SDK
+does not know it.
+
+Earlier versions rounded every value to six decimal places before returning it. That silently
+returned `0` for any legitimately small quantity — a between-group sum of squares of `3.6e-9`, for
+instance — so it was removed. If you were relying on the SDK to round for you, format at the render
+site instead.
+
+### Validated against NIST certified values
+
+The [NIST Statistical Reference Datasets](https://www.itl.nist.gov/div898/strd/) publish datasets
+together with values certified in extended precision. `e2e/nist-strd.browser.test.ts` checks the
+results against them, including two datasets chosen for being hostile:
+
+| Dataset | Procedure | What it tests | Agreement |
+| :--- | :--- | :--- | :--- |
+| Norris | Linear least squares | Well-conditioned baseline | 1e-9 relative |
+| SiRstv | One-way ANOVA | Baseline | 1e-9 relative |
+| AtmWtAg | One-way ANOVA | 7 constant leading digits; SS ≈ 3.6e-9 | 1e-8 relative |
+| Longley | Linear least squares | The classic ill-conditioned regression (1967) | see below |
+
+`AtmWtAg` does not reach 1e-9, and that is expected rather than a defect: subtracting values that
+agree to seven significant digits spends seven of the sixteen a double carries. NIST publishes the
+dataset to expose exactly that, and the tolerance in the test records the measured error.
+
+`Longley` is currently marked as a known failure — not for numerical reasons but because
+`linearRegression` defaults to stepwise selection and fits a different model than the one requested
+([#13](https://github.com/WinM2M/inferential-stats-js/issues/13)).
+
+To run the checks, and to regenerate the fixture from NIST:
+
+```bash
+npx playwright install chromium
+npm test                             # includes the NIST comparisons
+node scripts/fetch-nist-strd.mjs     # regenerates e2e/fixtures/nist-strd.json
+```
 
 ---
 
