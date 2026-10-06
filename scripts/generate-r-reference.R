@@ -144,22 +144,18 @@ case("crosstabs/spect/diagnosis-x-f1-yates", "spect-train", "crosstabs",
      list(rowVariable = "overall_diagnosis", colVariable = "f1"),
      crosstab_stats(spect, "overall_diagnosis", "f1", correct = TRUE))
 
-# Category labels. The bridge marshals every numeric column as a Float64Array
-# (bridge/columnar-serializer.ts:49), so an integer-coded category arrives in
-# Python as a float and `str()` gives it a ".0". R and SPSS both print "1".
-# These are the row and column headers a reader of the crosstab sees.
+# Category labels. These are the row and column headers a reader of the crosstab
+# sees. They used to carry a trailing ".0" because the bridge marshals every
+# numeric column as a Float64Array (bridge/columnar-serializer.ts:49) and an
+# integer-coded category therefore arrived in Python as a float; #19 added
+# `category_label` to format it the way R and SPSS do.
 case("crosstabs/auto-mpg/origin-x-cylinders-labels", "auto-mpg", "crosstabs",
      list(rowVariable = "origin", colVariable = "cylinders"),
-     crosstab_labels(autompg, "origin", "cylinders"),
-     status = "known-defect",
-     note = paste("integer-coded categories are labelled '1.0'/'3.0' where R and",
-                  "SPSS label them '1'/'3'; crosstab row/column headers only"))
+     crosstab_labels(autompg, "origin", "cylinders"))
 
 case("crosstabs/spect/diagnosis-x-f1-labels", "spect-train", "crosstabs",
      list(rowVariable = "overall_diagnosis", colVariable = "f1"),
-     crosstab_labels(spect, "overall_diagnosis", "f1"),
-     status = "known-defect",
-     note = "same labelling defect on a 0/1-coded category")
+     crosstab_labels(spect, "overall_diagnosis", "f1"))
 
 # ------------------------------------------------------------------- t-tests
 
@@ -265,15 +261,14 @@ case("anova-oneway/iris/sepal-length-by-species", "iris", "anovaOneway",
 # the same way (lexicographic), so the sign convention lines up. The test matches
 # on the pair rather than on position all the same.
 #
-# This is where the cross-check earned its keep: `posthocTukey` reads
+# This is where the cross-check earned its keep. `posthocTukey` used to read
 # `pairwise_tukeyhsd(...).summary().data`, statsmodels' *display* table, which is
-# formatted to four decimals. Every number it returns - mean difference, p-value,
-# both confidence bounds - is therefore truncated, and a p-value small enough to
-# print as 0.0000 comes back as exactly 0. It is the same class of defect as #12
-# (output rounded before leaving Python), and removing the explicit
-# `round(x, 6)` calls did not reach it, because here the rounding belongs to the
-# object being read rather than to our own code. The unrounded values are on the
-# result itself: `meandiffs`, `pvalues`, `confint`, `reject`.
+# formatted to four decimals; every value it returned was truncated and a p-value
+# small enough to print as 0.0000 came back as exactly 0. That is the same class
+# of defect as #12, and removing the explicit `round(x, 6)` calls did not reach
+# it, because the rounding belonged to the object being read rather than to our
+# own code. #18 switched the extraction to `meandiffs`, `pvalues`, `confint` and
+# `reject`, which carry the unrounded quantities.
 tuk <- TukeyHSD(fit_aov)[["factor(species)"]]
 case("posthoc-tukey/iris/sepal-length-by-species", "iris", "posthocTukey",
      list(variable = "sepal_length", groupVariable = "species", alpha = 0.05),
@@ -291,11 +286,20 @@ case("posthoc-tukey/iris/sepal-length-by-species", "iris", "posthocTukey",
             lowerCI = unname(tuk[rn, "lwr"]), upperCI = unname(tuk[rn, "upr"]),
             pValue = unname(tuk[rn, "p adj"]))
      })),
-     status = "known-defect",
-     note = paste("posthocTukey reads statsmodels' summary() display table, which",
-                  "is formatted to 4 decimals, so every value is truncated and a",
-                  "tiny p-value becomes exactly 0. Same class as #12.",
-                  "compare-means.ts:199-206"))
+     # The absolute leg is for the p-values only. statsmodels reaches the
+     # studentized range distribution through `psturng` and R through `ptukey`,
+     # two different implementations, and they diverge in the far tail: the three
+     # certified-small p-values here are 2.2e-14, 2.4e-14 and 8.3e-9, and the
+     # absolute gaps are 1.9e-14, 9.7e-15 and 3.4e-15 - at the double-precision
+     # floor for quantities that size. This is not output rounding (#18 fixed
+     # that; the mean differences and all six confidence bounds now agree to
+     # better than 1e-9) and not a defect in either package.
+     #
+     # 1e-13 absolute is *tighter* than the relative leg for every quantity
+     # above about 1e-4, because expectCloseTo accepts either bound: at 0.686 a
+     # 1e-9 relative bound already allows 6.9e-10. So this loosens nothing
+     # except the tail it is aimed at.
+     tolerance = list(relative = 1e-9, absolute = 1e-13))
 
 # -------------------------------------------------------- linear regression
 #
@@ -414,25 +418,20 @@ case("logistic-binary/spect/diagnosis~f1+f2", "spect-train", "logisticBinary",
 # REGRESSION and R's `glm(factor(y) ~ .)` both accept any two-valued outcome and
 # model the higher value as the event; the reference here is that fit.
 #
-# This SDK produces no result at all. The Python layer coerces the column with
-# `pd.to_numeric` and hands it straight to `sm.Logit` (regression.ts:240-250),
-# which rejects it with `ValueError: endog must be in the unit interval.` The
-# failure is loud rather than silent, which is the right half of the behaviour -
-# but it reaches the caller as a raw Python traceback, and the procedure both
-# reference packages would have run is simply unavailable for data coded this
-# way.
+# This SDK used to produce no result at all: the Python layer coerced the column
+# with `pd.to_numeric` and handed it to `sm.Logit`, which rejected it with
+# `ValueError: endog must be in the unit interval.` #20 encodes the higher of the
+# two observed values as the event and reports the encoding, so the case now also
+# checks `eventValue` and `referenceValue`.
 hab_fit <- glm(factor(survival_status) ~ age + positive_nodes,
                data = haberman, family = binomial())
 case("logistic-binary/haberman/survival~age+nodes", "haberman", "logisticBinary",
      list(dependentVariable = "survival_status",
           independentVariables = c("age", "positive_nodes")),
-     logistic_expected(hab_fit, nrow(haberman), 2),
-     status = "known-defect",
+     c(logistic_expected(hab_fit, nrow(haberman), 2),
+       list(eventValue = 2, referenceValue = 1)),
      tolerance = list(relative = 1e-5, absolute = 1e-5),
-     note = paste("dependent variable is coded 1/2, not 0/1. SPSS and R model the",
-                  "higher value as the event; sm.Logit rejects it with 'endog must",
-                  "be in the unit interval' and the traceback reaches the caller.",
-                  "regression.ts:240-250"))
+     note = spss_pseudo_note(hab_fit, nrow(haberman)))
 
 # ------------------------------------------------------------------- reliability
 #

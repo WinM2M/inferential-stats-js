@@ -300,27 +300,35 @@ column. Two of those also settle a question beyond their own numbers:
 same 6 rows with a missing `horsepower`, and `cronbachAlpha` reports 683 valid of
 699, matching R's listwise split over the 16 missing `bare_nuclei` values.
 
-**Defects, new.**
+**Defects, new — all three fixed.**
 
-- `posthocTukey` returns every value truncated to four decimals, and all three
-  p-values come back as exactly `0` where R reports 3.4e-14, 3.0e-15 and 8.3e-9 —
-  the #12 flattening, reproduced. It reads
-  `pairwise_tukeyhsd(...).summary().data`, which is statsmodels' *display* table
-  and is formatted for printing. Removing the explicit `round(x, 6)` calls in
-  PR #17 did not reach it, because the rounding belongs to the object being read
-  rather than to our own code. The unrounded values sit on the result object:
-  `meandiffs`, `pvalues`, `confint`, `reject`. `compare-means.ts:199-206`.
-- `crosstabs` labels an integer-coded category `"1.0"` where R and SPSS print
+- `posthocTukey` returned every value truncated to four decimals, and all three
+  p-values came back as exactly `0` where R reports 3.4e-14, 3.0e-15 and 8.3e-9 —
+  the #12 flattening, reproduced. It read
+  `pairwise_tukeyhsd(...).summary().data`, statsmodels' *display* table, which is
+  formatted for printing. Removing the explicit `round(x, 6)` calls in PR #17 did
+  not reach it, because the rounding belonged to the object being read rather
+  than to our own code. **#18** switched the extraction to `meandiffs`,
+  `pvalues`, `confint` and `reject`. The mean differences and all six confidence
+  bounds now agree to better than 1e-9; the three tail p-values agree to 1.9e-14
+  absolute, which is a difference between `psturng` and `ptukey` rather than a
+  rounding loss, and the case carries an absolute tolerance leg that says so.
+- `crosstabs` labelled an integer-coded category `"1.0"` where R and SPSS print
   `"1"`. The cause is a level below `crosstabs`: the bridge marshals every
   numeric column as a `Float64Array`
   (`bridge/columnar-serializer.ts:49`), so an integer category arrives in Python
-  as a float. It therefore affects any integer-coded grouping variable, and these
-  labels are the row and column headers a reader of the table sees.
-- `logisticBinary` cannot fit an outcome coded 1/2 — the norm in registry and
-  survey data. `sm.Logit` rejects it with `ValueError: endog must be in the unit
-  interval.` and the traceback reaches the caller as the error string. SPSS
+  as a float. **#19** added a `category_label` helper to the shared Python
+  preamble and applied it to the crosstab row and column labels, the `row`/`col`
+  fields of each cell, `anovaOneway`'s `groupStats[].group` (which is declared a
+  string and was emitting a number), and `posthocTukey`'s group labels.
+- `logisticBinary` could not fit an outcome coded 1/2 — the norm in registry and
+  survey data. `sm.Logit` rejected it with `ValueError: endog must be in the unit
+  interval.` and the traceback reached the caller as the error string. SPSS
   `LOGISTIC REGRESSION` and R's `glm(factor(y) ~ .)` both fit such an outcome by
-  modelling the higher value as the event. `regression.ts:240-250`.
+  modelling the higher value as the event. **#20** encodes the higher of the two
+  observed values as the event, reports the encoding as `eventValue` /
+  `referenceValue` rather than recoding silently, and rejects an outcome with
+  more than two distinct values with a stated reason instead of a traceback.
 
 **Defect, already filed.** #13 reproduces exactly as described: with `method`
 unset, `linearRegression` fits a stepwise subset instead of the model requested,
@@ -357,7 +365,7 @@ confirmed, plus one that has no counterpart to compare against:
 | 2 | R reference values for the closed-form procedures | done — 18 cases |
 | 3 | Cross-check test body, tier 2 wired | done — `e2e/cross-check.browser.test.ts` |
 | 4 | Resolve the four convention questions | open — needs a decision per row |
-| 5 | Fix the three new defects | open |
+| 5 | Fix the three new defects | done — #18, #19, #20 |
 | 6 | `cross-check.sps` + manual-run document | done |
 | 7 | SPSS run by licence holder, importer written against the export | open |
 | 8 | Indeterminate-output invariants (`efa`, `pca`, `mds`, both clusterings) | open |

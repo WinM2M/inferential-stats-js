@@ -7,6 +7,14 @@ This is the record of what was run and what it found. The design and the plan
 are in [`cross-check-r-spss.md`](./cross-check-r-spss.md); the SPSS procedure is
 in [`spss-manual-run.md`](./spss-manual-run.md).
 
+> **Status note.** This report is a dated snapshot of the first run and is left
+> as measured. The three defects it reports in §6.2 were filed as #18, #19 and
+> #20 and fixed later the same day; `cross-check-r-spss.md` carries the current
+> state. The one residual is that `posthocTukey`'s tail p-values agree with R to
+> 1.9e-14 absolute rather than to 1e-9 relative, because statsmodels' `psturng`
+> and R's `ptukey` are different implementations of the studentized range
+> distribution — see §6.2(a).
+
 ---
 
 ## 1. Why

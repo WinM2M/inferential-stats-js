@@ -212,8 +212,8 @@
         "rowVariable": "origin",
         "colVariable": "cylinders"
       },
-      "status": "known-defect",
-      "note": "integer-coded categories are labelled '1.0'/'3.0' where R and SPSS label them '1'/'3'; crosstab row/column headers only",
+      "status": "check",
+      "note": null,
       "tolerance": null,
       "expected": {
         "rowLabels": [
@@ -238,8 +238,8 @@
         "rowVariable": "overall_diagnosis",
         "colVariable": "f1"
       },
-      "status": "known-defect",
-      "note": "same labelling defect on a 0/1-coded category",
+      "status": "check",
+      "note": null,
       "tolerance": null,
       "expected": {
         "rowLabels": [
@@ -457,9 +457,12 @@
         "groupVariable": "species",
         "alpha": 0.05
       },
-      "status": "known-defect",
-      "note": "posthocTukey reads statsmodels' summary() display table, which is formatted to 4 decimals, so every value is truncated and a tiny p-value becomes exactly 0. Same class as #12. compare-means.ts:199-206",
-      "tolerance": null,
+      "status": "check",
+      "note": null,
+      "tolerance": {
+        "relative": 1e-09,
+        "absolute": 1e-13
+      },
       "expected": {
         "comparisons": [
           {
@@ -677,8 +680,8 @@
           "positive_nodes"
         ]
       },
-      "status": "known-defect",
-      "note": "dependent variable is coded 1/2, not 0/1. SPSS and R model the higher value as the event; sm.Logit rejects it with 'endog must be in the unit interval' and the traceback reaches the caller. regression.ts:240-250",
+      "status": "check",
+      "note": "pseudoRSquared is McFadden's (statsmodels prsquared). SPSS prints Cox & Snell 0.079587 and Nagelkerke 0.116150 instead.",
       "tolerance": {
         "relative": 1e-05,
         "absolute": 1e-05
@@ -727,7 +730,9 @@
               0.127171291508568
             ]
           }
-        ]
+        ],
+        "eventValue": 2,
+        "referenceValue": 1
       }
     },
     {
