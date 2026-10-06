@@ -16,12 +16,12 @@ browser worker. Validation before this work had two layers:
 
 | Layer | What it asserts | Coverage |
 | :--- | :--- | :--- |
-| 98 unit + 2 browser e2e tests | that an analysis **runs** and its result has the right shape | all 17 public methods |
+| 98 unit + 2 browser e2e tests | that an analysis **runs** and its result has the right shape | all 16 analysis methods |
 | 4 NIST StRD cases | that the result is **right** | `linearRegression`, `anovaOneway` |
 
-NIST certifies four dataset families. Fifteen of the seventeen methods were
-therefore guaranteed only to return numbers without raising — and a wrong number
-has the right shape.
+NIST certifies four dataset families. Fourteen of the sixteen analysis methods
+were therefore guaranteed only to return numbers without raising — and a wrong
+number has the right shape.
 
 The packages researchers actually reconcile their output against are R and SPSS.
 Running the same data through them is what this work does.

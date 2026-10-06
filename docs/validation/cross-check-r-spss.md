@@ -5,7 +5,7 @@
 `e2e/nist-strd.browser.test.ts` checks two procedures — `linearRegression` and
 `anovaOneway` — against values certified by NIST in extended precision. That is the
 strongest evidence available, but NIST only certifies four procedure families, so
-fifteen of the seventeen public methods are currently covered by tests that assert
+fourteen of the sixteen analysis methods are currently covered by tests that assert
 an analysis *runs* and returns plausible numbers, not that the numbers are *right*.
 
 This document specifies how those fifteen get a reference value, using the two
