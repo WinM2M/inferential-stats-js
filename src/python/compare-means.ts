@@ -161,7 +161,10 @@ def run_anova_oneway(data_json, variable, group_variable):
     group_stats = []
     for name, arr in zip(group_names, group_arrays):
         group_stats.append({
-            'group': name,
+            # AnovaGroupStats.group is declared as a string. Passing the raw
+            # value emitted a number for a numeric grouping variable, and str()
+            # would emit '1.0' for an integer code (#19).
+            'group': category_label(name),
             'n': len(arr),
             'mean': float(arr.mean()),
             'std': float(arr.std(ddof=1))
@@ -194,18 +197,31 @@ def run_posthoc_tukey(data_json, variable, group_variable, alpha=0.05):
     df = df.dropna(subset=[variable])
     
     result = pairwise_tukeyhsd(df[variable], df[group_variable], alpha=alpha)
-    
+
+    # Numbers come from the result object, never from summary() (#18).
+    #
+    # summary() builds a *display* table: statsmodels formats it to four
+    # decimals, so reading it truncated every value and turned a p-value small
+    # enough to print as 0.0000 into exactly 0 — the same way the output
+    # rounding in #12 did. meandiffs / pvalues / confint / reject carry the
+    # unrounded quantities.
+    #
+    # The group labels are still taken from the table, because the strings there
+    # are not rounded and the table is what fixes which pair each row is. Row
+    # k of summary() corresponds to index k-1 of the arrays, since the table is
+    # built by iterating them in order.
+    rows = result.summary().data[1:]
+
     comparisons = []
-    for i in range(len(result.summary().data) - 1):
-        row = result.summary().data[i + 1]
+    for i, row in enumerate(rows):
         comparisons.append({
-            'group1': str(row[0]),
-            'group2': str(row[1]),
-            'meanDifference': float(row[2]),
-            'pValue': float(row[3]),
-            'lowerCI': float(row[4]),
-            'upperCI': float(row[5]),
-            'reject': bool(row[6])
+            'group1': category_label(row[0]),
+            'group2': category_label(row[1]),
+            'meanDifference': float(result.meandiffs[i]),
+            'pValue': float(result.pvalues[i]),
+            'lowerCI': float(result.confint[i][0]),
+            'upperCI': float(result.confint[i][1]),
+            'reject': bool(result.reject[i])
         })
     
     return json.dumps({
