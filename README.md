@@ -691,6 +691,32 @@ npm test                             # includes the NIST comparisons
 node scripts/fetch-nist-strd.mjs     # regenerates e2e/fixtures/nist-strd.json
 ```
 
+### Cross-checked against R and SPSS
+
+NIST certifies four datasets across two procedure families, so the remaining
+procedures are checked against the two packages researchers compare their results
+to. `e2e/cross-check.browser.test.ts` runs each procedure on a dataset from R's
+`datasets` package and compares it to what R reports — to 1e-9 for the
+closed-form procedures, and to 1e-6 for logistic regression, where the bound is
+set by two solvers' convergence criteria rather than by floating point.
+
+Where this SDK and SPSS differ by *convention* rather than by correctness, the
+difference is recorded as a declared divergence rather than quietly matched. Three
+are currently open — the form of skewness and kurtosis, the centring of Levene's
+test, and continuity correction on a 2 × 2 chi-square. See
+[`docs/validation/cross-check-r-spss.md`](./docs/validation/cross-check-r-spss.md)
+for the design, the full case list, and what the comparison has found so far.
+
+```bash
+npm test                               # includes the cross-check comparisons
+npm run generate-r-reference           # needs R; regenerates the R fixture
+```
+
+SPSS has no redistributable runtime, so its reference values cannot be generated
+in CI. `scripts/spss/cross-check.sps` is run once by a licence holder and the
+output frozen into a fixture; the procedure is in
+[`docs/validation/spss-manual-run.md`](./docs/validation/spss-manual-run.md).
+
 ---
 
 ## License

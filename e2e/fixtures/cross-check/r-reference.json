@@ -1,0 +1,784 @@
+{
+  "source": "R version 4.2.2 Patched (2022-11-10 r83330)",
+  "generatedAt": "2026-10-06",
+  "generator": "scripts/generate-r-reference.R",
+  "tolerance": {
+    "relative": 1e-09
+  },
+  "cases": [
+    {
+      "id": "descriptives/USArrests/moments-g",
+      "dataset": "USArrests",
+      "procedure": "descriptives",
+      "input": {
+        "variables": [
+          "Murder",
+          "Assault",
+          "UrbanPop",
+          "Rape"
+        ]
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "statistics": [
+          {
+            "variable": "Murder",
+            "count": 50,
+            "mean": 7.788,
+            "std": 4.35550976420929,
+            "min": 0.8,
+            "max": 17.4,
+            "q25": 4.075,
+            "q50": 7.25,
+            "q75": 11.25,
+            "skewness": 0.38203784897198,
+            "kurtosis": -0.864671348958235
+          },
+          {
+            "variable": "Assault",
+            "count": 50,
+            "mean": 170.76,
+            "std": 83.3376608400171,
+            "min": 45,
+            "max": 337,
+            "q25": 109,
+            "q50": 159,
+            "q75": 249,
+            "skewness": 0.227317866591112,
+            "kurtosis": -1.06902005157308
+          },
+          {
+            "variable": "UrbanPop",
+            "count": 50,
+            "mean": 65.54,
+            "std": 14.4747634008368,
+            "min": 32,
+            "max": 91,
+            "q25": 54.5,
+            "q50": 66,
+            "q75": 77.75,
+            "skewness": -0.219171870514211,
+            "kurtosis": -0.784209745818456
+          },
+          {
+            "variable": "Rape",
+            "count": 50,
+            "mean": 21.232,
+            "std": 9.36638453105965,
+            "min": 7.3,
+            "max": 46,
+            "q25": 15.075,
+            "q50": 20.1,
+            "q75": 26.175,
+            "skewness": 0.776961320212419,
+            "kurtosis": 0.201897793084263
+          }
+        ]
+      }
+    },
+    {
+      "id": "descriptives/USArrests/moments-G-spss",
+      "dataset": "USArrests",
+      "procedure": "descriptives",
+      "input": {
+        "variables": [
+          "Murder",
+          "Assault",
+          "UrbanPop",
+          "Rape"
+        ]
+      },
+      "status": "convention-pending",
+      "note": "scipy.stats.skew/kurtosis default to bias=TRUE (g1/g2); SPSS reports the sample-adjusted G1/G2. descriptive.ts:71",
+      "tolerance": null,
+      "expected": {
+        "statistics": [
+          {
+            "variable": "Murder",
+            "count": 50,
+            "mean": 7.788,
+            "std": 4.35550976420929,
+            "min": 0.8,
+            "max": 17.4,
+            "q25": 4.075,
+            "q50": 7.25,
+            "q75": 11.25,
+            "skewness": 0.393956432447097,
+            "kurtosis": -0.827488342662513
+          },
+          {
+            "variable": "Assault",
+            "count": 50,
+            "mean": 170.76,
+            "std": 83.3376608400171,
+            "min": 45,
+            "max": 337,
+            "q25": 109,
+            "q50": 159,
+            "q75": 249,
+            "skewness": 0.234409590554175,
+            "kurtosis": -1.05384800925582
+          },
+          {
+            "variable": "UrbanPop",
+            "count": 50,
+            "mean": 65.54,
+            "std": 14.4747634008368,
+            "min": 32,
+            "max": 91,
+            "q25": 54.5,
+            "q50": 66,
+            "q75": 77.75,
+            "skewness": -0.226009460666993,
+            "kurtosis": -0.738359997695178
+          },
+          {
+            "variable": "Rape",
+            "count": 50,
+            "mean": 21.232,
+            "std": 9.36638453105965,
+            "min": 7.3,
+            "max": 46,
+            "q25": 15.075,
+            "q50": 20.1,
+            "q75": 26.175,
+            "skewness": 0.801200484936037,
+            "kurtosis": 0.353963911754244
+          }
+        ]
+      }
+    },
+    {
+      "id": "crosstabs/ToothGrowth/supp-x-dose",
+      "dataset": "ToothGrowth",
+      "procedure": "crosstabs",
+      "input": {
+        "rowVariable": "supp",
+        "colVariable": "dose"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "chiSquare": 0,
+        "degreesOfFreedom": 2,
+        "pValue": 1,
+        "cramersV": 0
+      }
+    },
+    {
+      "id": "crosstabs/mtcars/am-x-vs-pearson-spss",
+      "dataset": "mtcars",
+      "procedure": "crosstabs",
+      "input": {
+        "rowVariable": "am",
+        "colVariable": "vs"
+      },
+      "status": "convention-pending",
+      "note": "scipy.stats.chi2_contingency defaults to correction=TRUE, so a 2x2 reports Yates where SPSS reports uncorrected Pearson on the primary row. descriptive.ts:88",
+      "tolerance": null,
+      "expected": {
+        "chiSquare": 0.906882591093117,
+        "degreesOfFreedom": 1,
+        "pValue": 0.340942914274381,
+        "cramersV": 0.168345124585359
+      }
+    },
+    {
+      "id": "crosstabs/mtcars/am-x-vs-yates",
+      "dataset": "mtcars",
+      "procedure": "crosstabs",
+      "input": {
+        "rowVariable": "am",
+        "colVariable": "vs"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "chiSquare": 0.347535505430242,
+        "degreesOfFreedom": 1,
+        "pValue": 0.55551154701315,
+        "cramersV": 0.104213648552841
+      }
+    },
+    {
+      "id": "crosstabs/ToothGrowth/supp-x-dose-labels",
+      "dataset": "ToothGrowth",
+      "procedure": "crosstabs",
+      "input": {
+        "rowVariable": "supp",
+        "colVariable": "dose"
+      },
+      "status": "known-defect",
+      "note": "numeric categories are labelled '1.0' where R and SPSS label them '1'; crosstab row/column headers only",
+      "tolerance": null,
+      "expected": {
+        "rowLabels": [
+          "OJ",
+          "VC"
+        ],
+        "colLabels": [
+          "0.5",
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "id": "crosstabs/mtcars/am-x-vs-labels",
+      "dataset": "mtcars",
+      "procedure": "crosstabs",
+      "input": {
+        "rowVariable": "am",
+        "colVariable": "vs"
+      },
+      "status": "known-defect",
+      "note": "numeric categories are labelled '0.0'/'1.0' where R and SPSS label them '0'/'1'",
+      "tolerance": null,
+      "expected": {
+        "rowLabels": [
+          "0",
+          "1"
+        ],
+        "colLabels": [
+          "0",
+          "1"
+        ]
+      }
+    },
+    {
+      "id": "ttest-independent/ToothGrowth/len-by-supp",
+      "dataset": "ToothGrowth",
+      "procedure": "ttestIndependent",
+      "input": {
+        "variable": "len",
+        "groupVariable": "supp",
+        "group1Value": "OJ",
+        "group2Value": "VC"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "leveneTest": {
+          "statistic": 1.21357206569451,
+          "pValue": 0.275176461614407
+        },
+        "equalVariance": {
+          "tStatistic": 1.91526826869527,
+          "degreesOfFreedom": 58,
+          "pValue": 0.0603933712241287,
+          "meanDifference": 3.7,
+          "confidenceInterval": [
+            -0.167006420141225,
+            7.56700642014122
+          ],
+          "group1Mean": 20.6633333333333,
+          "group1Std": 6.60556104972236,
+          "group1N": 30,
+          "group2Mean": 16.9633333333333,
+          "group2Std": 8.26602866466464,
+          "group2N": 30
+        },
+        "unequalVariance": {
+          "tStatistic": 1.91526826869527,
+          "degreesOfFreedom": 55.3094326826406,
+          "pValue": 0.0606345078809341,
+          "meanDifference": 3.7,
+          "confidenceInterval": [
+            -0.171015618367165,
+            7.57101561836716
+          ],
+          "group1Mean": 20.6633333333333,
+          "group1Std": 6.60556104972236,
+          "group1N": 30,
+          "group2Mean": 16.9633333333333,
+          "group2Std": 8.26602866466464,
+          "group2N": 30
+        }
+      }
+    },
+    {
+      "id": "ttest-independent/ToothGrowth/levene-mean-spss",
+      "dataset": "ToothGrowth",
+      "procedure": "ttestIndependent",
+      "input": {
+        "variable": "len",
+        "groupVariable": "supp",
+        "group1Value": "OJ",
+        "group2Value": "VC"
+      },
+      "status": "convention-pending",
+      "note": "scipy.stats.levene defaults to center='median' (Brown-Forsythe); SPSS T-TEST centres on the mean. compare-means.ts:32",
+      "tolerance": null,
+      "expected": {
+        "leveneTest": {
+          "statistic": 1.09733432308867,
+          "pValue": 0.299197664000311
+        }
+      }
+    },
+    {
+      "id": "ttest-independent/mtcars/hp-by-vs",
+      "dataset": "mtcars",
+      "procedure": "ttestIndependent",
+      "input": {
+        "variable": "hp",
+        "groupVariable": "vs",
+        "group1Value": 0,
+        "group2Value": 1
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "leveneTest": {
+          "statistic": 4.0736153369773,
+          "pValue": 0.0525764747994312,
+          "equalVariance": true
+        },
+        "equalVariance": {
+          "tStatistic": 5.73374220653406,
+          "degreesOfFreedom": 30,
+          "pValue": 2.94089589750053e-06,
+          "meanDifference": 98.3650793650794,
+          "confidenceInterval": [
+            63.3289223470226,
+            133.401236383136
+          ],
+          "group1Mean": 189.722222222222,
+          "group1Std": 60.2815019481448,
+          "group1N": 18,
+          "group2Mean": 91.3571428571429,
+          "group2Std": 24.4244743045771,
+          "group2N": 14
+        },
+        "unequalVariance": {
+          "tStatistic": 6.29083779393711,
+          "degreesOfFreedom": 23.5611103938959,
+          "pValue": 1.81980597317305e-06,
+          "meanDifference": 98.3650793650794,
+          "confidenceInterval": [
+            66.0616145357503,
+            130.668544194408
+          ],
+          "group1Mean": 189.722222222222,
+          "group1Std": 60.2815019481448,
+          "group1N": 18,
+          "group2Mean": 91.3571428571429,
+          "group2Std": 24.4244743045771,
+          "group2N": 14
+        }
+      }
+    },
+    {
+      "id": "ttest-independent/mtcars/hp-by-vs-levene-mean-spss",
+      "dataset": "mtcars",
+      "procedure": "ttestIndependent",
+      "input": {
+        "variable": "hp",
+        "groupVariable": "vs",
+        "group1Value": 0,
+        "group2Value": 1
+      },
+      "status": "convention-pending",
+      "note": "Same centre question as above, but here it changes the reported result: median-centred Levene keeps the equal-variance t-test, mean-centred (SPSS) rejects it. compare-means.ts:32-33",
+      "tolerance": null,
+      "expected": {
+        "leveneTest": {
+          "statistic": 5.61891069065789,
+          "pValue": 0.0243926782312399,
+          "equalVariance": false
+        }
+      }
+    },
+    {
+      "id": "ttest-paired/sleep/drug1-vs-drug2",
+      "dataset": "sleep",
+      "procedure": "ttestPaired",
+      "input": {
+        "variable1": "drug1",
+        "variable2": "drug2"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "tStatistic": -4.06212768338204,
+        "degreesOfFreedom": 9,
+        "pValue": 0.00283289019738427,
+        "meanDifference": -1.58,
+        "stdDifference": 1.22999548327987,
+        "confidenceInterval": [
+          -2.45988576327698,
+          -0.700114236723018
+        ],
+        "mean1": 0.75,
+        "mean2": 2.33,
+        "n": 10
+      }
+    },
+    {
+      "id": "anova-oneway/iris/SepalLength-by-Species",
+      "dataset": "iris",
+      "procedure": "anovaOneway",
+      "input": {
+        "variable": "Sepal.Length",
+        "groupVariable": "Species"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "fStatistic": 119.264502184505,
+        "pValue": 1.6696691907694e-31,
+        "degreesOfFreedomBetween": 2,
+        "degreesOfFreedomWithin": 147,
+        "sumOfSquaresBetween": 63.2121333333333,
+        "sumOfSquaresWithin": 38.9562,
+        "meanSquareBetween": 31.6060666666667,
+        "meanSquareWithin": 0.265008163265306,
+        "etaSquared": 0.618705730738487,
+        "groupStats": [
+          {
+            "group": "setosa",
+            "n": 50,
+            "mean": 5.006,
+            "std": 0.352489687213451
+          },
+          {
+            "group": "versicolor",
+            "n": 50,
+            "mean": 5.936,
+            "std": 0.516171147063863
+          },
+          {
+            "group": "virginica",
+            "n": 50,
+            "mean": 6.588,
+            "std": 0.635879593274432
+          }
+        ]
+      }
+    },
+    {
+      "id": "posthoc-tukey/iris/SepalLength-by-Species",
+      "dataset": "iris",
+      "procedure": "posthocTukey",
+      "input": {
+        "variable": "Sepal.Length",
+        "groupVariable": "Species",
+        "alpha": 0.05
+      },
+      "status": "known-defect",
+      "note": "posthocTukey reads statsmodels' summary() display table, which is formatted to 4 decimals, so every value is truncated. Same class as #12. compare-means.ts:199-206",
+      "tolerance": null,
+      "expected": {
+        "comparisons": [
+          {
+            "group1": "setosa",
+            "group2": "versicolor",
+            "meanDifference": 0.93,
+            "lowerCI": 0.686227294142111,
+            "upperCI": 1.17377270585789,
+            "pValue": 3.38618022510673e-14
+          },
+          {
+            "group1": "setosa",
+            "group2": "virginica",
+            "meanDifference": 1.582,
+            "lowerCI": 1.33822729414211,
+            "upperCI": 1.82577270585789,
+            "pValue": 2.99760216648792e-15
+          },
+          {
+            "group1": "versicolor",
+            "group2": "virginica",
+            "meanDifference": 0.652,
+            "lowerCI": 0.408227294142112,
+            "upperCI": 0.895772705857888,
+            "pValue": 8.28755752912969e-09
+          }
+        ]
+      }
+    },
+    {
+      "id": "linear-regression/mtcars/mpg~wt+hp+disp",
+      "dataset": "mtcars",
+      "procedure": "linearRegression",
+      "input": {
+        "dependentVariable": "mpg",
+        "independentVariables": [
+          "wt",
+          "hp",
+          "disp"
+        ],
+        "method": "enter"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "rSquared": 0.826836142494644,
+        "adjustedRSquared": 0.808282872047642,
+        "residualStdError": 2.63893021290661,
+        "fStatistic": 44.5655198557317,
+        "fPValue": 8.64958771495696e-11,
+        "observations": 32,
+        "degreesOfFreedom": 28,
+        "durbinWatson": 1.36728396735159,
+        "coefficients": [
+          {
+            "variable": "const",
+            "coefficient": 37.1055052690318,
+            "stdError": 2.11081524549878,
+            "tStatistic": 17.5787555770964,
+            "pValue": 1.16193589746734e-16,
+            "confidenceInterval": [
+              32.7816962451418,
+              41.4293142929218
+            ]
+          },
+          {
+            "variable": "wt",
+            "coefficient": -3.80089058263761,
+            "stdError": 1.06619063911051,
+            "tStatistic": -3.56492586148437,
+            "pValue": 0.00133099111355844,
+            "confidenceInterval": [
+              -5.98488310230683,
+              -1.6168980629684
+            ]
+          },
+          {
+            "variable": "hp",
+            "coefficient": -0.0311565508299456,
+            "stdError": 0.0114357942956644,
+            "tStatistic": -2.72447632621006,
+            "pValue": 0.0109710322513616,
+            "confidenceInterval": [
+              -0.0545817135372857,
+              -0.00773138812260538
+            ]
+          },
+          {
+            "variable": "disp",
+            "coefficient": -0.00093700908148966,
+            "stdError": 0.0103497448576593,
+            "tStatistic": -0.0905345102102904,
+            "pValue": 0.928507029485254,
+            "confidenceInterval": [
+              -0.0221375003636777,
+              0.0202634822006983
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "linear-regression/mtcars/mpg~wt+hp+disp-default-method",
+      "dataset": "mtcars",
+      "procedure": "linearRegression",
+      "input": {
+        "dependentVariable": "mpg",
+        "independentVariables": [
+          "wt",
+          "hp",
+          "disp"
+        ]
+      },
+      "status": "known-defect",
+      "note": "#13 - linearRegression defaults to stepwise and drops requested predictors",
+      "tolerance": null,
+      "expected": {
+        "coefficients": [
+          {
+            "variable": "const",
+            "coefficient": 37.1055052690318,
+            "stdError": 2.11081524549878
+          },
+          {
+            "variable": "wt",
+            "coefficient": -3.80089058263761,
+            "stdError": 1.06619063911051
+          },
+          {
+            "variable": "hp",
+            "coefficient": -0.0311565508299456,
+            "stdError": 0.0114357942956644
+          },
+          {
+            "variable": "disp",
+            "coefficient": -0.00093700908148966,
+            "stdError": 0.0103497448576593
+          }
+        ]
+      }
+    },
+    {
+      "id": "logistic-binary/mtcars/am~wt+hp",
+      "dataset": "mtcars",
+      "procedure": "logisticBinary",
+      "input": {
+        "dependentVariable": "am",
+        "independentVariables": [
+          "wt",
+          "hp"
+        ]
+      },
+      "status": "check",
+      "note": "pseudoRSquared is McFadden's (statsmodels prsquared). SPSS prints Cox & Snell 0.645335 and Nagelkerke 0.870897 instead.",
+      "tolerance": {
+        "relative": 1e-06
+      },
+      "expected": {
+        "logLikelihood": -5.02955523613349,
+        "aic": 16.059110472267,
+        "bic": 20.4563181806662,
+        "observations": 32,
+        "pseudoRSquared": 0.767310373907582,
+        "llrPValue": 6.26744854783836e-08,
+        "coefficients": [
+          {
+            "variable": "const",
+            "coefficient": 18.8662987172041,
+            "stdError": 7.44355806020527,
+            "zStatistic": 2.5345807159169,
+            "pValue": 0.0112581987166137,
+            "oddsRatio": 156145483.50632,
+            "confidenceInterval": [
+              4.27719300236893,
+              33.4554044320393
+            ]
+          },
+          {
+            "variable": "wt",
+            "coefficient": -8.08347518244463,
+            "stdError": 3.0686751130547,
+            "zStatistic": -2.63419061472362,
+            "pValue": 0.00843381259970702,
+            "oddsRatio": 0.000308596739840476,
+            "confidenceInterval": [
+              -14.0979678842862,
+              -2.06898248060305
+            ]
+          },
+          {
+            "variable": "hp",
+            "coefficient": 0.0362555960822165,
+            "stdError": 0.0177341536507693,
+            "zStatistic": 2.0443939302761,
+            "pValue": 0.0409146464590299,
+            "oddsRatio": 1.03692084552881,
+            "confidenceInterval": [
+              0.00149729363040912,
+              0.071013898534024
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "cronbach-alpha/attitude/all-items",
+      "dataset": "attitude",
+      "procedure": "cronbachAlpha",
+      "input": {
+        "items": [
+          "rating",
+          "complaints",
+          "privileges",
+          "learning",
+          "raises",
+          "critical",
+          "advance"
+        ]
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": null,
+      "expected": {
+        "alpha": 0.84314276956476,
+        "standardizedAlpha": 0.83908380302951,
+        "interItemCorrelationMean": 0.426906642649717,
+        "nItems": 7,
+        "nObservations": 30,
+        "scaleStatistics": {
+          "nItems": 7,
+          "mean": 423.066666666667,
+          "std": 57.7485233925768,
+          "minimum": 297,
+          "maximum": 518
+        },
+        "itemAnalysis": [
+          {
+            "item": "rating",
+            "itemMean": 64.6333333333333,
+            "itemStd": 12.1725619475859,
+            "scaleMeanIfItemDeleted": 358.433333333333,
+            "scaleStdIfItemDeleted": 48.8683547088913,
+            "correctedItemTotalCorrelation": 0.671262057223664,
+            "alphaIfItemDeleted": 0.809760206308921
+          },
+          {
+            "item": "complaints",
+            "itemMean": 66.6,
+            "itemStd": 13.3147571746799,
+            "scaleMeanIfItemDeleted": 356.466666666667,
+            "scaleStdIfItemDeleted": 47.1737312446263,
+            "correctedItemTotalCorrelation": 0.742109710222239,
+            "alphaIfItemDeleted": 0.79691745727414
+          },
+          {
+            "item": "privileges",
+            "itemMean": 53.1333333333333,
+            "itemStd": 12.2354299935244,
+            "scaleMeanIfItemDeleted": 369.933333333333,
+            "scaleStdIfItemDeleted": 49.9923672335007,
+            "correctedItemTotalCorrelation": 0.560711111480256,
+            "alphaIfItemDeleted": 0.827847765938659
+          },
+          {
+            "item": "learning",
+            "itemMean": 56.3666666666667,
+            "itemStd": 11.7370128765529,
+            "scaleMeanIfItemDeleted": 366.7,
+            "scaleStdIfItemDeleted": 48.7761600897759,
+            "correctedItemTotalCorrelation": 0.714445498133676,
+            "alphaIfItemDeleted": 0.803030975022574
+          },
+          {
+            "item": "raises",
+            "itemMean": 64.6333333333333,
+            "itemStd": 10.3972255361983,
+            "scaleMeanIfItemDeleted": 358.433333333333,
+            "scaleStdIfItemDeleted": 49.2149986483188,
+            "correctedItemTotalCorrelation": 0.7862755938344,
+            "alphaIfItemDeleted": 0.795386574198205
+          },
+          {
+            "item": "critical",
+            "itemMean": 74.7666666666667,
+            "itemStd": 9.89490754895157,
+            "scaleMeanIfItemDeleted": 348.3,
+            "scaleStdIfItemDeleted": 54.3324060283325,
+            "correctedItemTotalCorrelation": 0.265034339196676,
+            "alphaIfItemDeleted": 0.863872311446437
+          },
+          {
+            "item": "advance",
+            "itemMean": 42.9333333333333,
+            "itemStd": 10.2887060053424,
+            "scaleMeanIfItemDeleted": 380.133333333333,
+            "scaleStdIfItemDeleted": 52.2808947324258,
+            "correctedItemTotalCorrelation": 0.460810549468496,
+            "alphaIfItemDeleted": 0.840464868265457
+          }
+        ]
+      }
+    }
+  ]
+}
+

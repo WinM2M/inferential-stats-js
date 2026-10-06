@@ -58,6 +58,8 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "generate-data": "node scripts/generate-mock-data.js",
+    "export-cross-check-data": "Rscript scripts/export-cross-check-data.R",
+    "generate-r-reference": "Rscript scripts/generate-r-reference.R",
     "pretest": "npm run build",
     "test": "vitest",
     "test:unit": "vitest run --config vitest.unit.config.ts",
