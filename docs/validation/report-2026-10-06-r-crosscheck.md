@@ -1,232 +1,281 @@
-# R 교차검증 1차 실행 보고서
+# First R cross-check run
 
-2026-10-06 · 대상 `@winm2m/inferential-stats-js` v1.9.0 · 참조 R 4.2.2 Patched
-브랜치 `test/cross-check-r-spss`
+2026-10-06 · `@winm2m/inferential-stats-js` v1.9.0 · reference R 4.2.2 Patched
+branch `test/cross-check-r-spss`
 
-이 문서는 **무엇을 어떻게 돌려서 무엇을 알아냈는지의 기록**이다. 설계 근거와
-앞으로의 계획은 [`cross-check-r-spss.md`](./cross-check-r-spss.md), SPSS 실행 절차는
-[`spss-manual-run.md`](./spss-manual-run.md) 에 있다.
+This is the record of what was run and what it found. The design and the plan
+are in [`cross-check-r-spss.md`](./cross-check-r-spss.md); the SPSS procedure is
+in [`spss-manual-run.md`](./spss-manual-run.md).
 
 ---
 
-## 1. 왜 했나
+## 1. Why
 
-이 라이브러리는 브라우저 안에서 Pyodide 로 scipy·statsmodels·scikit-learn 을 돌린다.
-기존 검증은 두 층이었다.
+This library runs scipy, statsmodels and scikit-learn inside Pyodide, in a
+browser worker. Validation before this work had two layers:
 
-| 층 | 내용 | 덮는 범위 |
+| Layer | What it asserts | Coverage |
 | :--- | :--- | :--- |
-| 단위 98건 + 브라우저 e2e 2건 | 분석이 **돌아가는지**, 결과 모양이 맞는지 | 17개 공개 메서드 전부 |
-| NIST StRD 인증값 4건 | 결과가 **맞는지** | `linearRegression`, `anovaOneway` 2개 |
+| 98 unit + 2 browser e2e tests | that an analysis **runs** and its result has the right shape | all 17 public methods |
+| 4 NIST StRD cases | that the result is **right** | `linearRegression`, `anovaOneway` |
 
-NIST 가 인증하는 절차는 네 가족뿐이다. 그래서 **열다섯 개 메서드는 "오류 없이 숫자를
-돌려준다"까지만 보증**된 상태였다. 틀린 숫자도 모양은 맞다.
+NIST certifies four dataset families. Fifteen of the seventeen methods were
+therefore guaranteed only to return numbers without raising — and a wrong number
+has the right shape.
 
-연구자가 실제로 결과를 맞춰 보는 대상은 R 과 SPSS 다. 그 둘에 같은 데이터를 걸어
-비교하는 것이 이 작업이다.
+The packages researchers actually reconcile their output against are R and SPSS.
+Running the same data through them is what this work does.
 
 ---
 
-## 2. 전체 구조
+## 2. Shape of the thing
 
 ```mermaid
 flowchart LR
-    subgraph gen["참조값 생성 (사람·개발자가 1회)"]
-        RD["R datasets 패키지<br/>iris · mtcars · attitude<br/>USArrests · ToothGrowth · sleep"]
-        EX["export-cross-check-data.R"]
-        CSV[("CSV 6개<br/>17자리 정밀도")]
+    subgraph gen["Reference generation — once, by a person"]
+        PUB["Official archives<br/>UCI ML Repository<br/>NIST StRD"]
+        FETCH["fetch-cross-check-data.mjs<br/>download · SHA-256 pin · normalise"]
+        CSV[("data/*.csv<br/>+ provenance.json")]
         GR["generate-r-reference.R"]
         SPS["spss/cross-check.sps"]
-        RD --> EX --> CSV
-        CSV --> GR --> RJ[("r-reference.json<br/>18 사례")]
-        CSV --> SPS --> OX[("OXML 출력")] --> SJ[("spss-reference.json<br/>미생성")]
+        PUB --> FETCH --> CSV
+        CSV --> GR --> RJ[("r-reference.json<br/>18 cases")]
+        CSV --> SPS --> OX[("OXML output")] --> SJ[("spss-reference.json<br/>not yet produced")]
     end
 
-    subgraph run["테스트 실행 (CI·개발자 매번)"]
+    subgraph run["Test execution — every CI run"]
         T["cross-check.browser.test.ts"]
-        SDK["InferentialStats<br/>(Chromium + Pyodide)"]
+        SDK["InferentialStats<br/>Chromium + Pyodide"]
         CSV --> T
         RJ --> T
         SJ -.-> T
-        T --> SDK --> CMP{"항목별 비교"}
+        T --> SDK --> CMP{"field-by-field<br/>comparison"}
     end
 
-    CMP --> OK["일치"]
-    CMP --> NG["불일치"]
+    CMP --> OK["agrees"]
+    CMP --> NG["diverges"]
 
     style SJ stroke-dasharray: 4 4
     style OX stroke-dasharray: 4 4
 ```
 
-**핵심은 세 소비자가 같은 CSV 바이트를 읽는다는 점이다.** R 의 메모리 안 데이터셋을
-직접 쓰지 않고 일부러 CSV 로 내보낸 뒤 그것을 R 이 다시 읽는다. 그러지 않으면
-"반올림이 다른 두 사본"을 비교하게 되어, 차이가 나왔을 때 입력 때문인지 계산 때문인지
-가릴 수 없다.
+Two properties matter.
 
-**참조값은 커밋한다.** 테스트를 돌릴 때는 R 도 SPSS 도 필요 없다. NIST 픽스처와 같은
-방식이다 — CI 에 통계 툴체인이 들어가지 않는다.
+**All three consumers read the same bytes.** The data is downloaded once,
+normalised to CSV, committed, and then read from those files by this SDK, by R
+and by SPSS. Nobody reads their own package's copy of the data — see §3 for the
+concrete reason that is not pedantry.
+
+**The reference values are committed.** Running the suite needs neither R nor
+SPSS nor a network connection, which is the arrangement `nist-strd.json` already
+uses. R is needed only to regenerate a fixture.
 
 ---
 
-## 3. 데이터 — 무엇을 마련했나
+## 3. Data
 
-R 의 `datasets` 패키지에서 여섯 개를 골랐다. 조건은 셋이었다.
+Three requirements: retrievable from the archive that publishes it, identical for
+all three packages, and small enough to read in a diff.
 
-1. **재배포 가능** — GPL-2 로 R 과 함께 배포되고, 누구의 표본도 아닌 공표된 표다.
-2. **R·SPSS 양쪽에서 동일** — 양쪽이 같은 숫자를 본다는 것 자체가 전제다.
-3. **diff 로 읽을 만큼 작다** — 변경이 일어나면 눈에 보여야 한다.
+The first rules out a statistics package's bundled copy, and the reason is
+concrete rather than theoretical. UCI's `iris.data` carries two transcription
+errors against Fisher's 1936 table. UCI's own `iris.names` documents them:
 
-| 데이터셋 | 크기 | 성격 | 쓰인 절차 |
+```
+The 35th sample should be: 4.9,3.1,1.5,0.2,"Iris-setosa"
+where the error is in the fourth feature.
+The 38th sample: 4.9,3.6,1.4,0.1,"Iris-setosa"
+where the errors are in the second and third features.
+```
+
+R's built-in `iris` follows the paper. Neither copy is corrupt — they are
+different tables. A reference generated from `datasets::iris` and compared
+against a downloaded `iris.data` would be comparing two datasets and reporting
+the difference as a numerical error. **The file is used exactly as published,
+errors included, because the reference values are computed from that same file.**
+
+`scripts/fetch-cross-check-data.mjs` downloads each dataset, verifies it against
+a pinned SHA-256, normalises it to a CSV with a header row, and writes
+`provenance.json` recording the URL, digest, retrieval date and citation.
+
+| Dataset | Source | Shape | Carried for |
 | :--- | :--- | :--- | :--- |
-| `iris` | 150 × 5 | 3집단 연속형 | 일원 ANOVA, Tukey HSD |
-| `ToothGrowth` | 60 × 3 | 2 × 3 설계 | 독립표본 t, 교차표(2×3) |
-| `sleep` | 10 × 3 (wide 변환) | 대응 설계 | 대응표본 t |
-| `mtcars` | 32 × 12 | 연속형 + 이분형 `am`·`vs` | 선형회귀, 이진 로지스틱, 교차표(2×2) |
-| `attitude` | 30 × 7 | 리커트형 7문항 | Cronbach α |
-| `USArrests` | 50 × 5 | 연속형 4변수 | 기술통계 |
+| Iris | [UCI 53](https://archive.ics.uci.edu/dataset/53/iris) — Fisher (1936) | 150 × 5 | three balanced groups: ANOVA, Tukey, descriptives |
+| Auto MPG | [UCI 9](https://archive.ics.uci.edu/dataset/9/auto+mpg) — Quinlan (1993), StatLib/CMU | 398 × 9 | multiple regression; **6 missing values**; two discrete attributes for a 3 × 5 table |
+| Wine | [UCI 109](https://archive.ics.uci.edu/dataset/109/wine) — Aeberhard et al. (1992) | 178 × 14 | the **only** dataset here where the two Levene conventions straddle .05 |
+| Haberman's Survival | [UCI 43](https://archive.ics.uci.edu/dataset/43/haberman+s+survival) — Haberman (1976) | 306 × 4 | an outcome coded **1/2**, as registry and survey data arrive |
+| Breast Cancer Wisconsin (Original) | [UCI 15](https://archive.ics.uci.edu/dataset/15/breast+cancer+wisconsin+original) — Wolberg & Mangasarian (1990) | 699 × 11 | nine attributes graded 1–10 on one scale: a commensurable item set; 16 missing |
+| SPECT Heart (training split) | [UCI 95](https://archive.ics.uci.edu/dataset/95/spect+heart) — Kurgan et al. (2001) | 80 × 23 | **all 23 attributes binary**: a native 2 × 2 table with nothing binned or filtered |
 
-`sleep` 은 원래 long 형태(관측 1건 1행)인데, `ttestPaired` 와 SPSS `T-TEST PAIRS`,
-R `t.test(paired=TRUE)` 는 모두 한 쌍이 한 행에 있어야 한다. 그래서 export 단계에서
-wide 로 돌려 한 곳에서만 처리한다.
+Total 63 KB. Each is carried for a property no substitute had:
 
-SPSS 자체 샘플 파일(`Employee data.sav` 등)은 **쓰지 않았다.** SPSS 설치본에
-라이선스된 파일이라 이 저장소에 커밋할 수 없다.
+- **Auto MPG**'s 6 missing `horsepower` values are kept as empty CSV fields, so
+  listwise deletion is compared rather than hidden — `lm`, SPSS
+  `/MISSING=LISTWISE` and the Python layer must all reach n = 392.
+- **Wine** supplies the one place in these six datasets where mean-centred and
+  median-centred Levene fall on opposite sides of .05, which is what makes that
+  convention observable in a reported result rather than only in an auxiliary
+  number (§6.4).
+- **SPECT Heart** is used as its published training split rather than recombined
+  with the test split, because a recombined file would be a dataset nobody
+  publishes.
+
+SPSS's own sample files (`Employee data.sav` and the rest) are deliberately not
+used: they are licensed to SPSS installations and cannot be committed here.
 
 ---
 
-## 4. 판정 체계 — 차이를 세 갈래로 가른다
+## 4. How a difference is classified
 
-이것이 설계의 핵이다. "SPSS 와 숫자가 다르다"는 사실만으로는 아무것도 고칠 수 없다.
+This is the core of the design. "The number differs from SPSS" is not actionable
+on its own.
 
 ```mermaid
 flowchart TD
-    D{"R/SPSS 와 값이 다르다"} --> Q1{"우리가 그 양을<br/>잘못 계산했나?"}
-    Q1 -->|예| DEF["<b>결함</b><br/>고친다"]
-    Q1 -->|아니오| Q2{"두 패키지가 같은 이름으로<br/>다른 통계량을 쓰나?"}
-    Q2 -->|예| CNV["<b>규약차</b><br/>어느 쪽을 따를지 결정하고<br/>README 에 계약으로 명시"]
-    Q2 -->|아니오| Q3{"부호·순서·회전이<br/>원래 불확정인가?"}
-    Q3 -->|예| IND["<b>불확정</b><br/>값이 아니라 불변량을 비교"]
-    Q3 -->|아니오| REC["재측정"]
+    D{"value differs from<br/>R or SPSS"} --> Q1{"did we compute<br/>the quantity wrongly?"}
+    Q1 -->|yes| DEF["<b>defect</b><br/>fix it"]
+    Q1 -->|no| Q2{"do the packages use one name<br/>for two different statistics?"}
+    Q2 -->|yes| CNV["<b>convention</b><br/>decide which one to follow,<br/>state it in the README"]
+    Q2 -->|no| Q3{"is sign / order / rotation<br/>indeterminate by nature?"}
+    Q3 -->|yes| IND["<b>indeterminacy</b><br/>compare an invariant,<br/>not the value"]
+    Q3 -->|no| REC["measure again"]
 
     DEF --> S1["status: known-defect"]
     CNV --> S2["status: convention-pending"]
-    S1 --> F["it.fails 로 고정"]
+    S1 --> F["runs as it.fails"]
     S2 --> F
-    F --> G["차이가 열려 있는 동안 스위트는 초록.<br/>조용히 고쳐지거나 나빠지면 빨강."]
+    F --> G["green while the divergence is open and documented;<br/>red the moment it is silently fixed or silently worsened"]
 ```
 
-`it.fails` 는 NIST 테스트가 Longley 에 쓰는 장치를 그대로 가져온 것이다. 톨러런스를
-풀어 차이를 흡수하지 않는다 — **차이를 실행 가능한 증거로 남긴다.** 결함이 고쳐지면
-그 테스트가 빨개지고, 그때 status 를 바꾸는 것이 수정의 일부가 된다.
+`it.fails` is the device `nist-strd.browser.test.ts` already uses for Longley.
+A tolerance is never loosened to absorb a difference — **the difference is kept as
+executable evidence.** When a defect is fixed, its test turns red, and changing
+the status is part of the fix.
 
-### 주장 하나당 사례 하나
+### One case per claim
 
-`crosstabs` 는 카이제곱은 맞게 계산하면서 범주 이름을 틀리게 붙인다. 둘을 한 사례에
-묶으면 `it.fails` 하나가 양쪽을 덮어, 나중에 카이제곱이 틀어져도 "여전히 실패 중"으로
-보고된다. 그래서 통계량 사례와 라벨 사례를 따로 두었다.
+`crosstabs` computes the chi-square correctly and labels its categories
+incorrectly. Folding both into one case would put a single `it.fails` over them,
+and a chi-square that later drifted would be reported as "still failing" rather
+than as a new failure. The statistics and the labels are therefore separate
+cases.
 
 ---
 
-## 5. 무엇을 어디에 돌렸나
+## 5. What was run where
 
-**18개 사례**(픽스처 자체 점검 1건을 더해 테스트 19건). `check` 는 일치해야 하는 것,
-나머지는 차이가 선언된 것이다.
+**18 cases** (plus one fixture self-check, so 19 tests).
 
-| # | 사례 | 데이터 | SDK 메서드 | R 참조 | 비교 항목 | status |
+| # | Case | Data | SDK method | R reference | Compared | Status |
 | :-- | :--- | :--- | :--- | :--- | --: | :--- |
-| 1 | 기술통계 (g1/g2) | USArrests | `descriptives` | `e1071::skewness(type=1)`, `quantile(type=7)`, `sd` | 40 | check |
-| 2 | 기술통계 (G1/G2) | USArrests | `descriptives` | `e1071::skewness(type=2)` | 40 | **convention** |
-| 3 | 교차표 2×3 | ToothGrowth | `crosstabs` | `chisq.test(correct=FALSE)` | 4 | check |
-| 4 | 교차표 2×2 Pearson | mtcars | `crosstabs` | `chisq.test(correct=FALSE)` | 4 | **convention** |
-| 5 | 교차표 2×2 Yates | mtcars | `crosstabs` | `chisq.test(correct=TRUE)` | 4 | check |
-| 6 | 교차표 범주 라벨 | ToothGrowth | `crosstabs` | `rownames/colnames(table(...))` | 라벨 5 | **defect** |
-| 7 | 교차표 범주 라벨 | mtcars | `crosstabs` | `rownames/colnames` | 라벨 4 | **defect** |
-| 8 | 독립 t + Levene(중앙값) | ToothGrowth | `ttestIndependent` | `t.test`, `car::leveneTest(center=median)` | 26 | check |
-| 9 | Levene(평균) | ToothGrowth | `ttestIndependent` | `car::leveneTest(center=mean)` | 2 | **convention** |
-| 10 | 독립 t + Levene(중앙값) | mtcars | `ttestIndependent` | 같음 | 26 | check |
-| 11 | Levene(평균) — 판정 역전 | mtcars | `ttestIndependent` | 같음 | 2 + 판정 1 | **convention** |
-| 12 | 대응 t | sleep | `ttestPaired` | `t.test(paired=TRUE)` | 10 | check |
-| 13 | 일원 ANOVA | iris | `anovaOneway` | `aov` + `summary` | 18 | check |
-| 14 | Tukey HSD | iris | `posthocTukey` | `TukeyHSD` | 12 | **defect** |
-| 15 | 선형회귀 (`method:'enter'`) | mtcars | `linearRegression` | `lm`, `confint`, `car::durbinWatsonTest` | 32 | check |
-| 16 | 선형회귀 (method 미지정) | mtcars | `linearRegression` | 같음 | 6 + 결측 3 | **defect #13** |
-| 17 | 이진 로지스틱 | mtcars | `logisticBinary` | `glm(binomial)`, `confint.default` | 27 | check |
-| 18 | Cronbach α | attitude | `cronbachAlpha` | 공식 직접 구현 + `cor` | 52 | check |
+| 1 | descriptives, g1/g2 | iris | `descriptives` | `e1071::skewness(type=1)`, `quantile(type=7)`, `sd` | 40 | check |
+| 2 | descriptives, G1/G2 | iris | `descriptives` | `e1071::skewness(type=2)` | 40 | **convention** |
+| 3 | crosstabs 3 × 5 | auto-mpg | `crosstabs` | `chisq.test(correct=FALSE)` | 4 | check |
+| 4 | crosstabs 2 × 2, Pearson | spect | `crosstabs` | `chisq.test(correct=FALSE)` | 4 | **convention** |
+| 5 | crosstabs 2 × 2, Yates | spect | `crosstabs` | `chisq.test(correct=TRUE)` | 4 | check |
+| 6 | category labels | auto-mpg | `crosstabs` | `rownames/colnames(table())` | 8 labels | **defect** |
+| 7 | category labels | spect | `crosstabs` | same | 4 labels | **defect** |
+| 8 | independent t + Levene | haberman | `ttestIndependent` | `t.test`, `car::leveneTest(center=median)` | 26 | check |
+| 9 | independent t + Levene | wine | `ttestIndependent` | same | 26 | check |
+| 10 | Levene, mean-centred | wine | `ttestIndependent` | `car::leveneTest(center=mean)` | 2 + 1 flag | **convention** |
+| 11 | paired t | bcw | `ttestPaired` | `t.test(paired=TRUE)` | 10 | check |
+| 12 | one-way ANOVA | iris | `anovaOneway` | `aov` + `summary` | 18 | check |
+| 13 | Tukey HSD | iris | `posthocTukey` | `TukeyHSD` | 12 | **defect** |
+| 14 | regression, `method:'enter'` | auto-mpg | `linearRegression` | `lm`, `confint`, `car::durbinWatsonTest` | 32 | check |
+| 15 | regression, default method | auto-mpg | `linearRegression` | same | 6 + 3 absent | **defect #13** |
+| 16 | binary logistic, 0/1 outcome | spect | `logisticBinary` | `glm(binomial)`, `confint.default` | 27 | check |
+| 17 | binary logistic, 1/2 outcome | haberman | `logisticBinary` | `glm(factor(y) ~ .)` | call fails | **defect** |
+| 18 | Cronbach's alpha | bcw | `cronbachAlpha` | formula + `cor` | 67 | check |
 
-비교 항목은 **잎 단위로 센 것**이다. 예컨대 15번은 계수 4개 × (계수·표준오차·t·p·CI
-하한·CI 상한) + 모형요약 8개 = 32개 숫자를 각각 대조한다. 합계 **수치 305개 + 문자열
-라벨 10개**를 항목별로 맞춰 봤다. 6·7번은 라벨만 보므로 수치 비교가 0이다.
+"Compared" counts **leaf values**. Case 14, for instance, matches 4 coefficients
+× (estimate, standard error, t, p, lower bound, upper bound) plus 8 model-summary
+fields = 32 numbers individually. In total **318 numeric quantities and 16
+category labels** were matched.
 
-### 비교 방식 — 위치가 아니라 신원으로 맞춘다
+### Matching by identity, not by position
 
-R 은 Tukey 대비를 `"virginica-setosa"` 로 적고 statsmodels 는 쌍의 순서를 다르게
-잡는다. 둘 다 맞다. 그래서 배열을 인덱스로 비교하지 않고 식별 키(`group1`+`group2`,
-`variable`, `item`, `group`)로 짝지은 뒤 비교한다. 신뢰구간처럼 순서가 의미인 것은
-위치로 비교한다.
+R names a Tukey contrast `Iris-versicolor-Iris-setosa` and statsmodels orders the
+pair its own way. Both are correct. Arrays are therefore matched on an identity
+key (`group1`+`group2`, `variable`, `item`, `group`) rather than by index; things
+whose order is meaningful, like a confidence interval, are matched positionally.
 
-### 톨러런스 — 한 값으로 안 된다
+### Tolerances
 
-| 대상 | 톨러런스 | 왜 |
+| Applies to | Tolerance | Why |
 | :--- | :--- | :--- |
-| 닫힌 형태 (t·ANOVA·OLS·χ²·α) | **1e-9** 상대 | R 과 같은 추정식을 같은 바이트에 적용하므로, 벌어질 여지는 부동소수점 결합 순서뿐이다. NIST 작업에서 이 코드베이스가 9자리를 유지함을 확인했다 |
-| 반복추정 (로지스틱) | **1e-5** 상대 | R 은 IRLS(`epsilon=1e-8`), statsmodels 는 Newton-Raphson. 둘 다 정확한 최대점에서 멈추지 않으므로 벌어지는 거리는 수렴 기준이 정하고, 부동소수점 오차가 아니다 |
-| SPSS | 미정 | OXML 이 원값을 들고 있으면 조일 수 있다. 형식 문자열만 얻는다면 피벗표 소수 3자리에서 오는 양자화 때문에 5e-4 절대 / 1e-3 상대가 상한이다 |
+| Closed-form procedures (t, ANOVA, OLS, χ², α) | **1e-9** relative | R and this SDK evaluate the same estimator on the same bytes, so the only gap is floating-point association order. The NIST work established that this codebase holds nine digits on well-conditioned problems. |
+| Iteratively fitted models (logistic) | **1e-5** relative **or** 1e-5 absolute | R's `glm` iterates by IRLS until the relative deviance change is below `1e-8`; statsmodels maximises by Newton–Raphson against its own tolerance. Neither stops at the exact maximum, so the distance between them is set by convergence criteria, not by rounding. The absolute leg carries quantities that straddle zero, where a relative error is inflated by a small denominator rather than by the fit. |
+| SPSS | not yet set | OXML carries the unrounded value per cell, so the bound can be tight. If a quantity turns out to be available only as formatted text, a pivot table's three decimals cap it at 5e-4 absolute / 1e-3 relative. |
 
 ---
 
-## 6. 결과
+## 6. Results
 
 ```mermaid
 pie showData
-    title 18개 사례의 판정
-    "일치 — check" : 10
-    "규약차 — convention-pending" : 4
-    "결함 — known-defect" : 4
+    title 18 cases
+    "agree — check" : 10
+    "convention — decision needed" : 3
+    "defect" : 5
 ```
 
-결함 4사례는 **서로 다른 결함 3개**다. `crosstabs` 라벨 문제가 두 데이터셋에 걸쳐
-두 사례로 들어가 있다.
+The five defect cases are **four distinct defects**: the category-label problem
+appears on two datasets.
 
-### 6.1 일치한 것 — check 10사례, 수치 239개
+### 6.1 Agreement — 10 cases, 254 numeric quantities
 
-| 사례 | 비교 수 | 최대 상대오차 | 가장 큰 오차가 난 항목 |
+| Case | Compared | Worst relative error | At |
 | :--- | --: | --: | :--- |
-| 기술통계 (g1/g2) | 40 | `1.06e-14` | `Rape.kurtosis` |
-| 교차표 2×3 | 4 | `0` | — (완전일치) |
-| 교차표 2×2 Yates | 4 | `7.99e-16` | `pValue` |
-| 독립 t — ToothGrowth | 26 | `2.50e-14` | `unequalVariance.confidenceInterval[0]` |
-| 독립 t — mtcars | 26 | `2.83e-15` | `unequalVariance.confidenceInterval[1]` |
-| 대응 t | 10 | `3.11e-11` | `confidenceInterval[1]` |
-| 일원 ANOVA | 18 | `1.05e-14` | `pValue` |
-| 선형회귀 (`enter`) | 32 | `2.73e-11` | `coefficients[disp].coefficient` |
-| 이진 로지스틱 | 27 | `8.92e-07` | `coefficients[hp].confidenceInterval[0]` |
-| Cronbach α | 52 | `4.49e-15` | `itemAnalysis[advance].itemStd` |
+| descriptives, g1/g2 | 40 | `1.07e-14` | `sepal_width.kurtosis` |
+| crosstabs 3 × 5 | 4 | `2.09e-14` | `pValue` |
+| crosstabs 2 × 2, Yates | 4 | `2.79e-14` | `pValue` |
+| independent t — haberman | 26 | `1.22e-11` | `unequalVariance.confidenceInterval[1]` |
+| independent t — wine | 26 | `1.54e-11` | `equalVariance.confidenceInterval[1]` |
+| paired t | 10 | `3.69e-14` | `pValue` |
+| one-way ANOVA | 18 | `1.05e-14` | `pValue` |
+| regression, `method:'enter'` | 32 | `4.55e-13` | `coefficients[const].pValue` |
+| binary logistic (0/1) | 27 | `5.59e-06` | `coefficients[f2].confidenceInterval[0]` |
+| Cronbach's alpha | 67 | `1.01e-14` | `itemAnalysis[mitoses].correctedItemTotalCorrelation` |
 
-239개 중 **224개가 1e-9 이내**이고, 1e-9 을 넘는 15개는 **전부 로지스틱 사례**에 있다.
-즉 닫힌 형태 절차 9사례(212개 수치)는 한 항목도 1e-9 를 넘지 않았다. 대응 t 의
-`3.11e-11` 과 회귀계수의 `2.73e-11` 은 뺄셈에서 유효자리를 쓰는 양이라 예상 범위다.
+Of the 254 quantities, **239 are within 1e-9**, and all 15 that are not belong to
+the logistic case. The **nine closed-form cases do not have a single quantity
+outside 1e-9** — their worst is `1.54e-11`, on a t-test confidence bound, which
+is a subtraction that spends significant digits and is expected to sit there.
 
-로지스틱만 자리수가 다르다. 27개 항목 중 15개가 1e-9 를 넘고, 그 분포가 원인을 그대로
-보여 준다.
+Two of those cases are load-bearing beyond their numbers:
 
-| 양 | 상대오차 |
+- **Regression on auto-mpg** agrees to 4.6e-13 across coefficients, standard
+  errors, t, p, confidence intervals, the ANOVA table and Durbin–Watson — *and*
+  reports `observations: 392`. All three packages dropped the same 6 rows with a
+  missing `horsepower`.
+- **Cronbach's alpha** agrees across all 67 quantities including every
+  item-total column, and `caseProcessing` reports 683 valid of 699 — the same
+  listwise split R computes from the 16 missing `bare_nuclei` values.
+
+The logistic case is the one with a different order of magnitude, and the
+distribution across its 27 quantities shows why:
+
+| Quantity | Relative error |
 | :--- | --: |
-| 표준오차, z | `3.8e-08` ~ `5.3e-08` |
-| p값 | `1.9e-07` ~ `4.1e-07` |
-| 신뢰구간 경계 | `2.3e-08` ~ `8.9e-07` |
+| standard errors, z | `3.5e-07` – `6.9e-08` |
+| p-values | `9.0e-08` – `1.4e-06` |
+| confidence bounds | `1.2e-07` – `5.6e-06` |
 
-신뢰구간이 가장 나쁜 것은 당연하다 — `계수 ± 1.96 × 표준오차` 이므로 두 오차를 함께
-짊어진다. 이것은 결함이 아니라 **두 솔버의 정지 규칙이 다르다는 사실**이고, 그래서
-이 사례만 톨러런스를 1e-5 로 두고 측정값을 생성기에 기록했다.
+Confidence bounds are worst because a bound is `coefficient ± 1.96 × se` and so
+carries both errors; the worst of them, `-0.0870`, is also near zero, which
+inflates the relative error without the fit being any further off — the absolute
+difference is 4.9e-7. This is not a defect. It is the distance two different
+optimisers stop at, which is why this case carries an explicit tolerance and the
+generator records the measurement behind it.
 
-### 6.2 새로 찾은 결함 2건
+### 6.2 New defects
 
-#### (가) `posthocTukey` — 모든 값이 소수 4자리로 절단된다
+#### (a) `posthocTukey` truncates every value to four decimals, and p-values to zero
 
-`compare-means.ts:199-206` 이 `pairwise_tukeyhsd(...).summary().data` 를 읽는다.
-그것은 statsmodels 의 **출력용 표**이고 표시를 위해 4자리로 포맷된다.
+`compare-means.ts:199-206` reads `pairwise_tukeyhsd(...).summary().data` — that is
+statsmodels' **display** table, formatted for printing to four decimals.
 
-| 대비 | 항목 | 우리 | R | 상대오차 |
+| Contrast | Quantity | This SDK | R | Relative error |
 | :--- | :--- | --: | --: | --: |
 | setosa–versicolor | `pValue` | **`0`** | `3.386e-14` | `1.00` |
 | setosa–virginica | `pValue` | **`0`** | `2.998e-15` | `1.00` |
@@ -236,180 +285,225 @@ pie showData
 | versicolor–virginica | `upperCI` | `0.8958` | `0.895772705857888` | `3.05e-05` |
 | setosa–virginica | `lowerCI` | `1.3382` | `1.33822729414211` | `2.04e-05` |
 
-**p값이 정확히 `0` 으로 나온다.** `8.3e-09` 이 `0.0000` 으로 포맷된 뒤 그것을
-`float()` 로 읽기 때문이다. 이것은 **#12 와 같은 고장 양상** — 작은 값이 조용히 0이
-되는 것 — 이고, 연구자가 논문에 "p = 0" 을 적게 된다.
+**The p-values come back as exactly `0`.** `8.3e-09` is formatted as `0.0000` and
+then read back with `float()`. This is the failure mode of issue #12 — a small
+quantity silently becoming zero — and it means a researcher copies `p = 0` into a
+paper.
 
-#12 수정(PR #17)이 여기 닿지 않은 이유가 중요하다. 그 PR 은 우리 코드의 `round(x, 6)`
-133곳을 지웠다. 여기서는 **반올림이 우리 코드가 아니라 우리가 읽고 있는 객체에 있다.**
-원값은 결과 객체에 그대로 있다 — `meandiffs`, `pvalues`, `confint`, `reject`.
+Why #12's fix did not reach it matters: PR #17 removed 133 `round(x, 6)` calls
+from our own code. Here the rounding belongs to **the object being read**, not to
+anything we wrote. The unrounded values are on the result object the whole time:
+`meandiffs`, `pvalues`, `confint`, `reject`.
 
-NIST 검증 스위트가 이것을 못 잡은 것도 설명된다. NIST 는 Tukey 를 인증하지 않는다.
+The NIST suite could not have caught this. NIST certifies no post-hoc procedure.
 
-#### (나) `crosstabs` — 수치형 범주 이름
+#### (b) `crosstabs` labels integer categories with a trailing `.0`
 
-`descriptive.ts:98-99` 의 `str(x)` 가 float 범주에 적용된다.
-
-| 데이터 | 항목 | 우리 | R·SPSS |
+| Data | Field | This SDK | R and SPSS |
 | :--- | :--- | :--- | :--- |
-| ToothGrowth | `colLabels` (dose) | `['0.5', '1.0', '2.0']` | `['0.5', '1', '2']` |
-| mtcars | `rowLabels` (am) | `['0.0', '1.0']` | `['0', '1']` |
-| mtcars | `colLabels` (vs) | `['0.0', '1.0']` | `['0', '1']` |
+| auto-mpg | `rowLabels` (origin) | `['1.0','2.0','3.0']` | `['1','2','3']` |
+| auto-mpg | `colLabels` (cylinders) | `['3.0','4.0','5.0','6.0','8.0']` | `['3','4','5','6','8']` |
+| spect | `rowLabels` (diagnosis) | `['0.0','1.0']` | `['0','1']` |
+| spect | `colLabels` (f1) | `['0.0','1.0']` | `['0','1']` |
 
-숫자는 맞다. 다만 이 라벨이 **표의 행·열 머리글**이라 읽는 사람에게 그대로 보인다.
+The counts and the chi-square are correct. The root cause is one level below
+`crosstabs`: the bridge marshals **every** numeric column as a `Float64Array`
+(`bridge/columnar-serializer.ts:49`), so an integer-coded category arrives in
+Python as a float and `str()` gives it a `.0`. It therefore affects any
+integer-coded grouping variable, not only the ones tested here — and these labels
+are the row and column headers a reader of the table sees.
 
-### 6.3 이미 등록된 결함 — #13 재현, 범위 축소
+#### (c) `logisticBinary` cannot fit an outcome coded 1/2
 
-`method` 를 비우면 `linearRegression` 이 stepwise 로 빠져 요청하지 않은 모형을 적합한다.
+Haberman's `survival_status` is 1 = survived five years or longer, 2 = died
+within five years. That coding is the norm in registry and survey data, which is
+the data this library exists to analyse.
 
-`mpg ~ wt + hp + disp` 를 요청했을 때:
+SPSS `LOGISTIC REGRESSION` and R's `glm(factor(y) ~ .)` both accept any
+two-valued outcome and model the higher value as the event. R's fit:
 
-| 항목 | 우리 (기본값) | R `lm` | 결과 |
+| | |
+| :--- | --: |
+| log-likelihood | `-164.155342510479` |
+| AIC / BIC | `334.3107` / `345.4814` |
+| McFadden pseudo-R² | `0.0717509` |
+| LR test p | `3.086e-06` |
+
+This SDK returns no result. The Python layer coerces the column with
+`pd.to_numeric` and hands it to `sm.Logit` (`regression.ts:240-250`), which
+rejects it:
+
+```
+ValueError: endog must be in the unit interval.
+```
+
+The failure is loud rather than silent, which is the right half of the behaviour.
+The wrong half is twofold: a raw Python traceback reaches the caller as the error
+string, and a procedure both reference packages would have run is simply
+unavailable for data coded this way.
+
+### 6.3 Issue #13 reproduced, and narrowed
+
+With `method` unset, `linearRegression` falls into stepwise selection and fits a
+model that was not requested. Asking for `mpg ~ weight + horsepower +
+displacement`:
+
+| Quantity | This SDK (default) | R `lm` | Difference |
 | :--- | --: | --: | :--- |
-| `disp` 계수 | **없음** | `-0.000937009` | 예측변수가 조용히 사라짐 |
-| `wt` 표준오차 | `0.6327` | `1.0662` | `-41%` |
-| `const` 표준오차 | `1.5988` | `2.1108` | `-24%` |
-| `hp` 표준오차 | `0.009030` | `0.011436` | `-21%` |
-| `wt` 계수 | `-3.8778` | `-3.8009` | `+2.0%` |
-| `hp` 계수 | `-0.031773` | `-0.031157` | `+2.0%` |
+| `displacement` coefficient | **absent** | `-0.00576882` | predictor silently dropped |
+| `const` std. error | `0.79320` | `1.19592` | `-34%` |
+| `weight` std. error | `0.00050233` | `0.00071235` | `-29%` |
+| `horsepower` std. error | `0.011085` | `0.012814` | `-13%` |
+| `horsepower` coefficient | `-0.047303` | `-0.041674` | `+14%` |
+| `weight` coefficient | `-0.0057942` | `-0.0053516` | `+8.3%` |
 
-표준오차가 20~40% 작게 나오는 것은 모형이 다르기 때문이다 — 변수를 뺀 2예측변수
-모형에서는 잔차자유도와 다중공선성이 모두 달라진다. **p값과 신뢰구간이 전부 좁아지므로
-유의성 판정이 낙관적으로 기울어진다.**
+Standard errors come out 13–34% **too small** because the fitted model is a
+different one: dropping a collinear predictor changes both the residual degrees
+of freedom and the collinearity structure. Narrower standard errors mean narrower
+confidence intervals and smaller p-values, so **significance is reported
+optimistically.**
 
-같은 호출에 `method: 'enter'` 를 주면 **32개 항목 전부 1e-11 이내로 `lm` 과 일치한다**
-(계수·표준오차·t·p·신뢰구간·ANOVA 표·Durbin-Watson 포함). 즉 **결함은 추정량이 아니라
-기본값이다.** NIST Longley 가 `it.fails` 인 이유도 같다.
+The same call with `method: 'enter'` matches `lm` to 4.6e-13 across all 32
+compared quantities. **The defect is the default, not the estimator** — which is
+also why NIST's Longley case is marked `it.fails`.
 
-### 6.4 결정이 필요한 규약차 4건
+### 6.4 Conventions awaiting a decision
 
-코드를 읽고 예측한 3건이 전부 확인되고, 하나가 더 나왔다.
+Three predicted from reading the implementation, all confirmed, plus one that has
+no comparable counterpart at all.
 
-#### ① skewness · kurtosis 의 형태
+#### ① The form of skewness and kurtosis
 
-`descriptive.ts:71` 의 `scipy.stats.skew(col)` 은 `bias=True` 가 기본이라 모적률
-g1·g2 를 낸다. SPSS 는 표본보정형 G1·G2 를 찍는다.
+`descriptive.ts:71` calls `scipy.stats.skew(col)`, whose default `bias=True`
+returns the plain moment ratios g1 and g2. SPSS prints the sample-adjusted G1 and
+G2.
 
-| 변수 | 항목 | 우리 (g) | SPSS (G) | 상대오차 |
+| Variable | Quantity | This SDK (g) | SPSS (G) | Relative |
 | :--- | :--- | --: | --: | --: |
-| Rape | kurtosis | `0.20190` | `0.35396` | **`43.0%`** |
-| UrbanPop | kurtosis | `-0.78421` | `-0.73836` | `6.2%` |
-| Murder | kurtosis | `-0.86467` | `-0.82749` | `4.5%` |
-| Assault | kurtosis | `-1.06902` | `-1.05385` | `1.4%` |
-| 네 변수 전부 | skewness | — | — | `3.025%` (일정) |
+| sepal_width | kurtosis | `0.241443` | `0.290781` | **`17.0%`** |
+| sepal_length | kurtosis | `-0.573568` | `-0.552064` | `3.9%` |
+| petal_length | kurtosis | `-1.395359` | `-1.401921` | `0.47%` |
+| all four | skewness | — | — | `1.003%`, identical |
 
-왜도의 오차가 네 변수에서 **정확히 같은 3.025%** 인 것이 진단이다. G1/g1 =
-√(n(n−1))/(n−2) 이고 n=50 에서 1.03025 다. 즉 산술이 아니라 보정계수 하나의 문제다.
+The skewness error being **exactly the same 1.003%** on all four variables is the
+diagnosis: G1/g1 = √(n(n−1))/(n−2), which at n = 150 is 1.01003. Nothing is
+miscomputed; one correction factor is absent.
 
-첨도 쪽은 변수마다 다르고 Rape 에서 43%까지 벌어진다. 초과첨도가 0 근처일 때 보정항이
-상대적으로 커지기 때문이다. **0 근처 값이라 실무 해석은 잘 안 바뀌지만, 숫자를 SPSS
-출력과 나란히 놓으면 틀린 것처럼 보인다.** SPSS 가 함께 찍는 왜도·첨도의 표준오차도
-우리는 내지 않는다.
+Kurtosis varies by variable and reaches 17% on `sepal_width`, because its excess
+kurtosis is near zero and the correction term is then large relative to it.
+Interpretation rarely changes — but a reader comparing our output to an SPSS table
+sees a different number. SPSS also prints standard errors for both moments, which
+this SDK does not return at all.
 
-#### ② Levene 검정의 중심 — 이것은 결과를 바꾼다
+#### ② Where Levene's test is centred — this one changes the result
 
-`compare-means.ts:32` 의 `scipy.stats.levene` 은 `center='median'`(Brown-Forsythe)이
-기본이다. SPSS `T-TEST` 는 평균을 중심으로 한다.
+`compare-means.ts:32` calls `scipy.stats.levene`, which defaults to
+`center='median'` (Brown–Forsythe). SPSS `T-TEST` centres on the mean.
 
 ```mermaid
 flowchart LR
-    A["mtcars hp ~ vs"] --> B["Levene<br/>중앙값 중심"]
-    A --> C["Levene<br/>평균 중심 (SPSS)"]
-    B --> D["F = 4.0736<br/>p = .0526"]
-    C --> E["F = 5.6189<br/>p = .0244"]
-    D --> F["p > .05<br/>→ equalVariance = true"]
-    E --> G["p &lt; .05<br/>→ equalVariance = false"]
-    F --> H["등분산 가정 t검정을<br/>결과로 제시"]
-    G --> I["Welch t검정을<br/>결과로 제시"]
+    A["wine · proline<br/>cultivar 2 vs 3"] --> B["Levene<br/>median-centred"]
+    A --> C["Levene<br/>mean-centred (SPSS)"]
+    B --> D["F = 3.0698<br/>p = .08238"]
+    C --> E["F = 4.3015<br/>p = .04027"]
+    D --> F["p &gt; .05<br/>equalVariance = true"]
+    E --> G["p &lt; .05<br/>equalVariance = false"]
+    F --> H["reports the<br/>pooled-variance t-test"]
+    G --> I["reports<br/>Welch's t-test"]
 ```
 
-`compare-means.ts:33` 이 `equal_var = levene_p > 0.05` 로 분기한다. 그래서 중심 선택이
-**어느 t검정이 "결과"로 제시되는지를 바꾼다** — 부수적인 숫자 하나가 아니다.
+`compare-means.ts:33` branches on `equal_var = levene_p > 0.05`. The centring
+therefore decides **which t-test is presented as the result**, not merely an
+auxiliary statistic.
 
-| 데이터 | 우리 F / p | SPSS F / p | `equalVariance` |
+| Data | This SDK F / p | SPSS F / p | `equalVariance` |
 | :--- | --: | --: | :--- |
-| mtcars `hp ~ vs` | `4.0736` / `.05258` | `5.6189` / `.02439` | **`true` vs `false`** |
-| ToothGrowth `len ~ supp` | `1.2136` / `.27518` | `1.0973` / `.29920` | `true` (양쪽 동일) |
+| wine `proline`, cultivar 2 vs 3 | `3.0698` / `.08238` | `4.3015` / `.04027` | **`true` vs `false`** |
+| haberman `age` by survival |  `1.79990` / `.18073` | `1.57579` / `.21033` | `true` either way |
 
-ToothGrowth 처럼 p 가 .05 에서 멀면 아무 일도 안 일어난다. **.05 를 사이에 두고
-갈리는 사례를 일부러 찾아 스위트에 고정했다** — 그러지 않으면 이 규약차가 무해해
-보인다.
+Haberman behaves like most data: p is far from .05 and nothing happens. The wine
+case was searched for deliberately across every two-group split in all six
+datasets, because without it this convention looks harmless.
 
-#### ③ 2×2 카이제곱의 연속성 보정
+#### ③ Continuity correction on a 2 × 2 chi-square
 
-`descriptive.ts:88` 의 `chi2_contingency(ct)` 는 `correction=True` 가 기본이라 2×2 에
-Yates 보정을 적용한다. SPSS 는 주행(primary row)에 무보정 Pearson 을 놓고 연속성 보정은
-별행에 둔다.
+`descriptive.ts:88` calls `chi2_contingency(ct)`, whose default `correction=True`
+applies Yates to any 2 × 2. SPSS puts the uncorrected Pearson statistic on the
+primary row and the continuity correction on a separate one.
 
-| mtcars `am × vs` | 우리 (Yates) | SPSS 주행 (Pearson) | 상대오차 |
+| spect `diagnosis × f1` | This SDK (Yates) | SPSS primary row (Pearson) | Relative |
 | :--- | --: | --: | --: |
-| `chiSquare` | `0.34754` | `0.90688` | **`61.7%`** |
-| `pValue` | `0.55551` | `0.34094` | `62.9%` |
-| `cramersV` | `0.10421` | `0.16835` | `38.1%` |
+| `chiSquare` | `1.94726` | `2.65044` | **`26.5%`** |
+| `pValue` | `0.16288` | `0.10352` | `57.3%` |
+| `cramersV` | `0.156015` | `0.182018` | `14.3%` |
 
-이 표는 양쪽 다 비유의라 결론이 같지만, **표본이 작고 χ² 가 임계값 근처면 보정 유무가
-유의성을 뒤집는다.** 2×3 표(ToothGrowth)에서는 어느 패키지도 보정을 안 하므로 완전
-일치했다 — 그래서 3번 사례를 따로 둬서 산술과 보정 문제를 분리했다.
+Both are non-significant here, so the conclusion is unchanged — but with a small
+sample and a statistic near the critical value, the presence of the correction
+flips significance. The 3 × 5 table on auto-mpg agreed to 2.1e-14, because no
+package applies a correction above 2 × 2; that case exists precisely to separate
+the arithmetic from this question.
 
-#### ④ `pseudoRSquared` 의 종류
+#### ④ Which pseudo-R² `pseudoRSquared` is
 
-`logisticBinary` 가 돌려주는 값은 statsmodels `prsquared`, 즉 McFadden 이다.
-SPSS `LOGISTIC REGRESSION` 은 **Cox & Snell 과 Nagelkerke 를 찍고 McFadden 칼럼은
-아예 없다.** 비교할 대상이 없는 것이라 숫자 차이로 다룰 수 없다. 참조값 생성기가
-SPSS 두 값을 `note` 에 같이 담아 두었으니, **README 에 어느 것인지 명시**하면 끝난다.
+`logisticBinary` returns statsmodels' `prsquared`, which is McFadden's. SPSS
+`LOGISTIC REGRESSION` prints Cox & Snell and Nagelkerke and **no McFadden column
+at all**, so there is nothing to compare value-for-value. The reference generator
+records the SPSS pair in the case's `note`; naming which one this SDK returns in
+the README settles it.
 
 ---
 
-## 7. 아직 안 덮은 것
+## 7. Not yet covered
 
-| 절차 | 왜 아직 아닌가 |
+| Procedure | Why not |
 | :--- | :--- |
-| `efa`, `pca`, `mds`, `kmeans`, `hierarchicalCluster` | 출력이 부호·회전·군집 레이블에 대해 **불확정**이다. 값을 직접 비교하면 의미 없는 실패가 난다. 로딩은 부호 정렬 후 절대값, MDS 는 좌표 대신 거리행렬, 군집은 조정 랜드지수로 비교해야 한다 |
-| `logisticMultinomial` | #14 로 `stdError`·`z`·`p`·신뢰구간이 `0.0` 으로 하드코딩돼 비교할 것이 없다. 게다가 밑의 추정량이 `sklearn.linear_model.LogisticRegression` 이라 기본적으로 L2 벌점을 걸고 **벌점 우도**를 최대화한다 — `nnet::multinom`·SPSS `NOMREG` 와 다른 함수다 |
-| `frequencies` | 낮은 위험이라 2차로 미뤘다 |
-| SPSS 전 계층 | 상용 라이선스. `.sps` 와 절차는 준비됐고 1회 실행 대기 |
+| `efa`, `pca`, `mds`, `kmeans`, `hierarchicalCluster` | Output is **indeterminate** up to sign, rotation and cluster labelling. Comparing values directly produces failures that mean nothing. Loadings need sign alignment then absolute values, MDS needs its distance matrix rather than its coordinates, clusterings need an adjusted Rand index. |
+| `logisticMultinomial` | Issue #14 hardcodes `stdError`, `z`, `p` and the confidence intervals to `0.0`, so there is nothing to compare. Underneath, the estimator is `sklearn.linear_model.LogisticRegression`, which applies L2 regularization by default and therefore maximises a **penalized** likelihood — a different objective from the one `nnet::multinom` and SPSS `NOMREG` maximise. |
+| `frequencies` | Low risk; deferred to a second pass. |
+| Every SPSS tier | Proprietary. The syntax file and the procedure are ready; one manual run is outstanding. |
 
 ---
 
-## 8. 재현 방법
+## 8. Reproducing this
 
 ```bash
-cd /contents/workspace/inferential-stats-js
 git checkout test/cross-check-r-spss
 
-# R 과 참조 패키지 (Debian/Ubuntu)
+# R and the reference packages (Debian/Ubuntu)
 apt-get install -y --no-install-recommends \
   r-base-core r-cran-jsonlite r-cran-psych r-cran-e1071 r-cran-car \
   r-cran-nnet r-cran-mass r-cran-cluster
 
-npm run export-cross-check-data   # CSV 재생성 — 재실행은 no-op 이어야 한다
-npm run generate-r-reference      # r-reference.json 재생성
+npm run fetch-cross-check-data   # re-download; verifies each pinned SHA-256
+npm run generate-r-reference     # rebuild r-reference.json
 
 npx playwright install chromium
-npm test                          # NIST + 교차검증 + 기존 e2e
+npm test                         # NIST + cross-check + the existing e2e tests
 ```
 
-참조값 픽스처는 커밋돼 있으므로, **테스트만 돌릴 때는 R 이 필요 없다.**
+The reference fixtures are committed, so **running the tests needs neither R nor
+a network connection.**
 
-실행 환경: Chromium(Playwright), Pyodide 안의 scipy·statsmodels·scikit-learn·
-factor_analyzer. 교차검증 테스트 19건 소요 29.5초 — Pyodide 와 패키지 로드가 그중
-8.6초다(첫 사례에 포함된다).
+Environment: Chromium via Playwright; scipy, statsmodels, scikit-learn and
+factor_analyzer inside Pyodide. The 19 cross-check tests take 12 s, of which
+3.4 s is the one-off Pyodide and package load charged to the first case.
 
 ---
 
-## 9. 요약
+## 9. Summary
 
 | | |
 | :--- | :--- |
-| 마련한 데이터 | R `datasets` 6개 → 17자리 CSV, 세 패키지가 같은 바이트를 읽음 |
-| 돌린 사례 | 18건 / 10개 메서드 / 수치 305개 + 라벨 10개 (테스트 19건) |
-| 일치 | check 10사례 239개 중 224개가 1e-9 이내. 닫힌 형태 9사례는 전원 1e-9 이내 — 최악 `3.1e-11`, 대부분 `1e-14` 대 |
-| 반복추정 | 로지스틱 27항목 최악 `8.9e-07` — 솔버 수렴 기준 차이, 결함 아님 |
-| 새 결함 | `posthocTukey` 4자리 절단(p값이 `0` 으로 나옴), `crosstabs` 범주 라벨 |
-| 재현된 결함 | #13 — 기본값이 stepwise. `method:'enter'` 는 1e-11 로 정확 |
-| 결정 필요 | 규약 4건 (왜도·첨도 형태 / Levene 중심 / 2×2 보정 / pseudo R² 종류) |
-| 미착수 | 불확정 출력 5개 메서드, `logisticMultinomial`(#14 선행), SPSS 전 계층 |
+| Data | 6 datasets from UCI, downloaded from the publisher and SHA-256 pinned; 63 KB; all three packages read the identical files |
+| Run | 18 cases over 10 methods — 318 numeric quantities and 16 category labels (19 tests) |
+| Agreement | 10 cases, 254 quantities, 239 of them within 1e-9. The nine closed-form cases have nothing outside 1e-9; worst `1.54e-11` |
+| Iterative fit | logistic, 27 quantities, worst `5.59e-06` — two optimisers' stopping rules, not a defect |
+| New defects | `posthocTukey` truncated to 4 decimals with p-values flattened to `0`; `crosstabs` labels integer categories `'1.0'`; `logisticBinary` cannot fit a 1/2-coded outcome that R and SPSS both fit |
+| Reproduced | #13 — the stepwise **default** shrinks standard errors 13–34%. `method:'enter'` matches `lm` to 4.6e-13 |
+| Decisions needed | 4 conventions: moment form, Levene centring, 2 × 2 correction, pseudo-R² identity |
+| Outstanding | indeterminate output (5 methods), `logisticMultinomial` (blocked on #14), every SPSS tier |
 
-**이 작업이 산출한 것은 "맞다"는 보증이 아니라 경계선이다.** 어디까지 외부 참조값과
-일치하는지, 어디가 결함인지, 어디가 규약 선택이고 그 선택이 무엇을 바꾸는지 —
-그 세 가지가 이제 실행 가능한 테스트로 고정돼 있다.
+**What this produced is not a guarantee of correctness. It is a boundary.** Where
+the library agrees with an external reference, where it is defective, and where it
+has chosen a convention and what that choice changes — those three are now fixed
+as executable tests rather than held as impressions.

@@ -51,23 +51,58 @@ already uses, and it keeps CI free of a statistics toolchain.
 
 ## Datasets
 
-Reference data must be redistributable, identical in R and SPSS, and small enough
-to read in a diff. The datasets in R's `datasets` package satisfy all three: they
-ship with R under GPL-2, they are the canonical examples in the R documentation,
-and they are published tables rather than samples of anyone's data.
+Reference data has to satisfy three things: it must be **retrievable from the
+archive that publishes it**, so that a reader can verify the committed copy
+rather than take our word for it; it must be **identical for all three packages**,
+so that a disagreement cannot be an artefact of the input; and it must be small
+enough to read in a diff.
 
-| Dataset | Shape | Used for |
-| :--- | :--- | :--- |
-| `iris` | 150 × 5, 3 groups | ANOVA, Tukey HSD, multinomial logistic, k-means, PCA, MDS |
-| `ToothGrowth` | 60 × 3, 2 × 3 design | independent t-test, crosstabs |
-| `sleep` | 20 × 3, paired | paired t-test |
-| `mtcars` | 32 × 11, binary `am`/`vs` | linear regression, binary logistic |
-| `attitude` | 30 × 7, Likert-like | EFA, PCA with rotation, Cronbach's alpha |
-| `USArrests` | 50 × 4 | hierarchical clustering, MDS, descriptives |
+The first of those rules out a package's bundled copy, even a familiar one, and
+the reason is concrete. UCI's `iris.data` carries two transcription errors
+against Fisher's 1936 table — UCI's own `iris.names` documents them: the 35th
+sample should be `4.9,3.1,1.5,0.2` and the 38th `4.9,3.6,1.4,0.1` — while R's
+built-in `iris` follows the paper. Neither copy is corrupt; they are different
+tables. A reference generated from `datasets::iris` and compared against a
+downloaded `iris.data` would be comparing two datasets and calling the difference
+a numerical error.
 
-Each is exported once to `e2e/fixtures/cross-check/data/<name>.csv` and read by all
-three of this SDK, R, and SPSS, so none of the three can be compared against a
-differently-rounded copy of the input.
+So `scripts/fetch-cross-check-data.mjs` downloads each file from its publisher,
+pins its SHA-256, normalises it to a CSV with a header row, and records the URL,
+digest, retrieval date and citation in
+`e2e/fixtures/cross-check/data/provenance.json`. All three of this SDK, R and
+SPSS then read those CSVs.
+
+| Dataset | Publisher | Shape | Used for |
+| :--- | :--- | :--- | :--- |
+| Iris | UCI 53 — Fisher (1936) | 150 × 5 | `descriptives`, `anovaOneway`, `posthocTukey` |
+| Auto MPG | UCI 9 — Quinlan (1993), StatLib/CMU | 398 × 9 | `linearRegression`, `crosstabs` (3 × 5) |
+| Wine | UCI 109 — Aeberhard et al. (1992) | 178 × 14 | `ttestIndependent` |
+| Haberman's Survival | UCI 43 — Haberman (1976) | 306 × 4 | `ttestIndependent`, `logisticBinary` |
+| Breast Cancer Wisconsin (Original) | UCI 15 — Wolberg & Mangasarian (1990) | 699 × 11 | `cronbachAlpha`, `ttestPaired` |
+| SPECT Heart (training split) | UCI 95 — Kurgan et al. (2001) | 80 × 23 | `crosstabs` (2 × 2) |
+
+Each is carried for a property no substitute had:
+
+- **Auto MPG** has 6 missing `horsepower` values. Keeping them means listwise
+  deletion is compared rather than hidden: `lm`, SPSS `/MISSING=LISTWISE` and the
+  Python layer must all arrive at n = 392.
+- **Wine** is the only one of the six where the mean-centred and median-centred
+  Levene tests fall on opposite sides of .05 (`proline`, cultivars 2 vs 3). That
+  is what makes the Levene convention observable in a result rather than only in
+  an auxiliary statistic.
+- **Haberman** codes its outcome 1/2, which is how survey and registry data
+  normally arrive, and exercises what `logisticBinary` does with an outcome that
+  is binary but not 0/1.
+- **Breast Cancer Wisconsin** grades nine cytological attributes 1–10 on one
+  scale, which is what makes them a commensurable item set for a reliability
+  coefficient; its 16 missing `bare_nuclei` values exercise `caseProcessing`.
+- **SPECT Heart** is binary in all 23 attributes, which supplies a 2 × 2
+  contingency table — and so the continuity-correction question — without binning
+  or filtering anything. The published training split is used as published rather
+  than recombined with the test split.
+
+NIST StRD remains the tier-1 source and keeps its own fixture; it publishes no
+categorical data, so it cannot cover the procedures here.
 
 SPSS's own sample files (`Employee data.sav` and the rest) are deliberately *not*
 used: they are licensed to SPSS installations and cannot be committed here.
@@ -183,7 +218,7 @@ docs/validation/
   spss-manual-run.md             step-by-step for the licence holder
   report-2026-10-06-*.md         what a run found, with the measured differences
 scripts/
-  export-cross-check-data.R      writes data/*.csv from R's `datasets` package, once
+  fetch-cross-check-data.mjs     downloads data/*.csv from NIST/UCI, SHA-256 pinned
   generate-r-reference.R         data/*.csv -> r-reference.json
   spss/cross-check.sps           syntax run by hand, emits one table per block
   import-spss-reference.mjs      SPSS export -> spss-reference.json
@@ -191,6 +226,7 @@ e2e/
   cross-check.browser.test.ts    one body, both fixtures
   fixtures/cross-check/
     data/*.csv                   the shared input
+    data/provenance.json         URL, SHA-256, citation per dataset
     r-reference.json             tier 2
     spss-reference.json          tier 3
 ```
@@ -243,20 +279,23 @@ contract is visible to users, not just to this suite.
 
 ## What the first R run found
 
-Eighteen cases against R 4.2.2, comparing 305 numeric quantities and 10 category
+Eighteen cases against R 4.2.2, comparing 318 numeric quantities and 16 category
 labels. Ten cases agree; the rest divide as the framing above predicts. The
 measured per-case differences are tabulated in
 [`report-2026-10-06-r-crosscheck.md`](./report-2026-10-06-r-crosscheck.md).
 
-**Confirmed correct** — 239 compared quantities across ten cases, of which 224
-are within 1e-9 and the fifteen that are not all belong to the logistic case:
-`descriptives` (moments, quartiles, dispersion),
-`crosstabs` chi-square on a 2 × 3 table and the Yates value on a 2 × 2, both arms
-of `ttestIndependent` plus median-centred Levene, `ttestPaired`, `anovaOneway`,
-`linearRegression` with `method: 'enter'`, `logisticBinary` to 1e-6, and
-`cronbachAlpha` including every item-total column. The nine closed-form cases do
-not have a single quantity outside 1e-9; the worst is 3.1e-11, on a paired-t
-confidence bound.
+**Confirmed correct** — 254 compared quantities across ten cases, of which 239
+are within 1e-9 and the fifteen that are not all belong to the logistic case.
+The nine closed-form cases do not have a single quantity outside 1e-9; their
+worst is 1.5e-11, on a t-test confidence bound. Covered: `descriptives` (moments,
+quartiles, dispersion), `crosstabs` chi-square on a 3 × 5 table and the Yates
+value on a 2 × 2, both arms of `ttestIndependent` plus median-centred Levene,
+`ttestPaired`, `anovaOneway`, `linearRegression` with `method: 'enter'`,
+`logisticBinary` on a 0/1 outcome, and `cronbachAlpha` including every item-total
+column. Two of those also settle a question beyond their own numbers:
+`linearRegression` reports `observations: 392`, so all three packages dropped the
+same 6 rows with a missing `horsepower`, and `cronbachAlpha` reports 683 valid of
+699, matching R's listwise split over the 16 missing `bare_nuclei` values.
 
 **Defects, new.**
 
@@ -264,32 +303,45 @@ confidence bound.
   p-values come back as exactly `0` where R reports 3.4e-14, 3.0e-15 and 8.3e-9 —
   the #12 flattening, reproduced. It reads
   `pairwise_tukeyhsd(...).summary().data`, which is statsmodels' *display* table
-  and is formatted for printing. This is the same class of defect as #12 — output
-  rounded before it leaves Python — and removing the explicit `round(x, 6)` calls
-  in PR #17 did not reach it, because the rounding belongs to the object being
-  read rather than to our own code. The unrounded values sit on the result object:
+  and is formatted for printing. Removing the explicit `round(x, 6)` calls in
+  PR #17 did not reach it, because the rounding belongs to the object being read
+  rather than to our own code. The unrounded values sit on the result object:
   `meandiffs`, `pvalues`, `confint`, `reject`. `compare-means.ts:199-206`.
-- `crosstabs` labels a numeric category `"1.0"` where R and SPSS print `"1"`, via
-  `str()` on a float. Cosmetic in origin, but the labels are the row and column
-  headers a reader of the table sees. `descriptive.ts:98-99`.
+- `crosstabs` labels an integer-coded category `"1.0"` where R and SPSS print
+  `"1"`. The cause is a level below `crosstabs`: the bridge marshals every
+  numeric column as a `Float64Array`
+  (`bridge/columnar-serializer.ts:49`), so an integer category arrives in Python
+  as a float. It therefore affects any integer-coded grouping variable, and these
+  labels are the row and column headers a reader of the table sees.
+- `logisticBinary` cannot fit an outcome coded 1/2 — the norm in registry and
+  survey data. `sm.Logit` rejects it with `ValueError: endog must be in the unit
+  interval.` and the traceback reaches the caller as the error string. SPSS
+  `LOGISTIC REGRESSION` and R's `glm(factor(y) ~ .)` both fit such an outcome by
+  modelling the higher value as the event. `regression.ts:240-250`.
 
 **Defect, already filed.** #13 reproduces exactly as described: with `method`
-unset, `linearRegression` fits a stepwise subset instead of the model requested.
-The same call with `method: 'enter'` matches `lm` to 1e-9 across coefficients,
-standard errors, t, p, confidence intervals, the ANOVA table and Durbin–Watson —
-so the defect is the default, not the estimator.
+unset, `linearRegression` fits a stepwise subset instead of the model requested,
+dropping `displacement` and shrinking the remaining standard errors by 13–34%,
+which reports significance optimistically. The same call with `method: 'enter'`
+matches `lm` to 4.6e-13 across coefficients, standard errors, t, p, confidence
+intervals, the ANOVA table and Durbin–Watson — so the defect is the default, not
+the estimator.
 
 **Conventions to decide** — the three predicted from reading the code, all
-confirmed, plus one found on the way:
+confirmed, plus one that has no counterpart to compare against:
 
 1. `skewness`/`kurtosis` are the plain moment ratios g1/g2; SPSS reports the
-   sample-adjusted G1/G2.
+   sample-adjusted G1/G2. The skewness difference is exactly 1.003% on all four
+   iris variables, which is √(n(n−1))/(n−2) at n = 150 — one absent correction
+   factor, not an arithmetic error. Kurtosis reaches 17% where excess kurtosis is
+   near zero.
 2. Levene is centred on the median (Brown–Forsythe); SPSS centres on the mean.
-   On `mtcars hp ~ vs` the two fall on opposite sides of .05 — mean p = .0244,
-   median p = .0526 — so the convention decides which t-test the SDK presents as
-   the result, not merely an auxiliary number.
+   On wine `proline` between cultivars 2 and 3 the two fall on opposite sides of
+   .05 — mean p = .0403, median p = .0824 — so the convention decides which
+   t-test the SDK presents as the result, not merely an auxiliary number.
 3. A 2 × 2 chi-square has Yates applied; SPSS puts uncorrected Pearson on the
-   primary row and the continuity correction on a separate one.
+   primary row and the continuity correction on a separate one. On SPECT
+   `diagnosis × f1` that is χ² 1.947 against 2.650.
 4. `pseudoRSquared` is McFadden's. SPSS prints Cox & Snell and Nagelkerke and no
    McFadden column at all, so there is nothing to compare it against — the
    README has to name which one it is.
@@ -298,11 +350,11 @@ confirmed, plus one found on the way:
 
 | # | Step | State |
 | :--- | :--- | :--- |
-| 1 | Export the six datasets to CSV | done — `scripts/export-cross-check-data.R` |
-| 2 | R reference values for the closed-form procedures | done — 19 cases |
+| 1 | Download the six datasets from their publishers, SHA-256 pinned | done — `scripts/fetch-cross-check-data.mjs` |
+| 2 | R reference values for the closed-form procedures | done — 18 cases |
 | 3 | Cross-check test body, tier 2 wired | done — `e2e/cross-check.browser.test.ts` |
 | 4 | Resolve the four convention questions | open — needs a decision per row |
-| 5 | Fix the two new defects | open |
+| 5 | Fix the three new defects | open |
 | 6 | `cross-check.sps` + manual-run document | done |
 | 7 | SPSS run by licence holder, importer written against the export | open |
 | 8 | Indeterminate-output invariants (`efa`, `pca`, `mds`, both clusterings) | open |

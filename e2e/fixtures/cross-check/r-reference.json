@@ -7,15 +7,15 @@
   },
   "cases": [
     {
-      "id": "descriptives/USArrests/moments-g",
-      "dataset": "USArrests",
+      "id": "descriptives/iris/moments-g",
+      "dataset": "iris",
       "procedure": "descriptives",
       "input": {
         "variables": [
-          "Murder",
-          "Assault",
-          "UrbanPop",
-          "Rape"
+          "sepal_length",
+          "sepal_width",
+          "petal_length",
+          "petal_width"
         ]
       },
       "status": "check",
@@ -24,70 +24,70 @@
       "expected": {
         "statistics": [
           {
-            "variable": "Murder",
-            "count": 50,
-            "mean": 7.788,
-            "std": 4.35550976420929,
-            "min": 0.8,
-            "max": 17.4,
-            "q25": 4.075,
-            "q50": 7.25,
-            "q75": 11.25,
-            "skewness": 0.38203784897198,
-            "kurtosis": -0.864671348958235
+            "variable": "sepal_length",
+            "count": 150,
+            "mean": 5.84333333333333,
+            "std": 0.828066127977863,
+            "min": 4.3,
+            "max": 7.9,
+            "q25": 5.1,
+            "q50": 5.8,
+            "q75": 6.4,
+            "skewness": 0.311753058502296,
+            "kurtosis": -0.573567948924977
           },
           {
-            "variable": "Assault",
-            "count": 50,
-            "mean": 170.76,
-            "std": 83.3376608400171,
-            "min": 45,
-            "max": 337,
-            "q25": 109,
-            "q50": 159,
-            "q75": 249,
-            "skewness": 0.227317866591112,
-            "kurtosis": -1.06902005157308
+            "variable": "sepal_width",
+            "count": 150,
+            "mean": 3.054,
+            "std": 0.433594311362174,
+            "min": 2,
+            "max": 4.4,
+            "q25": 2.8,
+            "q50": 3,
+            "q75": 3.3,
+            "skewness": 0.330702812773318,
+            "kurtosis": 0.241443299383186
           },
           {
-            "variable": "UrbanPop",
-            "count": 50,
-            "mean": 65.54,
-            "std": 14.4747634008368,
-            "min": 32,
-            "max": 91,
-            "q25": 54.5,
-            "q50": 66,
-            "q75": 77.75,
-            "skewness": -0.219171870514211,
-            "kurtosis": -0.784209745818456
+            "variable": "petal_length",
+            "count": 150,
+            "mean": 3.75866666666667,
+            "std": 1.76442041995226,
+            "min": 1,
+            "max": 6.9,
+            "q25": 1.6,
+            "q50": 4.35,
+            "q75": 5.1,
+            "skewness": -0.271711950171639,
+            "kurtosis": -1.39535930213971
           },
           {
-            "variable": "Rape",
-            "count": 50,
-            "mean": 21.232,
-            "std": 9.36638453105965,
-            "min": 7.3,
-            "max": 46,
-            "q25": 15.075,
-            "q50": 20.1,
-            "q75": 26.175,
-            "skewness": 0.776961320212419,
-            "kurtosis": 0.201897793084263
+            "variable": "petal_width",
+            "count": 150,
+            "mean": 1.19866666666667,
+            "std": 0.763160741700841,
+            "min": 0.1,
+            "max": 2.5,
+            "q25": 0.3,
+            "q50": 1.3,
+            "q75": 1.8,
+            "skewness": -0.103943666267517,
+            "kurtosis": -1.33524564413119
           }
         ]
       }
     },
     {
-      "id": "descriptives/USArrests/moments-G-spss",
-      "dataset": "USArrests",
+      "id": "descriptives/iris/moments-G-spss",
+      "dataset": "iris",
       "procedure": "descriptives",
       "input": {
         "variables": [
-          "Murder",
-          "Assault",
-          "UrbanPop",
-          "Rape"
+          "sepal_length",
+          "sepal_width",
+          "petal_length",
+          "petal_width"
         ]
       },
       "status": "convention-pending",
@@ -96,147 +96,150 @@
       "expected": {
         "statistics": [
           {
-            "variable": "Murder",
-            "count": 50,
-            "mean": 7.788,
-            "std": 4.35550976420929,
-            "min": 0.8,
-            "max": 17.4,
-            "q25": 4.075,
-            "q50": 7.25,
-            "q75": 11.25,
-            "skewness": 0.393956432447097,
-            "kurtosis": -0.827488342662513
+            "variable": "sepal_length",
+            "count": 150,
+            "mean": 5.84333333333333,
+            "std": 0.828066127977863,
+            "min": 4.3,
+            "max": 7.9,
+            "q25": 5.1,
+            "q50": 5.8,
+            "q75": 6.4,
+            "skewness": 0.314910956636973,
+            "kurtosis": -0.552064041315639
           },
           {
-            "variable": "Assault",
-            "count": 50,
-            "mean": 170.76,
-            "std": 83.3376608400171,
-            "min": 45,
-            "max": 337,
-            "q25": 109,
-            "q50": 159,
-            "q75": 249,
-            "skewness": 0.234409590554175,
-            "kurtosis": -1.05384800925582
+            "variable": "sepal_width",
+            "count": 150,
+            "mean": 3.054,
+            "std": 0.433594311362174,
+            "min": 2,
+            "max": 4.4,
+            "q25": 2.8,
+            "q50": 3,
+            "q75": 3.3,
+            "skewness": 0.33405266217209,
+            "kurtosis": 0.29078106236543
           },
           {
-            "variable": "UrbanPop",
-            "count": 50,
-            "mean": 65.54,
-            "std": 14.4747634008368,
-            "min": 32,
-            "max": 91,
-            "q25": 54.5,
-            "q50": 66,
-            "q75": 77.75,
-            "skewness": -0.226009460666993,
-            "kurtosis": -0.738359997695178
+            "variable": "petal_length",
+            "count": 150,
+            "mean": 3.75866666666667,
+            "std": 1.76442041995226,
+            "min": 1,
+            "max": 6.9,
+            "q25": 1.6,
+            "q50": 4.35,
+            "q75": 5.1,
+            "skewness": -0.274464252473784,
+            "kurtosis": -1.4019208006454
           },
           {
-            "variable": "Rape",
-            "count": 50,
-            "mean": 21.232,
-            "std": 9.36638453105965,
-            "min": 7.3,
-            "max": 46,
-            "q25": 15.075,
-            "q50": 20.1,
-            "q75": 26.175,
-            "skewness": 0.801200484936037,
-            "kurtosis": 0.353963911754244
+            "variable": "petal_width",
+            "count": 150,
+            "mean": 1.19866666666667,
+            "std": 0.763160741700841,
+            "min": 0.1,
+            "max": 2.5,
+            "q25": 0.3,
+            "q50": 1.3,
+            "q75": 1.8,
+            "skewness": -0.104996562144127,
+            "kurtosis": -1.33975417113934
           }
         ]
       }
     },
     {
-      "id": "crosstabs/ToothGrowth/supp-x-dose",
-      "dataset": "ToothGrowth",
+      "id": "crosstabs/auto-mpg/origin-x-cylinders",
+      "dataset": "auto-mpg",
       "procedure": "crosstabs",
       "input": {
-        "rowVariable": "supp",
-        "colVariable": "dose"
+        "rowVariable": "origin",
+        "colVariable": "cylinders"
       },
       "status": "check",
       "note": null,
       "tolerance": null,
       "expected": {
-        "chiSquare": 0,
-        "degreesOfFreedom": 2,
-        "pValue": 1,
-        "cramersV": 0
+        "chiSquare": 180.101771419767,
+        "degreesOfFreedom": 8,
+        "pValue": 9.80069332558837e-35,
+        "cramersV": 0.475666381835791
       }
     },
     {
-      "id": "crosstabs/mtcars/am-x-vs-pearson-spss",
-      "dataset": "mtcars",
+      "id": "crosstabs/spect/diagnosis-x-f1-pearson-spss",
+      "dataset": "spect-train",
       "procedure": "crosstabs",
       "input": {
-        "rowVariable": "am",
-        "colVariable": "vs"
+        "rowVariable": "overall_diagnosis",
+        "colVariable": "f1"
       },
       "status": "convention-pending",
       "note": "scipy.stats.chi2_contingency defaults to correction=TRUE, so a 2x2 reports Yates where SPSS reports uncorrected Pearson on the primary row. descriptive.ts:88",
       "tolerance": null,
       "expected": {
-        "chiSquare": 0.906882591093117,
+        "chiSquare": 2.65043948613928,
         "degreesOfFreedom": 1,
-        "pValue": 0.340942914274381,
-        "cramersV": 0.168345124585359
+        "pValue": 0.103521272434683,
+        "cramersV": 0.18201783862232
       }
     },
     {
-      "id": "crosstabs/mtcars/am-x-vs-yates",
-      "dataset": "mtcars",
+      "id": "crosstabs/spect/diagnosis-x-f1-yates",
+      "dataset": "spect-train",
       "procedure": "crosstabs",
       "input": {
-        "rowVariable": "am",
-        "colVariable": "vs"
+        "rowVariable": "overall_diagnosis",
+        "colVariable": "f1"
       },
       "status": "check",
       "note": null,
       "tolerance": null,
       "expected": {
-        "chiSquare": 0.347535505430242,
+        "chiSquare": 1.947261663286,
         "degreesOfFreedom": 1,
-        "pValue": 0.55551154701315,
-        "cramersV": 0.104213648552841
+        "pValue": 0.162882238432969,
+        "cramersV": 0.156015290247703
       }
     },
     {
-      "id": "crosstabs/ToothGrowth/supp-x-dose-labels",
-      "dataset": "ToothGrowth",
+      "id": "crosstabs/auto-mpg/origin-x-cylinders-labels",
+      "dataset": "auto-mpg",
       "procedure": "crosstabs",
       "input": {
-        "rowVariable": "supp",
-        "colVariable": "dose"
+        "rowVariable": "origin",
+        "colVariable": "cylinders"
       },
       "status": "known-defect",
-      "note": "numeric categories are labelled '1.0' where R and SPSS label them '1'; crosstab row/column headers only",
+      "note": "integer-coded categories are labelled '1.0'/'3.0' where R and SPSS label them '1'/'3'; crosstab row/column headers only",
       "tolerance": null,
       "expected": {
         "rowLabels": [
-          "OJ",
-          "VC"
-        ],
-        "colLabels": [
-          "0.5",
           "1",
-          "2"
+          "2",
+          "3"
+        ],
+        "colLabels": [
+          "3",
+          "4",
+          "5",
+          "6",
+          "8"
         ]
       }
     },
     {
-      "id": "crosstabs/mtcars/am-x-vs-labels",
-      "dataset": "mtcars",
+      "id": "crosstabs/spect/diagnosis-x-f1-labels",
+      "dataset": "spect-train",
       "procedure": "crosstabs",
       "input": {
-        "rowVariable": "am",
-        "colVariable": "vs"
+        "rowVariable": "overall_diagnosis",
+        "colVariable": "f1"
       },
       "status": "known-defect",
-      "note": "numeric categories are labelled '0.0'/'1.0' where R and SPSS label them '0'/'1'",
+      "note": "same labelling defect on a 0/1-coded category",
       "tolerance": null,
       "expected": {
         "rowLabels": [
@@ -250,184 +253,165 @@
       }
     },
     {
-      "id": "ttest-independent/ToothGrowth/len-by-supp",
-      "dataset": "ToothGrowth",
+      "id": "ttest-independent/haberman/age-by-survival",
+      "dataset": "haberman",
       "procedure": "ttestIndependent",
       "input": {
-        "variable": "len",
-        "groupVariable": "supp",
-        "group1Value": "OJ",
-        "group2Value": "VC"
+        "variable": "age",
+        "groupVariable": "survival_status",
+        "group1Value": 1,
+        "group2Value": 2
       },
       "status": "check",
       "note": null,
       "tolerance": null,
       "expected": {
         "leveneTest": {
-          "statistic": 1.21357206569451,
-          "pValue": 0.275176461614407
-        },
-        "equalVariance": {
-          "tStatistic": 1.91526826869527,
-          "degreesOfFreedom": 58,
-          "pValue": 0.0603933712241287,
-          "meanDifference": 3.7,
-          "confidenceInterval": [
-            -0.167006420141225,
-            7.56700642014122
-          ],
-          "group1Mean": 20.6633333333333,
-          "group1Std": 6.60556104972236,
-          "group1N": 30,
-          "group2Mean": 16.9633333333333,
-          "group2Std": 8.26602866466464,
-          "group2N": 30
-        },
-        "unequalVariance": {
-          "tStatistic": 1.91526826869527,
-          "degreesOfFreedom": 55.3094326826406,
-          "pValue": 0.0606345078809341,
-          "meanDifference": 3.7,
-          "confidenceInterval": [
-            -0.171015618367165,
-            7.57101561836716
-          ],
-          "group1Mean": 20.6633333333333,
-          "group1Std": 6.60556104972236,
-          "group1N": 30,
-          "group2Mean": 16.9633333333333,
-          "group2Std": 8.26602866466464,
-          "group2N": 30
-        }
-      }
-    },
-    {
-      "id": "ttest-independent/ToothGrowth/levene-mean-spss",
-      "dataset": "ToothGrowth",
-      "procedure": "ttestIndependent",
-      "input": {
-        "variable": "len",
-        "groupVariable": "supp",
-        "group1Value": "OJ",
-        "group2Value": "VC"
-      },
-      "status": "convention-pending",
-      "note": "scipy.stats.levene defaults to center='median' (Brown-Forsythe); SPSS T-TEST centres on the mean. compare-means.ts:32",
-      "tolerance": null,
-      "expected": {
-        "leveneTest": {
-          "statistic": 1.09733432308867,
-          "pValue": 0.299197664000311
-        }
-      }
-    },
-    {
-      "id": "ttest-independent/mtcars/hp-by-vs",
-      "dataset": "mtcars",
-      "procedure": "ttestIndependent",
-      "input": {
-        "variable": "hp",
-        "groupVariable": "vs",
-        "group1Value": 0,
-        "group2Value": 1
-      },
-      "status": "check",
-      "note": null,
-      "tolerance": null,
-      "expected": {
-        "leveneTest": {
-          "statistic": 4.0736153369773,
-          "pValue": 0.0525764747994312,
+          "statistic": 1.79989813759278,
+          "pValue": 0.180726109564795,
           "equalVariance": true
         },
         "equalVariance": {
-          "tStatistic": 5.73374220653406,
-          "degreesOfFreedom": 30,
-          "pValue": 2.94089589750053e-06,
-          "meanDifference": 98.3650793650794,
+          "tStatistic": -1.18749904876872,
+          "degreesOfFreedom": 304,
+          "pValue": 0.235957851268296,
+          "meanDifference": -1.66123456790123,
           "confidenceInterval": [
-            63.3289223470226,
-            133.401236383136
+            -4.41405723112814,
+            1.09158809532568
           ],
-          "group1Mean": 189.722222222222,
-          "group1Std": 60.2815019481448,
-          "group1N": 18,
-          "group2Mean": 91.3571428571429,
-          "group2Std": 24.4244743045771,
-          "group2N": 14
+          "group1Mean": 52.0177777777778,
+          "group1Std": 11.0121541799295,
+          "group1N": 225,
+          "group2Mean": 53.679012345679,
+          "group2Std": 10.1671372082974,
+          "group2N": 81
         },
         "unequalVariance": {
-          "tStatistic": 6.29083779393711,
-          "degreesOfFreedom": 23.5611103938959,
-          "pValue": 1.81980597317305e-06,
-          "meanDifference": 98.3650793650794,
+          "tStatistic": -1.23303365618891,
+          "degreesOfFreedom": 152.149358612691,
+          "pValue": 0.219464887430451,
+          "meanDifference": -1.66123456790123,
           "confidenceInterval": [
-            66.0616145357503,
-            130.668544194408
+            -4.32301527337491,
+            1.00054613757245
           ],
-          "group1Mean": 189.722222222222,
-          "group1Std": 60.2815019481448,
-          "group1N": 18,
-          "group2Mean": 91.3571428571429,
-          "group2Std": 24.4244743045771,
-          "group2N": 14
+          "group1Mean": 52.0177777777778,
+          "group1Std": 11.0121541799295,
+          "group1N": 225,
+          "group2Mean": 53.679012345679,
+          "group2Std": 10.1671372082974,
+          "group2N": 81
         }
       }
     },
     {
-      "id": "ttest-independent/mtcars/hp-by-vs-levene-mean-spss",
-      "dataset": "mtcars",
+      "id": "ttest-independent/wine/proline-by-cultivar-2v3",
+      "dataset": "wine",
       "procedure": "ttestIndependent",
       "input": {
-        "variable": "hp",
-        "groupVariable": "vs",
-        "group1Value": 0,
-        "group2Value": 1
+        "variable": "proline",
+        "groupVariable": "cultivar",
+        "group1Value": 2,
+        "group2Value": 3
       },
-      "status": "convention-pending",
-      "note": "Same centre question as above, but here it changes the reported result: median-centred Levene keeps the equal-variance t-test, mean-centred (SPSS) rejects it. compare-means.ts:32-33",
+      "status": "check",
+      "note": null,
       "tolerance": null,
       "expected": {
         "leveneTest": {
-          "statistic": 5.61891069065789,
-          "pValue": 0.0243926782312399,
+          "statistic": 3.06979986144622,
+          "pValue": 0.0823792604636777,
+          "equalVariance": true
+        },
+        "equalVariance": {
+          "tStatistic": -4.16591997713438,
+          "degreesOfFreedom": 117,
+          "pValue": 5.96367060427948e-05,
+          "meanDifference": -110.388791079812,
+          "confidenceInterval": [
+            -162.866807320047,
+            -57.9107748395771
+          ],
+          "group1Mean": 519.507042253521,
+          "group1Std": 157.211220359238,
+          "group1N": 71,
+          "group2Mean": 629.895833333333,
+          "group2Std": 115.097043159117,
+          "group2N": 48
+        },
+        "unequalVariance": {
+          "tStatistic": -4.4187703876044,
+          "degreesOfFreedom": 116.206441482886,
+          "pValue": 2.24179656012531e-05,
+          "meanDifference": -110.388791079812,
+          "confidenceInterval": [
+            -159.867446260642,
+            -60.9101358989823
+          ],
+          "group1Mean": 519.507042253521,
+          "group1Std": 157.211220359238,
+          "group1N": 71,
+          "group2Mean": 629.895833333333,
+          "group2Std": 115.097043159117,
+          "group2N": 48
+        }
+      }
+    },
+    {
+      "id": "ttest-independent/wine/proline-levene-mean-spss",
+      "dataset": "wine",
+      "procedure": "ttestIndependent",
+      "input": {
+        "variable": "proline",
+        "groupVariable": "cultivar",
+        "group1Value": 2,
+        "group2Value": 3
+      },
+      "status": "convention-pending",
+      "note": "scipy.stats.levene defaults to center='median' (Brown-Forsythe); SPSS T-TEST centres on the mean. Here that changes the reported result: median-centred keeps the equal-variance t-test, mean-centred rejects it. compare-means.ts:32-33",
+      "tolerance": null,
+      "expected": {
+        "leveneTest": {
+          "statistic": 4.30147763184432,
+          "pValue": 0.040273313194789,
           "equalVariance": false
         }
       }
     },
     {
-      "id": "ttest-paired/sleep/drug1-vs-drug2",
-      "dataset": "sleep",
+      "id": "ttest-paired/breast-cancer-wisconsin/clump-vs-cell-size",
+      "dataset": "breast-cancer-wisconsin",
       "procedure": "ttestPaired",
       "input": {
-        "variable1": "drug1",
-        "variable2": "drug2"
+        "variable1": "clump_thickness",
+        "variable2": "uniformity_cell_size"
       },
       "status": "check",
       "note": null,
       "tolerance": null,
       "expected": {
-        "tStatistic": -4.06212768338204,
-        "degreesOfFreedom": 9,
-        "pValue": 0.00283289019738427,
-        "meanDifference": -1.58,
-        "stdDifference": 1.22999548327987,
+        "tStatistic": 13.6726500327658,
+        "degreesOfFreedom": 698,
+        "pValue": 7.03978356296427e-38,
+        "meanDifference": 1.28326180257511,
+        "stdDifference": 2.48142502358898,
         "confidenceInterval": [
-          -2.45988576327698,
-          -0.700114236723018
+          1.09898766871912,
+          1.4675359364311
         ],
-        "mean1": 0.75,
-        "mean2": 2.33,
-        "n": 10
+        "mean1": 4.41773962804006,
+        "mean2": 3.13447782546495,
+        "n": 699
       }
     },
     {
-      "id": "anova-oneway/iris/SepalLength-by-Species",
+      "id": "anova-oneway/iris/sepal-length-by-species",
       "dataset": "iris",
       "procedure": "anovaOneway",
       "input": {
-        "variable": "Sepal.Length",
-        "groupVariable": "Species"
+        "variable": "sepal_length",
+        "groupVariable": "species"
       },
       "status": "check",
       "note": null,
@@ -444,19 +428,19 @@
         "etaSquared": 0.618705730738487,
         "groupStats": [
           {
-            "group": "setosa",
+            "group": "Iris-setosa",
             "n": 50,
             "mean": 5.006,
             "std": 0.352489687213451
           },
           {
-            "group": "versicolor",
+            "group": "Iris-versicolor",
             "n": 50,
             "mean": 5.936,
             "std": 0.516171147063863
           },
           {
-            "group": "virginica",
+            "group": "Iris-virginica",
             "n": 50,
             "mean": 6.588,
             "std": 0.635879593274432
@@ -465,38 +449,38 @@
       }
     },
     {
-      "id": "posthoc-tukey/iris/SepalLength-by-Species",
+      "id": "posthoc-tukey/iris/sepal-length-by-species",
       "dataset": "iris",
       "procedure": "posthocTukey",
       "input": {
-        "variable": "Sepal.Length",
-        "groupVariable": "Species",
+        "variable": "sepal_length",
+        "groupVariable": "species",
         "alpha": 0.05
       },
       "status": "known-defect",
-      "note": "posthocTukey reads statsmodels' summary() display table, which is formatted to 4 decimals, so every value is truncated. Same class as #12. compare-means.ts:199-206",
+      "note": "posthocTukey reads statsmodels' summary() display table, which is formatted to 4 decimals, so every value is truncated and a tiny p-value becomes exactly 0. Same class as #12. compare-means.ts:199-206",
       "tolerance": null,
       "expected": {
         "comparisons": [
           {
-            "group1": "setosa",
-            "group2": "versicolor",
+            "group1": "Iris-setosa",
+            "group2": "Iris-versicolor",
             "meanDifference": 0.93,
             "lowerCI": 0.686227294142111,
             "upperCI": 1.17377270585789,
             "pValue": 3.38618022510673e-14
           },
           {
-            "group1": "setosa",
-            "group2": "virginica",
+            "group1": "Iris-setosa",
+            "group2": "Iris-virginica",
             "meanDifference": 1.582,
             "lowerCI": 1.33822729414211,
             "upperCI": 1.82577270585789,
             "pValue": 2.99760216648792e-15
           },
           {
-            "group1": "versicolor",
-            "group2": "virginica",
+            "group1": "Iris-versicolor",
+            "group2": "Iris-virginica",
             "meanDifference": 0.652,
             "lowerCI": 0.408227294142112,
             "upperCI": 0.895772705857888,
@@ -506,15 +490,15 @@
       }
     },
     {
-      "id": "linear-regression/mtcars/mpg~wt+hp+disp",
-      "dataset": "mtcars",
+      "id": "linear-regression/auto-mpg/mpg~weight+hp+displacement",
+      "dataset": "auto-mpg",
       "procedure": "linearRegression",
       "input": {
         "dependentVariable": "mpg",
         "independentVariables": [
-          "wt",
-          "hp",
-          "disp"
+          "weight",
+          "horsepower",
+          "displacement"
         ],
         "method": "enter"
       },
@@ -522,72 +506,72 @@
       "note": null,
       "tolerance": null,
       "expected": {
-        "rSquared": 0.826836142494644,
-        "adjustedRSquared": 0.808282872047642,
-        "residualStdError": 2.63893021290661,
-        "fStatistic": 44.5655198557317,
-        "fPValue": 8.64958771495696e-11,
-        "observations": 32,
-        "degreesOfFreedom": 28,
-        "durbinWatson": 1.36728396735159,
+        "rSquared": 0.706955469344471,
+        "adjustedRSquared": 0.704689661117753,
+        "residualStdError": 4.24143338016294,
+        "fStatistic": 312.010284457518,
+        "fPValue": 5.0988610766583e-103,
+        "observations": 392,
+        "degreesOfFreedom": 388,
+        "durbinWatson": 0.858751337445871,
         "coefficients": [
           {
             "variable": "const",
-            "coefficient": 37.1055052690318,
-            "stdError": 2.11081524549878,
-            "tStatistic": 17.5787555770964,
-            "pValue": 1.16193589746734e-16,
+            "coefficient": 44.8559356952651,
+            "stdError": 1.19592001252595,
+            "tStatistic": 37.5074714240488,
+            "pValue": 4.10751772575458e-131,
             "confidenceInterval": [
-              32.7816962451418,
-              41.4293142929218
+              42.5046410921353,
+              47.2072302983949
             ]
           },
           {
-            "variable": "wt",
-            "coefficient": -3.80089058263761,
-            "stdError": 1.06619063911051,
-            "tStatistic": -3.56492586148437,
-            "pValue": 0.00133099111355844,
+            "variable": "weight",
+            "coefficient": -0.0053515926110339,
+            "stdError": 0.000712353968891249,
+            "tStatistic": -7.5125469145114,
+            "pValue": 4.03583542581949e-13,
             "confidenceInterval": [
-              -5.98488310230683,
-              -1.6168980629684
+              -0.00675214952540008,
+              -0.00395103569666772
             ]
           },
           {
-            "variable": "hp",
-            "coefficient": -0.0311565508299456,
-            "stdError": 0.0114357942956644,
-            "tStatistic": -2.72447632621006,
-            "pValue": 0.0109710322513616,
+            "variable": "horsepower",
+            "coefficient": -0.0416741438011199,
+            "stdError": 0.0128138622494436,
+            "tStatistic": -3.25227031396639,
+            "pValue": 0.00124506283088681,
             "confidenceInterval": [
-              -0.0545817135372857,
-              -0.00773138812260538
+              -0.0668674383666392,
+              -0.0164808492356006
             ]
           },
           {
-            "variable": "disp",
-            "coefficient": -0.00093700908148966,
-            "stdError": 0.0103497448576593,
-            "tStatistic": -0.0905345102102904,
-            "pValue": 0.928507029485254,
+            "variable": "displacement",
+            "coefficient": -0.00576881870761176,
+            "stdError": 0.00658188996064917,
+            "tStatistic": -0.876468422003637,
+            "pValue": 0.381317748482942,
             "confidenceInterval": [
-              -0.0221375003636777,
-              0.0202634822006983
+              -0.0187094520114908,
+              0.00717181459626733
             ]
           }
         ]
       }
     },
     {
-      "id": "linear-regression/mtcars/mpg~wt+hp+disp-default-method",
-      "dataset": "mtcars",
+      "id": "linear-regression/auto-mpg/default-method",
+      "dataset": "auto-mpg",
       "procedure": "linearRegression",
       "input": {
         "dependentVariable": "mpg",
         "independentVariables": [
-          "wt",
-          "hp",
-          "disp"
+          "weight",
+          "horsepower",
+          "displacement"
         ]
       },
       "status": "known-defect",
@@ -597,184 +581,274 @@
         "coefficients": [
           {
             "variable": "const",
-            "coefficient": 37.1055052690318,
-            "stdError": 2.11081524549878
+            "coefficient": 44.8559356952651,
+            "stdError": 1.19592001252595
           },
           {
-            "variable": "wt",
-            "coefficient": -3.80089058263761,
-            "stdError": 1.06619063911051
+            "variable": "weight",
+            "coefficient": -0.0053515926110339,
+            "stdError": 0.000712353968891249
           },
           {
-            "variable": "hp",
-            "coefficient": -0.0311565508299456,
-            "stdError": 0.0114357942956644
+            "variable": "horsepower",
+            "coefficient": -0.0416741438011199,
+            "stdError": 0.0128138622494436
           },
           {
-            "variable": "disp",
-            "coefficient": -0.00093700908148966,
-            "stdError": 0.0103497448576593
+            "variable": "displacement",
+            "coefficient": -0.00576881870761176,
+            "stdError": 0.00658188996064917
           }
         ]
       }
     },
     {
-      "id": "logistic-binary/mtcars/am~wt+hp",
-      "dataset": "mtcars",
+      "id": "logistic-binary/spect/diagnosis~f1+f2",
+      "dataset": "spect-train",
       "procedure": "logisticBinary",
       "input": {
-        "dependentVariable": "am",
+        "dependentVariable": "overall_diagnosis",
         "independentVariables": [
-          "wt",
-          "hp"
+          "f1",
+          "f2"
         ]
       },
       "status": "check",
-      "note": "pseudoRSquared is McFadden's (statsmodels prsquared). SPSS prints Cox & Snell 0.645335 and Nagelkerke 0.870897 instead.",
+      "note": "pseudoRSquared is McFadden's (statsmodels prsquared). SPSS prints Cox & Snell 0.078202 and Nagelkerke 0.104270 instead.",
       "tolerance": {
-        "relative": 1e-05
+        "relative": 1e-05,
+        "absolute": 1e-05
       },
       "expected": {
-        "logLikelihood": -5.02955523613349,
-        "aic": 16.059110472267,
-        "bic": 20.4563181806662,
-        "observations": 32,
-        "pseudoRSquared": 0.767310373907582,
-        "llrPValue": 6.26744854783836e-08,
+        "logLikelihood": -52.1945920558816,
+        "aic": 110.389184111763,
+        "bic": 117.535264015785,
+        "observations": 80,
+        "pseudoRSquared": 0.0587390109969644,
+        "llrPValue": 0.0384967141180419,
         "coefficients": [
           {
             "variable": "const",
-            "coefficient": 18.8662987172041,
-            "stdError": 7.44355806020527,
-            "zStatistic": 2.5345807159169,
-            "pValue": 0.0112581987166137,
-            "oddsRatio": 156145483.50632,
+            "coefficient": -0.427847051845537,
+            "stdError": 0.298027924922079,
+            "zStatistic": -1.43559383556893,
+            "pValue": 0.151117949863058,
+            "oddsRatio": 0.651911115776029,
             "confidenceInterval": [
-              4.27719300236893,
-              33.4554044320393
+              -1.01197105108002,
+              0.156276947388944
             ]
           },
           {
-            "variable": "wt",
-            "coefficient": -8.08347518244463,
-            "stdError": 3.0686751130547,
-            "zStatistic": -2.63419061472362,
-            "pValue": 0.00843381259970702,
-            "oddsRatio": 0.000308596739840476,
+            "variable": "f1",
+            "coefficient": 0.654480340710819,
+            "stdError": 0.48979744044474,
+            "zStatistic": 1.33622654319415,
+            "pValue": 0.181475237787228,
+            "oddsRatio": 1.92414235907749,
             "confidenceInterval": [
-              -14.0979678842862,
-              -2.06898248060305
+              -0.305505002280773,
+              1.61446568370241
             ]
           },
           {
-            "variable": "hp",
-            "coefficient": 0.0362555960822165,
-            "stdError": 0.0177341536507693,
-            "zStatistic": 2.0443939302761,
-            "pValue": 0.0409146464590299,
-            "oddsRatio": 1.03692084552881,
+            "variable": "f2",
+            "coefficient": 1.30804153547225,
+            "stdError": 0.711774680010847,
+            "zStatistic": 1.83771855364723,
+            "pValue": 0.0661038884526694,
+            "oddsRatio": 3.69892240549241,
             "confidenceInterval": [
-              0.00149729363040912,
-              0.071013898534024
+              -0.0870112024565288,
+              2.70309427340103
             ]
           }
         ]
       }
     },
     {
-      "id": "cronbach-alpha/attitude/all-items",
-      "dataset": "attitude",
+      "id": "logistic-binary/haberman/survival~age+nodes",
+      "dataset": "haberman",
+      "procedure": "logisticBinary",
+      "input": {
+        "dependentVariable": "survival_status",
+        "independentVariables": [
+          "age",
+          "positive_nodes"
+        ]
+      },
+      "status": "known-defect",
+      "note": "dependent variable is coded 1/2, not 0/1. SPSS and R model the higher value as the event; sm.Logit rejects it with 'endog must be in the unit interval' and the traceback reaches the caller. regression.ts:240-250",
+      "tolerance": {
+        "relative": 1e-05,
+        "absolute": 1e-05
+      },
+      "expected": {
+        "logLikelihood": -164.155342510479,
+        "aic": 334.310685020958,
+        "bic": 345.481440326815,
+        "observations": 306,
+        "pseudoRSquared": 0.0717509313251378,
+        "llrPValue": 3.08571653779912e-06,
+        "coefficients": [
+          {
+            "variable": "const",
+            "coefficient": -2.46289804432727,
+            "stdError": 0.706426487675375,
+            "zStatistic": -3.48641803116965,
+            "pValue": 0.000489535379178847,
+            "oddsRatio": 0.0851877151155859,
+            "confidenceInterval": [
+              -3.84746851789613,
+              -1.07832757075841
+            ]
+          },
+          {
+            "variable": "age",
+            "coefficient": 0.0196502809280023,
+            "stdError": 0.0126876070114172,
+            "zStatistic": 1.54877755200957,
+            "pValue": 0.121435203605417,
+            "oddsRatio": 1.01984461854066,
+            "confidenceInterval": [
+              -0.00521697186437335,
+              0.0445175337203779
+            ]
+          },
+          {
+            "variable": "positive_nodes",
+            "coefficient": 0.0883245263011463,
+            "stdError": 0.0198201423668191,
+            "zStatistic": 4.45630130533322,
+            "pValue": 8.33858137947352e-06,
+            "oddsRatio": 1.09234255840319,
+            "confidenceInterval": [
+              0.0494777610937244,
+              0.127171291508568
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "cronbach-alpha/breast-cancer-wisconsin/nine-items",
+      "dataset": "breast-cancer-wisconsin",
       "procedure": "cronbachAlpha",
       "input": {
         "items": [
-          "rating",
-          "complaints",
-          "privileges",
-          "learning",
-          "raises",
-          "critical",
-          "advance"
+          "clump_thickness",
+          "uniformity_cell_size",
+          "uniformity_cell_shape",
+          "marginal_adhesion",
+          "epithelial_cell_size",
+          "bare_nuclei",
+          "bland_chromatin",
+          "normal_nucleoli",
+          "mitoses"
         ]
       },
       "status": "check",
       "note": null,
       "tolerance": null,
       "expected": {
-        "alpha": 0.84314276956476,
-        "standardizedAlpha": 0.83908380302951,
-        "interItemCorrelationMean": 0.426906642649717,
-        "nItems": 7,
-        "nObservations": 30,
+        "alpha": 0.930528135328746,
+        "standardizedAlpha": 0.931551937800079,
+        "interItemCorrelationMean": 0.601939305572724,
+        "nItems": 9,
+        "nObservations": 683,
+        "caseProcessing": {
+          "valid": 683,
+          "excluded": 16,
+          "total": 699
+        },
         "scaleStatistics": {
-          "nItems": 7,
-          "mean": 423.066666666667,
-          "std": 57.7485233925768,
-          "minimum": 297,
-          "maximum": 518
+          "nItems": 9,
+          "mean": 28.3352855051244,
+          "std": 20.2708283101664,
+          "minimum": 9,
+          "maximum": 84
         },
         "itemAnalysis": [
           {
-            "item": "rating",
-            "itemMean": 64.6333333333333,
-            "itemStd": 12.1725619475859,
-            "scaleMeanIfItemDeleted": 358.433333333333,
-            "scaleStdIfItemDeleted": 48.8683547088913,
-            "correctedItemTotalCorrelation": 0.671262057223664,
-            "alphaIfItemDeleted": 0.809760206308921
+            "item": "clump_thickness",
+            "itemMean": 4.44216691068814,
+            "itemStd": 2.82076131883713,
+            "scaleMeanIfItemDeleted": 23.8931185944363,
+            "scaleStdIfItemDeleted": 18.27290663249,
+            "correctedItemTotalCorrelation": 0.669828961575139,
+            "alphaIfItemDeleted": 0.926969200989145
           },
           {
-            "item": "complaints",
-            "itemMean": 66.6,
-            "itemStd": 13.3147571746799,
-            "scaleMeanIfItemDeleted": 356.466666666667,
-            "scaleStdIfItemDeleted": 47.1737312446263,
-            "correctedItemTotalCorrelation": 0.742109710222239,
-            "alphaIfItemDeleted": 0.79691745727414
+            "item": "uniformity_cell_size",
+            "itemMean": 3.15080527086384,
+            "itemStd": 3.06514485578604,
+            "scaleMeanIfItemDeleted": 25.1844802342606,
+            "scaleStdIfItemDeleted": 17.491210842332,
+            "correctedItemTotalCorrelation": 0.89128328422865,
+            "alphaIfItemDeleted": 0.912614871372524
           },
           {
-            "item": "privileges",
-            "itemMean": 53.1333333333333,
-            "itemStd": 12.2354299935244,
-            "scaleMeanIfItemDeleted": 369.933333333333,
-            "scaleStdIfItemDeleted": 49.9923672335007,
-            "correctedItemTotalCorrelation": 0.560711111480256,
-            "alphaIfItemDeleted": 0.827847765938659
+            "item": "uniformity_cell_shape",
+            "itemMean": 3.21522693997072,
+            "itemStd": 2.98858081832502,
+            "scaleMeanIfItemDeleted": 25.1200585651537,
+            "scaleStdIfItemDeleted": 17.578569130199,
+            "correctedItemTotalCorrelation": 0.88482742462245,
+            "alphaIfItemDeleted": 0.913183361338265
           },
           {
-            "item": "learning",
-            "itemMean": 56.3666666666667,
-            "itemStd": 11.7370128765529,
-            "scaleMeanIfItemDeleted": 366.7,
-            "scaleStdIfItemDeleted": 48.7761600897759,
-            "correctedItemTotalCorrelation": 0.714445498133676,
-            "alphaIfItemDeleted": 0.803030975022574
+            "item": "marginal_adhesion",
+            "itemMean": 2.83016105417277,
+            "itemStd": 2.86456219044699,
+            "scaleMeanIfItemDeleted": 25.5051244509517,
+            "scaleStdIfItemDeleted": 18.027623479139,
+            "correctedItemTotalCorrelation": 0.752359379714521,
+            "alphaIfItemDeleted": 0.921930204342026
           },
           {
-            "item": "raises",
-            "itemMean": 64.6333333333333,
-            "itemStd": 10.3972255361983,
-            "scaleMeanIfItemDeleted": 358.433333333333,
-            "scaleStdIfItemDeleted": 49.2149986483188,
-            "correctedItemTotalCorrelation": 0.7862755938344,
-            "alphaIfItemDeleted": 0.795386574198205
+            "item": "epithelial_cell_size",
+            "itemMean": 3.23426061493411,
+            "itemStd": 2.22308545644179,
+            "scaleMeanIfItemDeleted": 25.1010248901903,
+            "scaleStdIfItemDeleted": 18.5336354801035,
+            "correctedItemTotalCorrelation": 0.758081481769454,
+            "alphaIfItemDeleted": 0.922970704844834
           },
           {
-            "item": "critical",
-            "itemMean": 74.7666666666667,
-            "itemStd": 9.89490754895157,
-            "scaleMeanIfItemDeleted": 348.3,
-            "scaleStdIfItemDeleted": 54.3324060283325,
-            "correctedItemTotalCorrelation": 0.265034339196676,
-            "alphaIfItemDeleted": 0.863872311446437
+            "item": "bare_nuclei",
+            "itemMean": 3.54465592972182,
+            "itemStd": 3.64385716049292,
+            "scaleMeanIfItemDeleted": 24.7906295754026,
+            "scaleStdIfItemDeleted": 17.364180106647,
+            "correctedItemTotalCorrelation": 0.759523448724973,
+            "alphaIfItemDeleted": 0.923950275388344
           },
           {
-            "item": "advance",
-            "itemMean": 42.9333333333333,
-            "itemStd": 10.2887060053424,
-            "scaleMeanIfItemDeleted": 380.133333333333,
-            "scaleStdIfItemDeleted": 52.2808947324258,
-            "correctedItemTotalCorrelation": 0.460810549468496,
-            "alphaIfItemDeleted": 0.840464868265457
+            "item": "bland_chromatin",
+            "itemMean": 3.44509516837482,
+            "itemStd": 2.44969657251287,
+            "scaleMeanIfItemDeleted": 24.8901903367496,
+            "scaleStdIfItemDeleted": 18.2751359168398,
+            "correctedItemTotalCorrelation": 0.792128554574663,
+            "alphaIfItemDeleted": 0.920329670117759
+          },
+          {
+            "item": "normal_nucleoli",
+            "itemMean": 2.8696925329429,
+            "itemStd": 3.05266640704736,
+            "scaleMeanIfItemDeleted": 25.4655929721816,
+            "scaleStdIfItemDeleted": 17.8662323999325,
+            "correctedItemTotalCorrelation": 0.755280349655821,
+            "alphaIfItemDeleted": 0.921905910349932
+          },
+          {
+            "item": "mitoses",
+            "itemMean": 1.60322108345534,
+            "itemStd": 1.73267414633703,
+            "scaleMeanIfItemDeleted": 26.7320644216691,
+            "scaleStdIfItemDeleted": 19.3736968264479,
+            "correctedItemTotalCorrelation": 0.485043753445569,
+            "alphaIfItemDeleted": 0.935719369508115
           }
         ]
       }

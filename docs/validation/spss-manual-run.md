@@ -14,7 +14,9 @@ when a case is added or an SPSS release changes a documented default.
 - IBM SPSS Statistics, any licensed edition, version 25 or later.
 - A checkout of this repository.
 - `e2e/fixtures/cross-check/data/*.csv` present. They are committed; if they are
-  not there, run `Rscript scripts/export-cross-check-data.R`.
+  not there, run `npm run fetch-cross-check-data`, which re-downloads each file
+  from its publisher and verifies it against the SHA-256 recorded in
+  `provenance.json`.
 
 ## Steps
 
@@ -74,14 +76,23 @@ The likely causes, in order:
 
 - **Path.** `!DATA` must be the directory, with no trailing slash. The first
   `GET DATA` is the one that fails.
-- **Decimal comma.** On a locale where SPSS writes decimals with a comma, add
-  `SET DECIMAL=DOT.` as the first line. The CSVs use a dot, and `GET DATA` reads
-  them under the session's decimal setting.
+- **Decimal comma.** The syntax already sets `SET DECIMAL=DOT.`, because the
+  published files use a dot regardless of locale. If a locale setting overrides
+  it, the symptom is every numeric field reading as missing.
+- **Trailing decimal points.** `auto-mpg`'s `weight` column is published as
+  `3504.` rather than `3504`. SPSS reads that under an `F` format without
+  complaint; if a build does not, widening the format (`weight F10.4`, as the
+  syntax already does) is the fix rather than editing the data.
 - **A procedure your licence does not include.** `REGRESSION`, `LOGISTIC
   REGRESSION`, `ONEWAY`, `RELIABILITY`, `CROSSTABS` and `T-TEST` are all in
   Statistics Base. If one is unavailable, comment out that block and send what
   ran — a partial fixture is useful, and the importer records which cases are
   absent rather than assuming agreement.
+- **A procedure that refuses the outcome coding.** `LOGISTIC REGRESSION` on
+  Haberman's `survival_status` is deliberate: the outcome is coded 1/2, and SPSS
+  modelling the higher value as the event is exactly the behaviour being compared
+  against. If your build asks for a recode, report that rather than recoding —
+  it changes what the case measures.
 
 ## What happens to the file
 

@@ -695,10 +695,13 @@ node scripts/fetch-nist-strd.mjs     # regenerates e2e/fixtures/nist-strd.json
 
 NIST certifies four datasets across two procedure families, so the remaining
 procedures are checked against the two packages researchers compare their results
-to. `e2e/cross-check.browser.test.ts` runs each procedure on a dataset from R's
-`datasets` package and compares it to what R reports — to 1e-9 for the
-closed-form procedures, and to 1e-5 for logistic regression, where the bound is
-set by two solvers' convergence criteria rather than by floating point.
+to. `e2e/cross-check.browser.test.ts` runs each procedure on data downloaded from
+the archive that publishes it — six datasets from the UCI Machine Learning
+Repository, each pinned by SHA-256 in
+`e2e/fixtures/cross-check/data/provenance.json` — and compares the result to what
+R reports: to 1e-9 for the closed-form procedures, and to 1e-5 for logistic
+regression, where the bound is set by two solvers' convergence criteria rather
+than by floating point.
 
 Where this SDK and SPSS differ by *convention* rather than by correctness, the
 difference is recorded as a declared divergence rather than quietly matched. Three
@@ -709,6 +712,7 @@ for the design, the full case list, and what the comparison has found so far.
 
 ```bash
 npm test                               # includes the cross-check comparisons
+npm run fetch-cross-check-data         # re-downloads the data, verifying each digest
 npm run generate-r-reference           # needs R; regenerates the R fixture
 ```
 
