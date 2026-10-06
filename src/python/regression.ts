@@ -238,13 +238,33 @@ def run_logistic_binary(data_json, dependent, independents_json, add_constant=Tr
     df = pd.DataFrame(json.loads(data_json))
     independents = json.loads(independents_json)
     
-    y = pd.to_numeric(df[dependent], errors='coerce')
+    y_raw = df[dependent]
     X = df[independents].apply(pd.to_numeric, errors='coerce')
-    
-    mask = y.notna() & X.notna().all(axis=1)
-    y = y[mask]
+
+    mask = y_raw.notna() & X.notna().all(axis=1)
+    y_raw = y_raw[mask]
     X = X[mask]
-    
+
+    # Encode the outcome the way SPSS LOGISTIC REGRESSION and R's
+    # glm(factor(y) ~ .) do: of the two observed values, the higher one is the
+    # event (#20). Passing the raw column to sm.Logit treated the values as the
+    # response itself, so a 1/2 coding - which is how registry and survey data
+    # normally arrive - failed with 'endog must be in the unit interval' and the
+    # traceback reached the caller. The encoding is reported rather than applied
+    # silently; SPSS prints the same thing as a "Dependent Variable Encoding"
+    # table.
+    levels = sorted(y_raw.dropna().unique().tolist(), key=lambda v: (isinstance(v, str), v))
+    if len(levels) != 2:
+        raise ValueError(
+            'logisticBinary needs a dependent variable with exactly two distinct '
+            'values; ' + dependent + ' has ' + str(len(levels)) + '. '
+            'Use logisticMultinomial for more than two categories.'
+        )
+
+    reference_value, event_value = levels[0], levels[1]
+    y = (y_raw == event_value).astype(float)
+    y.name = dependent
+
     if add_constant:
         X = sm.add_constant(X)
     
@@ -272,7 +292,9 @@ def run_logistic_binary(data_json, dependent, independents_json, add_constant=Tr
         'aic': float(model.aic),
         'bic': float(model.bic),
         'observations': int(model.nobs),
-        'convergence': bool(model.mle_retvals['converged'])
+        'convergence': bool(model.mle_retvals['converged']),
+        'eventValue': event_value,
+        'referenceValue': reference_value
     })
 `;
 
