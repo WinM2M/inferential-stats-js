@@ -33,7 +33,7 @@ Running the same data through them is what this work does.
 ```mermaid
 flowchart LR
     subgraph gen["Reference generation — once, by a person"]
-        PUB["Official archives<br/>UCI ML Repository<br/>NIST StRD"]
+        PUB["UCI Machine Learning Repository<br/>6 published files"]
         FETCH["fetch-cross-check-data.mjs<br/>download · SHA-256 pin · normalise"]
         CSV[("data/*.csv<br/>+ provenance.json")]
         GR["generate-r-reference.R"]
@@ -455,6 +455,10 @@ the README settles it.
 
 ## 7. Not yet covered
 
+Adding them will also add R dependencies the generator does not currently need —
+`psych` for factor analysis, `nnet` for multinomial logistic, `cluster` and
+`MASS` for the clusterings and MDS.
+
 | Procedure | Why not |
 | :--- | :--- |
 | `efa`, `pca`, `mds`, `kmeans`, `hierarchicalCluster` | Output is **indeterminate** up to sign, rotation and cluster labelling. Comparing values directly produces failures that mean nothing. Loadings need sign alignment then absolute values, MDS needs its distance matrix rather than its coordinates, clusterings need an adjusted Rand index. |
@@ -469,10 +473,9 @@ the README settles it.
 ```bash
 git checkout test/cross-check-r-spss
 
-# R and the reference packages (Debian/Ubuntu)
+# R and the three packages the generator needs (Debian/Ubuntu)
 apt-get install -y --no-install-recommends \
-  r-base-core r-cran-jsonlite r-cran-psych r-cran-e1071 r-cran-car \
-  r-cran-nnet r-cran-mass r-cran-cluster
+  r-base-core r-cran-jsonlite r-cran-e1071 r-cran-car
 
 npm run fetch-cross-check-data   # re-download; verifies each pinned SHA-256
 npm run generate-r-reference     # rebuild r-reference.json

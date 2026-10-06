@@ -101,8 +101,11 @@ Each is carried for a property no substitute had:
   or filtering anything. The published training split is used as published rather
   than recombined with the test split.
 
-NIST StRD remains the tier-1 source and keeps its own fixture; it publishes no
-categorical data, so it cannot cover the procedures here.
+NIST StRD remains the tier-1 source and keeps its own pipeline
+(`scripts/fetch-nist-strd.mjs`, `e2e/fixtures/nist-strd.json`); it is not fetched
+here. It publishes no categorical data and certifies only linear least squares,
+ANOVA, univariate summary statistics and nonlinear regression, so it cannot cover
+the procedures in this file.
 
 SPSS's own sample files (`Employee data.sav` and the rest) are deliberately *not*
 used: they are licensed to SPSS installations and cannot be committed here.
@@ -218,7 +221,7 @@ docs/validation/
   spss-manual-run.md             step-by-step for the licence holder
   report-2026-10-06-*.md         what a run found, with the measured differences
 scripts/
-  fetch-cross-check-data.mjs     downloads data/*.csv from NIST/UCI, SHA-256 pinned
+  fetch-cross-check-data.mjs     downloads data/*.csv from UCI, SHA-256 pinned
   generate-r-reference.R         data/*.csv -> r-reference.json
   spss/cross-check.sps           syntax run by hand, emits one table per block
   import-spss-reference.mjs      SPSS export -> spss-reference.json
