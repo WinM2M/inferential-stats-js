@@ -91,8 +91,10 @@ def run_crosstabs(data_json, row_variable, col_variable):
     k = min(ct.shape) - 1
     cramers_v = float(np.sqrt(chi2 / (n * k))) if k > 0 else 0
     
-    row_labels = [str(x) for x in ct.index.tolist()]
-    col_labels = [str(x) for x in ct.columns.tolist()]
+    # category_label, not str: an integer-coded category arrives from the bridge
+    # as a float and str() would append '.0' (#19).
+    row_labels = [category_label(x) for x in ct.index.tolist()]
+    col_labels = [category_label(x) for x in ct.columns.tolist()]
     
     table = []
     row_sums = ct.sum(axis=1)
