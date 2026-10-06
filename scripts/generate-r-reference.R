@@ -359,13 +359,15 @@ case("logistic-binary/mtcars/am~wt+hp", "mtcars", "logisticBinary",
                  confidenceInterval = unname(glm_ci[v, 1:2]))
           })),
      # R fits by IRLS with `epsilon = 1e-8` on the relative deviance change;
-     # statsmodels fits by Newton-Raphson to its own tolerance. Neither is the
-     # exact maximum, so the two land a convergence threshold apart rather than a
-     # rounding error apart - measured worst case here is 4.9e-8, on the
-     # intercept standard error, which is the most ill-conditioned entry of the
-     # covariance matrix. 1e-6 is three orders tighter than any reporting
-     # convention needs and does not depend on either solver's stopping rule.
-     tolerance = list(relative = 1e-6),
+     # statsmodels fits by Newton-Raphson to its own tolerance. Neither stops at
+     # the exact maximum, so the two land a convergence threshold apart rather
+     # than a rounding error apart. Measured across all 27 compared quantities:
+     # worst 8.9e-7 on a confidence bound for hp, 4.1e-7 on a p-value, 5.3e-8 on
+     # a standard error. The bound grows along that list because a confidence
+     # bound is coefficient +/- 1.96 * se and so carries both errors. 1e-5 keeps
+     # an order of headroom over the measurement without reaching the third
+     # decimal any reporting convention cares about.
+     tolerance = list(relative = 1e-5),
      note = sprintf(paste("pseudoRSquared is McFadden's (statsmodels prsquared).",
                           "SPSS prints Cox & Snell %.6f and Nagelkerke %.6f instead."),
                     cox_snell, nagelkerke))

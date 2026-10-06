@@ -126,13 +126,15 @@ Cronbach's alpha — the only gap is floating-point association order, and the N
 work established that this codebase holds nine digits on well-conditioned
 problems. A looser bound here would hide real drift. This is the fixture default.
 
-**Iteratively fitted models: `1e-6` relative, per case.** A logistic fit has no
+**Iteratively fitted models: `1e-5` relative, per case.** A logistic fit has no
 closed form. R's `glm` iterates by IRLS until the relative deviance change falls
 below `1e-8`; statsmodels maximises by Newton–Raphson against its own tolerance.
 Neither stops at the exact maximum, so the two land a convergence threshold
-apart, not a rounding error apart — measured here at 4.9e-8 on the intercept
-standard error, the most ill-conditioned entry of the covariance matrix. Tying the
-bound to either solver's stopping rule would be tying it to an implementation
+apart, not a rounding error apart. Measured across the 27 compared quantities of
+`logistic-binary/mtcars/am~wt+hp`: 5.3e-8 worst on a standard error, 4.1e-7 on a
+p-value, 8.9e-7 on a confidence bound — the bound grows along that list because a
+confidence bound is `coefficient ± 1.96 × se` and carries both errors. Tying the
+tolerance to either solver's stopping rule would be tying it to an implementation
 detail of the reference, so these cases carry an explicit override and the
 generator records the measurement behind it.
 
@@ -179,6 +181,7 @@ centroids checked only for the deterministic case `k = 2` on `USArrests`.
 docs/validation/
   cross-check-r-spss.md          this document
   spss-manual-run.md             step-by-step for the licence holder
+  report-2026-10-06-*.md         what a run found, with the measured differences
 scripts/
   export-cross-check-data.R      writes data/*.csv from R's `datasets` package, once
   generate-r-reference.R         data/*.csv -> r-reference.json
@@ -240,18 +243,26 @@ contract is visible to users, not just to this suite.
 
 ## What the first R run found
 
-Nineteen cases, run against R 4.2.2. Eleven agree to 1e-9. The rest divide as the
-framing above predicts.
+Eighteen cases against R 4.2.2, comparing 305 numeric quantities and 10 category
+labels. Ten cases agree; the rest divide as the framing above predicts. The
+measured per-case differences are tabulated in
+[`report-2026-10-06-r-crosscheck.md`](./report-2026-10-06-r-crosscheck.md).
 
-**Confirmed correct** — `descriptives` (moments, quartiles, dispersion),
+**Confirmed correct** — 239 compared quantities across ten cases, of which 224
+are within 1e-9 and the fifteen that are not all belong to the logistic case:
+`descriptives` (moments, quartiles, dispersion),
 `crosstabs` chi-square on a 2 × 3 table and the Yates value on a 2 × 2, both arms
 of `ttestIndependent` plus median-centred Levene, `ttestPaired`, `anovaOneway`,
 `linearRegression` with `method: 'enter'`, `logisticBinary` to 1e-6, and
-`cronbachAlpha` including every item-total column.
+`cronbachAlpha` including every item-total column. The nine closed-form cases do
+not have a single quantity outside 1e-9; the worst is 3.1e-11, on a paired-t
+confidence bound.
 
 **Defects, new.**
 
-- `posthocTukey` returns every value truncated to four decimals. It reads
+- `posthocTukey` returns every value truncated to four decimals, and all three
+  p-values come back as exactly `0` where R reports 3.4e-14, 3.0e-15 and 8.3e-9 —
+  the #12 flattening, reproduced. It reads
   `pairwise_tukeyhsd(...).summary().data`, which is statsmodels' *display* table
   and is formatted for printing. This is the same class of defect as #12 — output
   rounded before it leaves Python — and removing the explicit `round(x, 6)` calls

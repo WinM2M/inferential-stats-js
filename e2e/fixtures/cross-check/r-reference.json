@@ -632,7 +632,7 @@
       "status": "check",
       "note": "pseudoRSquared is McFadden's (statsmodels prsquared). SPSS prints Cox & Snell 0.645335 and Nagelkerke 0.870897 instead.",
       "tolerance": {
-        "relative": 1e-06
+        "relative": 1e-05
       },
       "expected": {
         "logLikelihood": -5.02955523613349,

@@ -697,7 +697,7 @@ NIST certifies four datasets across two procedure families, so the remaining
 procedures are checked against the two packages researchers compare their results
 to. `e2e/cross-check.browser.test.ts` runs each procedure on a dataset from R's
 `datasets` package and compares it to what R reports — to 1e-9 for the
-closed-form procedures, and to 1e-6 for logistic regression, where the bound is
+closed-form procedures, and to 1e-5 for logistic regression, where the bound is
 set by two solvers' convergence criteria rather than by floating point.
 
 Where this SDK and SPSS differ by *convention* rather than by correctness, the
