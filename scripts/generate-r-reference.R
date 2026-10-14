@@ -27,11 +27,14 @@
 # Usage: Rscript scripts/generate-r-reference.R
 # Needs: jsonlite, car  (Debian: r-cran-jsonlite, r-cran-car)
 #        e1071 for the two skewness/kurtosis conventions
+#        psych + GPArotation for the rotated component solutions
 
 suppressPackageStartupMessages({
   library(jsonlite)
   library(e1071)
   library(car)
+  library(psych)
+  library(GPArotation)
 })
 
 DATA_DIR <- file.path("e2e", "fixtures", "cross-check", "data")
@@ -474,6 +477,80 @@ case("cronbach-alpha/breast-cancer-wisconsin/nine-items",
                  correctedItemTotalCorrelation = cor(X[, it], rest),
                  alphaIfItemDeleted = alpha_of(X[, setdiff(items, it), drop = FALSE]))
           })))
+
+# ------------------------------------------------------- dimension reduction
+#
+# Thirteen chemical measurements on 178 wines. The Kaiser criterion keeps three
+# components in both packages, so this is the smallest fixture dataset on which
+# an oblique rotation has anything to rotate.
+#
+# What is compared, and what deliberately is not:
+#
+#   factorCorrelation   The factor correlation matrix Phi is scale-free - a
+#                       global rescaling of the loadings leaves the rotation
+#                       angles alone - so it isolates the rotation itself from
+#                       how each package standardizes the data. Phi is the one
+#                       number an oblique rotation adds, and the whole reason
+#                       the matrix is reported at all.
+#   communalities       Recorded for varimax, where they expose the
+#                       standardization difference below rather than anything
+#                       about rotation (they are rotation-invariant).
+#
+# Loadings are not compared. R reads the correlation matrix (denominator n-1)
+# while this SDK standardizes with scikit-learn's StandardScaler (denominator
+# n), which scales every loading by sqrt(n/(n-1)) = 1.0028 here and every
+# eigenvalue by n/(n-1). That is a real divergence, but it belongs to PCA
+# extraction and not to the rotation, so it is recorded once as the varimax
+# case below instead of being spread across all three.
+
+wine_vars <- setdiff(names(wine), "cultivar")
+wine_X <- wine[wine_vars]
+wine_pc <- function(rotate) psych::principal(wine_X, nfactors = 3, rotate = rotate)
+phi_of <- function(fit) lapply(seq_len(nrow(fit$Phi)), function(i) as.numeric(fit$Phi[i, ]))
+
+wine_varimax <- wine_pc("varimax")
+
+case("pca/wine/13-vars-varimax",
+     "wine", "pca",
+     list(variables = wine_vars, rotation = "varimax"),
+     list(communalities = as.list(stats::setNames(
+            as.numeric(wine_varimax$communality), wine_vars))),
+     status = "convention-pending",
+     tolerance = list(relative = 1e-6),
+     note = paste("R factors the correlation matrix (variance denominator n-1);",
+                  "this SDK standardizes with StandardScaler (denominator n),",
+                  "which inflates every communality and eigenvalue by n/(n-1) =",
+                  sprintf("%.5f.", nrow(wine_X) / (nrow(wine_X) - 1)),
+                  "Which denominator to follow is an extraction convention, not",
+                  "a rotation one: SPSS uses n-1."))
+
+# GPArotation's oblimin with gamma = 0 is direct oblimin with delta = 0, which
+# is what SPSS rotates by default and what factor_analyzer's Rotator computes.
+case("pca/wine/13-vars-oblimin",
+     "wine", "pca",
+     list(variables = wine_vars, rotation = "oblimin"),
+     list(rotation = "oblimin", rotationIsOblique = TRUE,
+          factorCorrelation = phi_of(wine_pc("oblimin"))),
+     tolerance = list(relative = 1e-3, absolute = 1e-4),
+     note = NULL)
+
+# Promax is the one rotation the two packages do not agree on. Both start from a
+# varimax solution and fit a target raised to the power m = kappa = 4, but they
+# build and rescale that target differently, and psych's result does not move
+# when its `normalize` argument does. Nothing here says which reading SPSS
+# follows, so the disagreement is recorded rather than tuned away; deciding it
+# needs the manual SPSS run in docs/validation/spss-manual-run.md.
+case("pca/wine/13-vars-promax",
+     "wine", "pca",
+     list(variables = wine_vars, rotation = "promax"),
+     list(rotation = "promax", rotationIsOblique = TRUE,
+          factorCorrelation = phi_of(wine_pc("promax"))),
+     status = "convention-pending",
+     tolerance = list(relative = 1e-3, absolute = 1e-4),
+     note = paste("psych::Promax and factor_analyzer's Rotator implement",
+                  "promax differently - on these data Phi[1,3] is -0.314 in R",
+                  "and -0.249 here. Both are promax with kappa = 4; which",
+                  "construction SPSS uses is undecided."))
 
 # ------------------------------------------------------------------- emit
 

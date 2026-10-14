@@ -1,6 +1,6 @@
 {
   "source": "R version 4.2.2 Patched (2022-11-10 r83330)",
-  "generatedAt": "2026-10-06",
+  "generatedAt": "2026-10-14",
   "generator": "scripts/generate-r-reference.R",
   "tolerance": {
     "relative": 1e-09
@@ -855,6 +855,151 @@
             "correctedItemTotalCorrelation": 0.485043753445569,
             "alphaIfItemDeleted": 0.935719369508115
           }
+        ]
+      }
+    },
+    {
+      "id": "pca/wine/13-vars-varimax",
+      "dataset": "wine",
+      "procedure": "pca",
+      "input": {
+        "variables": [
+          "alcohol",
+          "malic_acid",
+          "ash",
+          "alcalinity_of_ash",
+          "magnesium",
+          "total_phenols",
+          "flavanoids",
+          "nonflavanoid_phenols",
+          "proanthocyanins",
+          "color_intensity",
+          "hue",
+          "od280_od315",
+          "proline"
+        ],
+        "rotation": "varimax"
+      },
+      "status": "convention-pending",
+      "note": "R factors the correlation matrix (variance denominator n-1); this SDK standardizes with StandardScaler (denominator n), which inflates every communality and eigenvalue by n/(n-1) = 1.00565. Which denominator to follow is an extraction convention, not a rotation one: SPSS uses n-1.",
+      "tolerance": {
+        "relative": 1e-06
+      },
+      "expected": {
+        "communalities": {
+          "alcohol": 0.744308611173263,
+          "malic_acid": 0.420690717838835,
+          "ash": 0.816552552528786,
+          "alcalinity_of_ash": 0.811563939712129,
+          "magnesium": 0.343781805286634,
+          "total_phenols": 0.774432605289096,
+          "flavanoids": 0.874612826929395,
+          "nonflavanoid_phenols": 0.463435679146733,
+          "proanthocyanins": 0.4984507314524,
+          "color_intensity": 0.765605922920111,
+          "hue": 0.619498056711993,
+          "od280_od315": 0.77330261812824,
+          "proline": 0.742659888996465
+        }
+      }
+    },
+    {
+      "id": "pca/wine/13-vars-oblimin",
+      "dataset": "wine",
+      "procedure": "pca",
+      "input": {
+        "variables": [
+          "alcohol",
+          "malic_acid",
+          "ash",
+          "alcalinity_of_ash",
+          "magnesium",
+          "total_phenols",
+          "flavanoids",
+          "nonflavanoid_phenols",
+          "proanthocyanins",
+          "color_intensity",
+          "hue",
+          "od280_od315",
+          "proline"
+        ],
+        "rotation": "oblimin"
+      },
+      "status": "check",
+      "note": null,
+      "tolerance": {
+        "relative": 0.001,
+        "absolute": 0.0001
+      },
+      "expected": {
+        "rotation": "oblimin",
+        "rotationIsOblique": true,
+        "factorCorrelation": [
+          [
+            1,
+            0.119710957929397,
+            -0.172736231238753
+          ],
+          [
+            0.119710957929397,
+            1,
+            0.0712223092140787
+          ],
+          [
+            -0.172736231238753,
+            0.0712223092140787,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "id": "pca/wine/13-vars-promax",
+      "dataset": "wine",
+      "procedure": "pca",
+      "input": {
+        "variables": [
+          "alcohol",
+          "malic_acid",
+          "ash",
+          "alcalinity_of_ash",
+          "magnesium",
+          "total_phenols",
+          "flavanoids",
+          "nonflavanoid_phenols",
+          "proanthocyanins",
+          "color_intensity",
+          "hue",
+          "od280_od315",
+          "proline"
+        ],
+        "rotation": "promax"
+      },
+      "status": "convention-pending",
+      "note": "psych::Promax and factor_analyzer's Rotator implement promax differently - on these data Phi[1,3] is -0.314 in R and -0.249 here. Both are promax with kappa = 4; which construction SPSS uses is undecided.",
+      "tolerance": {
+        "relative": 0.001,
+        "absolute": 0.0001
+      },
+      "expected": {
+        "rotation": "promax",
+        "rotationIsOblique": true,
+        "factorCorrelation": [
+          [
+            1,
+            0.189559239917431,
+            -0.313894701088618
+          ],
+          [
+            0.189559239917431,
+            1,
+            0.13005702298777
+          ],
+          [
+            -0.313894701088618,
+            0.13005702298777,
+            1
+          ]
         ]
       }
     }

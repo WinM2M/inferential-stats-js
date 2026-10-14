@@ -76,7 +76,7 @@ SPSS then read those CSVs.
 | :--- | :--- | :--- | :--- |
 | Iris | UCI 53 — Fisher (1936) | 150 × 5 | `descriptives`, `anovaOneway`, `posthocTukey` |
 | Auto MPG | UCI 9 — Quinlan (1993), StatLib/CMU | 398 × 9 | `linearRegression`, `crosstabs` (3 × 5) |
-| Wine | UCI 109 — Aeberhard et al. (1992) | 178 × 14 | `ttestIndependent` |
+| Wine | UCI 109 — Aeberhard et al. (1992) | 178 × 14 | `ttestIndependent`, `pca` (13 variables, 3 components) |
 | Haberman's Survival | UCI 43 — Haberman (1976) | 306 × 4 | `ttestIndependent`, `logisticBinary` |
 | Breast Cancer Wisconsin (Original) | UCI 15 — Wolberg & Mangasarian (1990) | 699 × 11 | `cronbachAlpha`, `ttestPaired` |
 | SPECT Heart (training split) | UCI 95 — Kurgan et al. (2001) | 80 × 23 | `crosstabs` (2 × 2) |
@@ -129,7 +129,7 @@ used: they are licensed to SPSS installations and cannot be committed here.
 | `kmeans` | `stats::kmeans` | `QUICK CLUSTER` | indeterminate — labels, seeding |
 | `hierarchicalCluster` | `hclust(method="ward.D2")` | `CLUSTER /METHOD=WARD` | **convention** — `ward.D` vs `ward.D2` |
 | `efa` | `psych::fa`, `psych::KMO`, `psych::cortest.bartlett` | `FACTOR /EXTRACTION` | indeterminate + convention |
-| `pca` | `prcomp`, `psych::principal` | `FACTOR /EXTRACTION=PC` | indeterminate — loading sign |
+| `pca` | `prcomp`, `psych::principal` (+ `GPArotation`) | `FACTOR /EXTRACTION=PC` | indeterminate — loading sign; **convention** — standardization denominator, promax construction |
 | `mds` | `cmdscale`, `MASS::isoMDS` | `PROXSCAL` / `ALSCAL` | indeterminate — rotation |
 | `cronbachAlpha` | `psych::alpha` | `RELIABILITY /MODEL=ALPHA` | low |
 
@@ -152,6 +152,31 @@ just an auxiliary number.
 Resolution for each is one of: change the call to the SPSS convention; keep the
 current convention and document it in README "Numerical Accuracy"; or report both.
 The decision is recorded in the table in §"Declared conventions" once made.
+
+### Measured convention differences — dimension reduction
+
+Unlike the three above, these two were measured when oblique rotation was added,
+and each is an open `convention-pending` case in the fixture.
+
+| Site | This SDK | R | Size of the gap |
+| :--- | :--- | :--- | :--- |
+| `src/python/dimension.ts` — `StandardScaler()` before `PCA` | variance denominator `n` | `cor()`, denominator `n-1` | every eigenvalue and communality scaled by `n/(n-1)`; 1.00565 on Wine (n = 178) |
+| `src/python/dimension.ts` — `Rotator(method='promax')` | `factor_analyzer`'s construction, Kaiser-normalized | `psych::Promax`, which does not move when its `normalize` argument does | Φ[1,3] = −0.249 here, −0.314 in R on Wine |
+
+The first belongs to extraction, not rotation: SPSS factors the correlation
+matrix, so `n-1` is the convention our users report. Changing it would move every
+PCA number this SDK has ever returned, which is why it is recorded rather than
+quietly patched.
+
+The second cannot be decided from R alone, since both packages implement a
+documented promax with κ = 4. Deciding it needs the manual SPSS run.
+`oblimin` has no such question: `GPArotation`'s δ = 0 and `factor_analyzer`'s
+`gamma = 0` agree to 1e-4 on Φ, and that case is a plain `check`.
+
+Rotation is also why Φ, rather than the loadings, is what the oblique cases
+compare. Φ is scale-free — rescaling the loadings leaves the rotation angles
+alone — so it isolates the rotation from the standardization difference in the
+row above, and it is the one quantity an oblique rotation adds.
 
 ## Tolerances
 

@@ -313,9 +313,11 @@ At each step, the pair of clusters (A, B) that produces the smallest increase in
 
 #### Exploratory Factor Analysis (EFA)
 
-Discovers latent factors underlying a set of observed variables. Supports varimax, promax, oblimin, and no rotation. Reports factor loadings, communalities, eigenvalues, KMO measure of sampling adequacy, and Bartlett's test of sphericity.
+Discovers latent factors underlying a set of observed variables. Reports factor loadings, communalities, eigenvalues, KMO measure of sampling adequacy, and Bartlett's test of sphericity.
 
-**Python implementation:** `factor_analyzer.FactorAnalyzer(rotation='varimax')` — installed at runtime via `micropip`
+**Python implementation:** `factor_analyzer.FactorAnalyzer` — installed at runtime via `micropip`
+
+**Rotation:** `varimax` (default), `promax`, `oblimin`, or `none`. See [Rotation](#rotation) below — the two oblique rotations change what the output contains.
 
 **Factor model:**
 
@@ -335,7 +337,9 @@ where ![formula](<https://latex.codecogs.com/svg.image?r_%7Bij%7D>) are elements
 
 Finds orthogonal components that maximize variance in the data. Reports component loadings, explained variance, cumulative variance ratios, and singular values. Optionally standardizes the input.
 
-**Python implementation:** `sklearn.decomposition.PCA`
+**Python implementation:** `sklearn.decomposition.PCA`, rotated with `factor_analyzer.Rotator`
+
+**Rotation:** the same four choices as EFA, described below.
 
 **Objective:** Find the weight vector ![formula](<https://latex.codecogs.com/svg.image?w>) that maximizes projected variance:
 
@@ -348,6 +352,46 @@ This is equivalent to finding the eigenvectors of the covariance matrix ![formul
 ![formula](<https://latex.codecogs.com/svg.image?%5Ctext%7BEVR%7D_k%3D%5Cfrac%7B%5Clambda_k%7D%7B%5Csum_%7Bi%3D1%7D%5E%7Bp%7D%5Clambda_i%7D>)
 
 ---
+
+#### Rotation
+
+Both EFA and PCA accept `rotation: 'varimax' | 'promax' | 'oblimin' | 'none'`. The
+extracted axes are arbitrary up to rotation, and the choice is about how the
+result is read, not about how well it fits.
+
+| | `varimax` | `promax`, `oblimin` |
+| :--- | :--- | :--- |
+| Family | orthogonal | oblique |
+| Factors may correlate | no | yes |
+| `loadings` holds | rotated loadings | the **pattern matrix** — partial regression weights |
+| `structureLoadings` | `null` | the **structure matrix** `S = P Φ` — variable–factor correlations |
+| `factorCorrelation` | `null` | **Φ**, the factor correlation matrix |
+| Rotation sums of squared loadings | with percent of variance | `Total` only (see below) |
+
+`oblimin` is direct oblimin with δ = 0, which is both SPSS's default and
+quartimin. `promax` uses κ = 4, also SPSS's default.
+
+Three details worth knowing before reading an oblique solution:
+
+- **Communalities do not change under rotation.** `communalities` is read off the
+  unrotated extraction, which equals `diag(P Φ P')`. This matters because
+  `factor_analyzer`'s own `get_communalities()` returns the row sums of squared
+  pattern loadings, a smaller number that is only the communality while the
+  factors stay uncorrelated.
+- **No percent of variance is reported for an oblique rotation.** Correlated
+  factors overlap, so their sums of squared loadings no longer add up to the
+  extracted variance and no share of it belongs to each one. `variancePercent`
+  and `cumulativePercent` come back `null` in the rotation rows, which is what
+  SPSS's Total Variance Explained table prints there. The unrotated extraction
+  rows still carry the percentages.
+- **A one-factor solution is not rotated.** There is no second axis to rotate
+  against, so `rotationApplied` comes back `false` and the loadings are the
+  unrotated ones. The request is not an error.
+
+`promax` is the one rotation where this SDK and R disagree: `psych::Promax` and
+`factor_analyzer`'s `Rotator` build and rescale the power-4 target differently.
+The divergence is recorded as an executable case in the cross-check suite rather
+than smoothed over; see [Numerical Accuracy](#numerical-accuracy).
 
 #### Multidimensional Scaling (MDS)
 
@@ -520,8 +564,8 @@ interface AnalysisResult<T> {
 
 | # | Method | Input → Output | Description |
 |---|---|---|---|
-| 13 | `efa(input)` | `EFAInput` → `EFAOutput` | Exploratory Factor Analysis with rotation, KMO, and Bartlett's test. |
-| 14 | `pca(input)` | `PCAInput` → `PCAOutput` | Principal Component Analysis with loadings and explained variance. |
+| 13 | `efa(input)` | `EFAInput` → `EFAOutput` | Exploratory Factor Analysis with orthogonal or oblique rotation, KMO, and Bartlett's test. |
+| 14 | `pca(input)` | `PCAInput` → `PCAOutput` | Principal Component Analysis with rotation, loadings, and explained variance. |
 | 15 | `mds(input)` | `MDSInput` → `MDSOutput` | Multidimensional Scaling with stress value and coordinate output. |
 
 #### Scale
@@ -704,9 +748,10 @@ regression, where the bound is set by two solvers' convergence criteria rather
 than by floating point.
 
 Where this SDK and SPSS differ by *convention* rather than by correctness, the
-difference is recorded as a declared divergence rather than quietly matched. Three
+difference is recorded as a declared divergence rather than quietly matched. Five
 are currently open — the form of skewness and kurtosis, the centring of Levene's
-test, and continuity correction on a 2 × 2 chi-square. See
+test, continuity correction on a 2 × 2 chi-square, the variance denominator PCA
+standardizes by, and which promax construction to follow. See
 [`docs/validation/cross-check-r-spss.md`](./docs/validation/cross-check-r-spss.md)
 for the design, the full case list, and what the comparison has found so far.
 
