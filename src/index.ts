@@ -44,8 +44,9 @@ export type {
 } from './types/classify';
 
 export type {
+  FactorRotation,
   EFAInput, EFAOutput,
-  PCAInput, PCAOutput,
+  PCAInput, PCAOutput, PCAVarianceRow,
   MDSInput, MDSOutput,
 } from './types/dimension';
 

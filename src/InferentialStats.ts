@@ -352,12 +352,22 @@ export class InferentialStats {
   // ⑤ Dimension Reduction
   // ═══════════════════════════════════════
 
-  /** Exploratory Factor Analysis (EFA) with varimax rotation */
+  /**
+   * Exploratory Factor Analysis (EFA).
+   *
+   * `rotation` takes `varimax` (default, orthogonal), `promax` or `oblimin`
+   * (oblique), or `none`. The oblique rotations return a pattern matrix in
+   * `loadings` and add `structureLoadings` and `factorCorrelation`.
+   */
   async efa(input: EFAInput): Promise<AnalysisResult<EFAOutput>> {
     return this._runAnalysis('efa', input);
   }
 
-  /** Principal Component Analysis (PCA) */
+  /**
+   * Principal Component Analysis (PCA).
+   *
+   * Takes the same rotations as {@link InferentialStats.efa}.
+   */
   async pca(input: PCAInput): Promise<AnalysisResult<PCAOutput>> {
     return this._runAnalysis('pca', input);
   }

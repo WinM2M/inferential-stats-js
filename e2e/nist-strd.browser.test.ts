@@ -30,6 +30,10 @@
 
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
 import { InferentialStats } from '../src/index';
+import {
+  expectCloseTo as expectWithinTolerance,
+  expectNotFlattenedToZero,
+} from './support/numeric-assertions';
 import fixtureFile from './fixtures/nist-strd.json';
 
 const workerUrl = new URL('../dist/stats-worker.js', import.meta.url).href;
@@ -76,32 +80,14 @@ interface AnovaFixture {
 const fixtures = fixtureFile.fixtures as unknown as Record<string, RegressionFixture | AnovaFixture>;
 
 /**
- * Relative error, because the certified values span 1e-9 (AtmWtAg sums of
- * squares) to 1e8 (Longley regression sum of squares). An absolute tolerance
- * would be meaningless at one end and vacuous at the other.
+ * Every tolerance in this file is relative — the certified values span 1e-9
+ * (AtmWtAg sums of squares) to 1e8 (Longley regression sum of squares), and an
+ * absolute bound would be meaningless at one end and vacuous at the other. The
+ * shared helper accepts either kind, so this wrapper fixes the choice for the
+ * whole file and keeps the call sites reading as a single number.
  */
-const relativeError = (actual: number, certified: number): number =>
-  certified === 0 ? Math.abs(actual) : Math.abs((actual - certified) / certified);
-
-function expectCloseTo(actual: unknown, certified: number, tolerance: number, label: string): void {
-  expect(typeof actual, `${label} should be a number`).toBe('number');
-  const error = relativeError(actual as number, certified);
-  expect(
-    error,
-    `${label}: got ${actual}, certified ${certified}, relative error ` +
-      `${error.toExponential(3)} > ${tolerance.toExponential(0)}`,
-  ).toBeLessThanOrEqual(tolerance);
-}
-
-/**
- * Kept as a guard after #12: a certified-nonzero quantity coming back as exactly
- * 0 is the failure mode that an output-rounding regression would reintroduce,
- * and a relative tolerance alone reports it as merely "100% off".
- */
-function expectNotFlattenedToZero(actual: unknown, certified: number, label: string): void {
-  if (certified === 0) return;
-  expect(actual, `${label}: certified ${certified} but the library returned exactly 0`).not.toBe(0);
-}
+const expectCloseTo = (actual: unknown, certified: number, tolerance: number, label: string): void =>
+  expectWithinTolerance(actual, certified, { relative: tolerance }, label);
 
 describe('NIST StRD certified values', () => {
   let stats: InferentialStats;

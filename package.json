@@ -1,6 +1,6 @@
 {
   "name": "@winm2m/inferential-stats-js",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "A headless JavaScript SDK for advanced statistical analysis in the browser using WebAssembly (Pyodide). Performs SPSS-level inferential statistics entirely client-side with no backend required.",
   "author": "Youngjune Kwon <yjkwon@winm2m.com>",
   "license": "MIT",
@@ -58,6 +58,8 @@
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
     "generate-data": "node scripts/generate-mock-data.js",
+    "fetch-cross-check-data": "node scripts/fetch-cross-check-data.mjs",
+    "generate-r-reference": "Rscript scripts/generate-r-reference.R",
     "pretest": "npm run build",
     "test": "vitest",
     "test:unit": "vitest run --config vitest.unit.config.ts",

@@ -227,6 +227,146 @@ describe('InferentialStats browser e2e', () => {
     expectNonZeroFiniteNumber(cronbachAlpha.data.standardizedAlpha, 'cronbachAlpha.standardizedAlpha');
   });
 
+  it('rotates obliquely and reports the three matrices the rotation splits into', async () => {
+    // 사교 회전은 적재 한 장으로 끝나지 않는다. 패턴·구조·요인상관이 서로
+    // 맞물려 나와야 해석이 되고, 공통성은 회전에 변하지 않아야 한다.
+    const variables = [
+      'music_satisfaction',
+      'movie_satisfaction',
+      'art_satisfaction',
+      'weekly_hours_music',
+      'weekly_hours_movie',
+      'monthly_art_visits',
+    ];
+
+    const varimax = await stats.pca({ data, variables, nComponents: 3, rotation: 'varimax' });
+    expect(varimax.success, JSON.stringify(varimax.error)).toBe(true);
+    expect(varimax.data.rotationApplied).toBe(true);
+    expect(varimax.data.rotationIsOblique).toBe(false);
+    expect(varimax.data.factorCorrelation ?? null).toBeNull();
+    expect(varimax.data.structureLoadings ?? null).toBeNull();
+
+    const orthogonalRotationRows = varimax.data.totalVarianceExplained?.rotation ?? [];
+    expect(orthogonalRotationRows.length).toBe(3);
+    expectNonZeroFiniteNumber(orthogonalRotationRows[0]?.variancePercent, 'varimax rotation variancePercent');
+
+    for (const rotation of ['promax', 'oblimin'] as const) {
+      const oblique = await stats.pca({ data, variables, nComponents: 3, rotation });
+      expect(oblique.success, JSON.stringify(oblique.error)).toBe(true);
+
+      const result = oblique.data;
+      expect(result.rotation, `${rotation}: rotation echoed back`).toBe(rotation);
+      expect(result.rotationApplied).toBe(true);
+      expect(result.rotationIsOblique).toBe(true);
+
+      // 요인상관 Phi: 대칭이고 대각은 1, 비대각은 상관이므로 (-1, 1).
+      const phi = result.factorCorrelation;
+      expect(Array.isArray(phi), `${rotation}: factorCorrelation is a matrix`).toBe(true);
+      expect(phi?.length).toBe(3);
+      phi?.forEach((row, i) => {
+        expect(row.length).toBe(3);
+        expect(row[i], `${rotation}: Phi[${i}][${i}]`).toBeCloseTo(1, 10);
+        row.forEach((value, j) => {
+          expect(value, `${rotation}: Phi[${i}][${j}] symmetric`).toBeCloseTo(phi[j][i], 12);
+          // 상관이므로 |phi| <= 1. 대각은 부동소수점으로 1 을 아주 살짝 넘겨 돌아온다.
+          expect(Math.abs(value), `${rotation}: Phi[${i}][${j}] in range`).toBeLessThanOrEqual(1 + 1e-9);
+        });
+      });
+      // 직교 회전과 구분되려면 적어도 한 쌍은 실제로 상관이 있어야 한다.
+      expect(Math.abs(phi?.[0]?.[1] ?? 0), `${rotation}: components actually correlate`).toBeGreaterThan(1e-6);
+
+      // 구조 행렬은 패턴에 Phi 를 곱한 것이다. 둘 중 하나만 맞아도 해석이 어긋난다.
+      const structure = result.structureLoadings ?? {};
+      for (const variable of variables) {
+        const pattern = result.loadings[variable];
+        for (let j = 0; j < 3; j += 1) {
+          const expected = pattern.reduce((sum, value, k) => sum + value * (phi?.[k]?.[j] ?? 0), 0);
+          expect(structure[variable]?.[j], `${rotation}: structure[${variable}][${j}]`).toBeCloseTo(expected, 10);
+        }
+        // 공통성은 회전에 불변이다. 사교에서 적재 제곱합을 그대로 쓰면 틀린다.
+        expect(result.communalities?.[variable], `${rotation}: communality of ${variable}`)
+          .toBeCloseTo(varimax.data.communalities?.[variable] ?? NaN, 10);
+      }
+
+      // 상관된 성분의 제곱합은 더해지지 않으므로 분산 비율을 내지 않는다(SPSS).
+      const rotationRows = result.totalVarianceExplained?.rotation ?? [];
+      expect(rotationRows.length).toBe(3);
+      rotationRows.forEach((row, index) => {
+        expectNonZeroFiniteNumber(row.eigenvalue, `${rotation}: rotation SSL ${index}`);
+        expect(row.variancePercent, `${rotation}: no percent of variance`).toBeNull();
+        expect(row.cumulativePercent, `${rotation}: no cumulative percent`).toBeNull();
+      });
+    }
+  });
+
+  it('declines to rotate a one-component solution instead of failing on it', async () => {
+    // factor_analyzer 는 1성분에 varimax 를 걸면 예외를 던지고 promax 는 행렬을
+    // 잘라서 돌려준다. Kaiser 기준이 1성분을 고르는 데이터가 흔하므로 여기서 막는다.
+    const single = await stats.pca({
+      data,
+      variables: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
+      nComponents: 1,
+      rotation: 'varimax',
+    });
+    expect(single.success, JSON.stringify(single.error)).toBe(true);
+    expect(single.data.nComponents).toBe(1);
+    expect(single.data.rotationApplied).toBe(false);
+    expect(single.data.rotationIsOblique).toBe(false);
+    expectNonZeroFiniteNumber(single.data.loadings.music_satisfaction?.[0], 'single-component loading');
+  });
+
+  it('refuses a rotation it does not implement instead of silently not rotating', async () => {
+    const result = await stats.pca({
+      data,
+      variables: ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'],
+      nComponents: 2,
+      // 타입이 막는 값이라 캐스팅한다. 런타임에서도 거절해야 한다.
+      rotation: 'quartimax' as 'varimax',
+    });
+    expect(result.success).toBe(false);
+    expect(String(result.error)).toMatch(/quartimax/);
+  });
+
+  it('rotates factors obliquely in EFA as well', async () => {
+    const variables = [
+      'music_satisfaction',
+      'movie_satisfaction',
+      'art_satisfaction',
+      'weekly_hours_music',
+      'weekly_hours_movie',
+      'monthly_art_visits',
+    ];
+
+    const varimax = await stats.efa({ data, variables, rotation: 'varimax' });
+    expect(varimax.success, JSON.stringify(varimax.error)).toBe(true);
+
+    const promax = await stats.efa({ data, variables, rotation: 'promax' });
+    expect(promax.success, JSON.stringify(promax.error)).toBe(true);
+
+    if (promax.data.rotationApplied) {
+      expect(promax.data.rotationIsOblique).toBe(true);
+      const phi = promax.data.factorCorrelation;
+      expect(Array.isArray(phi)).toBe(true);
+      expect(phi?.length).toBe(promax.data.nFactors);
+      // 공통성은 추출 해의 값이어야 한다. factor_analyzer 의
+      // get_communalities() 는 사교에서 패턴 제곱합을 돌려주므로 더 작다.
+      for (const variable of variables) {
+        expect(promax.data.communalities[variable], `EFA communality of ${variable}`)
+          .toBeCloseTo(varimax.data.communalities[variable], 6);
+        expect(promax.data.uniquenesses[variable]).toBeCloseTo(1 - promax.data.communalities[variable], 10);
+      }
+    } else {
+      // 한 요인만 뽑힌 데이터라면 회전할 축이 없다. 그래도 실패하지는 않는다.
+      expect(promax.data.nFactors).toBe(1);
+      expect(promax.data.factorCorrelation ?? null).toBeNull();
+    }
+
+    // rotation: 'none' 은 FactorAnalyzer 가 문자열로 받지 못한다. 걸러져야 한다.
+    const unrotated = await stats.efa({ data, variables, rotation: 'none' });
+    expect(unrotated.success, JSON.stringify(unrotated.error)).toBe(true);
+    expect(unrotated.data.rotationApplied).toBe(false);
+  });
+
   it('reports progress while an analysis runs, not only while Pyodide loads', async () => {
     // init 구간에는 진행 이벤트가 있었고 실행 구간에는 없었다(#10). 실제 워커로 확인한다.
     expect(progressEvents.some((e) => e.stage === 'init')).toBe(true);

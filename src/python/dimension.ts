@@ -2,6 +2,82 @@
  * Python code for dimension reduction functions.
  */
 
+/**
+ * Rotation helpers shared by EFA and PCA.
+ *
+ * Orthogonal rotation keeps the factors uncorrelated, so a single rotated
+ * loading matrix says everything there is to say. Oblique rotation estimates
+ * the correlations among factors instead, which splits the answer in three:
+ * the pattern matrix (partial regression weights -- what the rotator returns),
+ * the factor correlation matrix Phi, and the structure matrix S = P @ Phi
+ * (plain variable-factor correlations).
+ *
+ * Three consequences the callers below depend on:
+ *
+ *   1. Communalities are h2 = diag(P Phi P') once the factors correlate, which
+ *      is the same number the unrotated solution gives. `factor_analyzer`'s
+ *      get_communalities() returns the row sums of squared pattern loadings,
+ *      which is only the communality while the factors stay orthogonal.
+ *   2. Rotation sums of squared loadings stop adding up to the extracted
+ *      variance, so percent-of-variance and cumulative percent are left out
+ *      for oblique rotation. This is SPSS's reading: its Total Variance
+ *      Explained table prints only the Total column there. (R's psych reports
+ *      an additive variant built on diag(Phi P' P); we follow SPSS because
+ *      every other table in this SDK does.)
+ *   3. A one-factor solution cannot be rotated. `factor_analyzer` does not
+ *      guard this -- varimax raises "too many values to unpack" and promax
+ *      silently returns a truncated matrix -- so we skip rotation there and
+ *      report it through `rotationApplied`.
+ */
+export const ROTATION_PY = `
+# factor_analyzer 0.3.1 is the newest release on PyPI that ships a wheel, so it
+# is the version micropip resolves inside Pyodide -- the later ones are
+# source-only and micropip cannot build them. That release still reaches for
+# the numpy aliases SciPy used to re-export and dropped in 1.12: its rotator
+# calls sp.diag, sp.dot and sp.sqrt, and factor_analyzer.py calls sp.sum.
+# Without these names promax dies on "Module 'scipy' has no attribute 'diag'".
+# Verified: 0.3.1 and 0.5.1 return the same rotated loadings and the same
+# factor correlation matrix, so the old wheel is a packaging accident rather
+# than a different estimator.
+for _alias in ('diag', 'dot', 'sqrt', 'sum'):
+    if not hasattr(sp, _alias):
+        setattr(sp, _alias, getattr(np, _alias))
+
+OBLIQUE_ROTATIONS = ('promax', 'oblimin')
+ORTHOGONAL_ROTATIONS = ('varimax',)
+SUPPORTED_ROTATIONS = ORTHOGONAL_ROTATIONS + OBLIQUE_ROTATIONS
+
+def normalize_rotation(rotation):
+    if rotation is None:
+        return 'none'
+    value = str(rotation).strip().lower()
+    if value in ('', 'none', 'null', 'undefined'):
+        return 'none'
+    if value in SUPPORTED_ROTATIONS:
+        return value
+    raise ValueError(
+        "Unsupported rotation '" + str(rotation) + "'. Supported rotations: "
+        + ', '.join(SUPPORTED_ROTATIONS) + ', none'
+    )
+
+def is_oblique_rotation(rotation):
+    return rotation in OBLIQUE_ROTATIONS
+
+def matrix_to_lists(matrix):
+    if matrix is None:
+        return None
+    return [[float(x) for x in row] for row in np.asarray(matrix, dtype=float).tolist()]
+
+def matrix_to_dict(matrix, variables):
+    if matrix is None:
+        return None
+    rows = np.asarray(matrix, dtype=float)
+    result = {}
+    for i, var in enumerate(variables):
+        result[var] = [float(x) for x in rows[i].tolist()]
+    return result
+`;
+
 export const EFA_PY = `
 import json
 import pandas as pd
@@ -9,15 +85,17 @@ import numpy as np
 import scipy as sp
 from factor_analyzer import FactorAnalyzer
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
+${ROTATION_PY}
 
 def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', method='minres'):
-    if not hasattr(sp, 'sum'):
-        sp.sum = np.sum
     df = pd.DataFrame(json.loads(data_json))
     variables = json.loads(variables_json)
-    
+
+    rotation = normalize_rotation(rotation)
+    oblique = is_oblique_rotation(rotation)
+
     X = df[variables].apply(pd.to_numeric, errors='coerce').dropna()
-    
+
     # KMO and Bartlett tests
     kmo_result = calculate_kmo(X)
     if isinstance(kmo_result, tuple):
@@ -27,7 +105,7 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         kmo_all = kmo_result
         kmo_model = kmo_result
     chi2, p_value = calculate_bartlett_sphericity(X)
-    
+
     # Auto-select number of factors by Kaiser criterion (eigenvalue >= 1)
     raw_eigenvalues = FactorAnalyzer(rotation=None, method=method).fit(X).get_eigenvalues()[0]
     valid_eigenvalues = [float(x) for x in raw_eigenvalues if np.isfinite(x)]
@@ -36,14 +114,25 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         auto_n_factors = 1
     n_factors = min(auto_n_factors, len(variables))
 
-    fa = FactorAnalyzer(n_factors=n_factors, rotation=rotation, method=method)
+    # A single factor has no second axis to rotate against, and factor_analyzer
+    # does not refuse the request: it raises for varimax and truncates the
+    # loadings for promax. Fit unrotated instead and say so in the output.
+    rotation_applied = rotation != 'none' and n_factors > 1
+    fa = FactorAnalyzer(
+        n_factors=n_factors,
+        rotation=rotation if rotation_applied else None,
+        method=method
+    )
     fa.fit(X)
-    
+
     loadings = fa.loadings_
-    loadings_dict = {}
-    for i, var in enumerate(variables):
-        loadings_dict[var] = [float(x) for x in loadings[i]]
-    
+    loadings_dict = matrix_to_dict(loadings, variables)
+
+    phi = getattr(fa, 'phi_', None) if (rotation_applied and oblique) else None
+    structure = getattr(fa, 'structure_', None) if phi is not None else None
+    if structure is None and phi is not None:
+        structure = np.asarray(loadings, dtype=float) @ np.asarray(phi, dtype=float)
+
     variance_result = fa.get_factor_variance()
     if isinstance(variance_result, tuple):
         ev = variance_result[0]
@@ -53,20 +142,29 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         ev = variance_result
         v = variance_result
         cumulative = None
-    
-    communalities = fa.get_communalities()
-    uniquenesses = fa.get_uniquenesses()
-    
+
+    if phi is not None:
+        # h2 = diag(P Phi P'). get_communalities() sums the squared pattern
+        # loadings, which undercounts once the factors correlate.
+        P = np.asarray(loadings, dtype=float)
+        communalities = np.sum(P * (P @ np.asarray(phi, dtype=float)), axis=1)
+        uniquenesses = 1.0 - communalities
+    else:
+        communalities = fa.get_communalities()
+        uniquenesses = fa.get_uniquenesses()
+
     comm_dict = {}
     uniq_dict = {}
     for i, var in enumerate(variables):
         comm_dict[var] = float(communalities[i])
         uniq_dict[var] = float(uniquenesses[i])
-    
+
     eigenvalues = raw_eigenvalues
-    
+
     return json.dumps({
         'loadings': loadings_dict,
+        'structureLoadings': matrix_to_dict(structure, variables),
+        'factorCorrelation': matrix_to_lists(phi),
         'eigenvalues': [float(x) for x in eigenvalues],
         'variance': [float(x) for x in ev],
         'cumulativeVariance': [float(x) for x in cumulative] if cumulative is not None else [float(sum(v[:i+1])) for i in range(len(v))],
@@ -74,6 +172,8 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         'uniquenesses': uniq_dict,
         'nFactors': n_factors,
         'rotation': rotation,
+        'rotationApplied': bool(rotation_applied),
+        'rotationIsOblique': bool(rotation_applied and oblique),
         'kmo': float(kmo_model),
         'bartlettChi2': float(chi2),
         'bartlettPValue': float(p_value)
@@ -84,22 +184,27 @@ export const PCA_PY = `
 import json
 import pandas as pd
 import numpy as np
+import scipy as sp
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from factor_analyzer.rotator import Rotator
+${ROTATION_PY}
 
 def run_pca(data_json, variables_json, n_components=None, standardize=True, rotation='varimax', sort_by_size=True):
     df = pd.DataFrame(json.loads(data_json))
     variables = json.loads(variables_json)
-    
+
+    rotation = normalize_rotation(rotation)
+    oblique = is_oblique_rotation(rotation)
+
     X = df[variables].apply(pd.to_numeric, errors='coerce').dropna()
-    
+
     if standardize:
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
     else:
         X_scaled = X.values
-    
+
     full_pca = PCA(n_components=min(len(variables), len(X_scaled)))
     full_pca.fit(X_scaled)
     eigenvalues = [float(x) for x in full_pca.explained_variance_]
@@ -116,10 +221,22 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
     transformed = pca.fit_transform(X_scaled)
 
     raw_loadings = pca.components_.T * np.sqrt(pca.explained_variance_)
-    if rotation == 'varimax':
-        rotated = Rotator(method='varimax').fit_transform(raw_loadings)
+
+    # One component has no second axis to rotate against. factor_analyzer
+    # raises for varimax and truncates the matrix for promax rather than
+    # refusing, so the guard has to live here.
+    rotation_applied = rotation != 'none' and n_components > 1
+    phi = None
+    if rotation_applied:
+        rotator = Rotator(method=rotation)
+        rotated = rotator.fit_transform(raw_loadings)
+        if oblique:
+            phi = rotator.phi_
     else:
         rotated = raw_loadings
+
+    rotated = np.asarray(rotated, dtype=float)
+    structure = rotated @ np.asarray(phi, dtype=float) if phi is not None else None
 
     dominant_indices = np.argmax(np.abs(rotated), axis=1)
     dominant_values = np.take_along_axis(np.abs(rotated), dominant_indices.reshape(-1, 1), axis=1).reshape(-1)
@@ -127,6 +244,8 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
     # (ascending component index) and, within each group, sort by descending
     # absolute loading magnitude.  This is the canonical SPSS Factor / PCA
     # ordering described in Field (2018) and the SPSS Statistics manual.
+    # Under oblique rotation the dominant component is read off the pattern
+    # matrix, which is the matrix SPSS sorts.
     if sort_by_size:
         order_keys = list(zip(
             dominant_indices.tolist(),
@@ -145,7 +264,10 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         var = variables[idx]
         row = [float(x) for x in rotated[idx].tolist()]
         loadings[var] = row
-        communalities[var] = float(np.sum(np.square(rotated[idx])))
+        # Extraction communalities, read off the unrotated solution. They are
+        # rotation-invariant: orthogonal rotation preserves the row sums of
+        # squares, and under oblique rotation the same number is diag(P Phi P').
+        communalities[var] = float(np.sum(np.square(raw_loadings[idx])))
 
     sorted_loadings = []
     for idx in sorted_indices:
@@ -193,20 +315,24 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         })
 
     rotation_rows = []
-    if rotation == 'varimax' and n_components > 0:
+    if rotation_applied and n_components > 0:
         # sum of squared rotated loadings per component
         rot_ssq = np.sum(np.square(rotated), axis=0)
         cum = 0.0
         for i in range(n_components):
             ev = float(rot_ssq[i])
-            pct = (ev / total_variance * 100.0) if total_variance > 0 else 0.0
-            cum += pct
-            rotation_rows.append({
-                'component': i + 1,
-                'eigenvalue': ev,
-                'variancePercent': pct,
-                'cumulativePercent': cum
-            })
+            row = {'component': i + 1, 'eigenvalue': ev}
+            if oblique:
+                # Correlated components overlap, so these sums do not add up to
+                # the extracted variance. SPSS prints the Total column alone.
+                row['variancePercent'] = None
+                row['cumulativePercent'] = None
+            else:
+                pct = (ev / total_variance * 100.0) if total_variance > 0 else 0.0
+                cum += pct
+                row['variancePercent'] = pct
+                row['cumulativePercent'] = cum
+            rotation_rows.append(row)
 
     return json.dumps({
         'components': [[float(x) for x in row] for row in transformed.tolist()],
@@ -215,6 +341,8 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
         'explainedVarianceRatio': [float(x) for x in pca.explained_variance_ratio_],
         'cumulativeVarianceRatio': [float(x) for x in cum_var],
         'loadings': loadings,
+        'structureLoadings': matrix_to_dict(structure, variables),
+        'factorCorrelation': matrix_to_lists(phi),
         'communalities': communalities,
         'sortedLoadings': sorted_loadings,
         'totalVarianceExplained': {
@@ -223,6 +351,8 @@ def run_pca(data_json, variables_json, n_components=None, standardize=True, rota
             'rotation': rotation_rows
         },
         'rotation': rotation,
+        'rotationApplied': bool(rotation_applied),
+        'rotationIsOblique': bool(rotation_applied and oblique),
         'sortBySize': bool(sort_by_size),
         'singularValues': [float(x) for x in pca.singular_values_],
         'nComponents': n_components,

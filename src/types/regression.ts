@@ -82,6 +82,15 @@ export interface LogisticBinaryOutput {
   bic: number;
   observations: number;
   convergence: boolean;
+  /**
+   * The outcome value modelled as the event, and the one modelled as its
+   * reference. Of the two values observed in `dependentVariable`, the higher is
+   * the event — the convention SPSS and R both use (#20). Reported because a
+   * 1/2 or 2/4 coded outcome is re-encoded to fit, and a reader of the
+   * coefficients needs to know which direction they point in.
+   */
+  eventValue?: string | number;
+  referenceValue?: string | number;
 }
 
 // Multinomial Logistic Regression

@@ -104,6 +104,27 @@ def load_dataframe(data_json):
     if data_json == _COLUMNAR_SENTINEL and '${FRAME_GLOBAL_NAME}' in globals():
         return globals()['${FRAME_GLOBAL_NAME}']
     return pd.DataFrame(json.loads(data_json))
+
+def category_label(value):
+    """Label a category value the way R and SPSS do (#19).
+
+    The columnar bridge marshals every numeric column as a Float64Array, so an
+    integer-coded category such as origin = 1 arrives here as 1.0 and str()
+    appends a fractional part that was never in the data. These labels are the
+    row and column headers a reader of a crosstab sees, so '1.0' where both
+    reference packages print '1' is wrong in the output, not merely internally.
+
+    Only an integral float is affected; 0.5 stays '0.5'. A bool is checked
+    first because bool is a subclass of int and True would otherwise become '1'.
+    """
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return str(value)
+        if value.is_integer():
+            return str(int(value))
+    return str(value)
 `;
 
 /**
