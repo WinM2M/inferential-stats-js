@@ -121,23 +121,36 @@ def squared_multiple_correlations(corr):
     # the original one (= principal components) for that item.
     return np.clip(smc, 0.0, 0.999)
 
+#: A communality this close to 1 means the item has no unique variance left --
+#: a Heywood case. We clamp so the iteration can continue, but the clamp is
+#: reported rather than hidden: it usually says the model asks for more factors
+#: than the data carries, or that the sample is small.
+PAF_COMMUNALITY_CEILING = 0.999
+
 def paf_loadings(corr, n_factors):
+    """Returns (loadings, converged, iterations, heywood_index_list)."""
     corr = np.asarray(corr, dtype=float)
     communalities = squared_multiple_correlations(corr)
     reduced = corr.copy()
     loadings = np.zeros((corr.shape[0], n_factors))
+    converged = False
+    iterations = 0
+    heywood = set()
 
-    for _ in range(PAF_MAX_ITER):
+    for iterations in range(1, PAF_MAX_ITER + 1):
         np.fill_diagonal(reduced, communalities)
         eigenvalues, eigenvectors = np.linalg.eigh(reduced)
         order = np.argsort(eigenvalues)[::-1][:n_factors]
         top_values = np.clip(eigenvalues[order], 0.0, None)
         loadings = eigenvectors[:, order] * np.sqrt(top_values)
         updated = np.sum(loadings ** 2, axis=1)
+        for index in np.where(updated >= PAF_COMMUNALITY_CEILING)[0]:
+            heywood.add(int(index))
         if np.max(np.abs(updated - communalities)) < PAF_TOLERANCE:
             communalities = updated
+            converged = True
             break
-        communalities = np.clip(updated, 0.0, 0.999)
+        communalities = np.clip(updated, 0.0, PAF_COMMUNALITY_CEILING)
 
     # Sign is arbitrary in an eigen-decomposition. SPSS reports the column so
     # that its dominant loadings are positive; without this the same data can
@@ -145,7 +158,7 @@ def paf_loadings(corr, n_factors):
     for column in range(loadings.shape[1]):
         if np.sum(loadings[:, column]) < 0:
             loadings[:, column] = -loadings[:, column]
-    return loadings
+    return loadings, converged, iterations, sorted(heywood)
 `;
 
 export const EFA_PY = `
@@ -215,8 +228,14 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
     # loadings for promax. Fit unrotated instead and say so in the output.
     rotation_applied = rotation != 'none' and n_factors > 1
 
+    paf_converged = None
+    paf_iterations = None
+    heywood_items = None
     if is_paf:
-        unrotated = paf_loadings(corr_mtx_full, n_factors)
+        unrotated, paf_converged, paf_iterations, heywood_indices = paf_loadings(
+            corr_mtx_full, n_factors
+        )
+        heywood_items = [variables[i] for i in heywood_indices if i < len(variables)]
         phi = None
         if rotation_applied:
             rotator = Rotator(method=rotation)
@@ -291,6 +310,13 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         'rotation': rotation,
         'rotationApplied': bool(rotation_applied),
         'rotationIsOblique': bool(rotation_applied and oblique),
+        # 🔴 Reported, not swallowed. A PAF solution that did not converge is
+        # unstable and will not reproduce, and a Heywood case usually means the
+        # model asks for more factors than the data carries. SPSS warns on both;
+        # a result that cannot be trusted should say so on its own.
+        'converged': (bool(paf_converged) if paf_converged is not None else None),
+        'iterations': (int(paf_iterations) if paf_iterations is not None else None),
+        'heywoodItems': heywood_items,
         'kmo': float(kmo_model),
         'bartlettChi2': float(chi2),
         'bartlettPValue': float(p_value)

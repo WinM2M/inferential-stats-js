@@ -441,6 +441,16 @@ describe('InferentialStats browser e2e', () => {
     expect(groupA.size, 'a 묶음이 한 요인에 모여야 한다').toBe(1);
     expect(groupB.size, 'b 묶음이 한 요인에 모여야 한다').toBe(1);
     expect([...groupA][0]).not.toBe([...groupB][0]);
+
+    // 🔴 믿어도 되는 해인지를 결과가 스스로 말해야 한다. 수렴하지 못한 PAF 해는
+    // 재현되지 않고, 헤이우드가 난 항목은 요인 수가 과하다는 신호다. 조용히
+    // 넘기면 그 숫자가 그대로 논문에 적힌다.
+    expect(paf.data.converged, 'PAF 수렴 여부가 결과에 실려야 한다').toBe(true);
+    expect(typeof paf.data.iterations).toBe('number');
+    expect(paf.data.heywoodItems).toEqual([]);
+    // 다른 추출법은 이 자리에서 반복하지 않으므로 「해당 없음」이어야 한다.
+    expect(pca.data.converged ?? null).toBeNull();
+    expect(pca.data.heywoodItems ?? null).toBeNull();
   });
 
   it('honours the requested number of factors instead of Kaiser', async () => {

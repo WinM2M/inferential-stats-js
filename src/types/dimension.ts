@@ -29,6 +29,22 @@ export interface EFAInput {
 }
 
 export interface EFAOutput {
+  /**
+   * Whether principal axis factoring reached its convergence tolerance.
+   * `null` for the other extraction methods, which do not iterate here.
+   *
+   * A solution that did not converge is unstable and will not reproduce, so a
+   * number taken from it should not be written down without saying so.
+   */
+  converged?: boolean | null;
+  /** Iterations principal axis factoring used. `null` elsewhere. */
+  iterations?: number | null;
+  /**
+   * Items whose communality hit the ceiling -- a Heywood case. Usually a sign
+   * that the model asks for more factors than the data carries, or that the
+   * sample is small. `null` outside principal axis factoring.
+   */
+  heywoodItems?: string[] | null;
   /** Pattern matrix under oblique rotation, rotated loadings otherwise. */
   loadings: Record<string, number[]>;
   /** Structure matrix (S = P x Phi). Oblique rotation only, else null. */
