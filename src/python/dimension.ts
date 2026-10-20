@@ -171,7 +171,7 @@ from factor_analyzer.rotator import Rotator
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
 ${ROTATION_PY}
 
-def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', method='minres'):
+def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', method='minres', sort_by_size=True):
     df = pd.DataFrame(json.loads(data_json))
     variables = json.loads(variables_json)
 
@@ -256,6 +256,36 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
 
     loadings_dict = matrix_to_dict(loadings, variables)
 
+    # SPSS-style "Sort by size": group variables by the factor they load on
+    # most (ascending factor index) and, within a group, by descending absolute
+    # loading. Under oblique rotation the dominant factor is read off the
+    # pattern matrix -- the matrix SPSS sorts -- so the pattern and structure
+    # tables keep one shared row order.
+    loadings_arr = np.asarray(loadings, dtype=float)
+    dominant_indices = np.argmax(np.abs(loadings_arr), axis=1)
+    dominant_values = np.take_along_axis(
+        np.abs(loadings_arr), dominant_indices.reshape(-1, 1), axis=1
+    ).reshape(-1)
+    if sort_by_size:
+        order_keys = list(zip(
+            dominant_indices.tolist(),
+            (-dominant_values).tolist(),
+            list(range(len(variables)))
+        ))
+        order_keys.sort()
+        sorted_indices = [key[2] for key in order_keys]
+    else:
+        sorted_indices = list(range(len(variables)))
+
+    sorted_loadings = []
+    for idx in sorted_indices:
+        sorted_loadings.append({
+            'variable': variables[idx],
+            'dominantComponent': int(dominant_indices[idx] + 1),
+            'dominantLoading': float(dominant_values[idx]),
+            'loadings': [float(x) for x in loadings_arr[idx].tolist()]
+        })
+
     structure = (getattr(fa, 'structure_', None) if fa is not None else None) if phi is not None else None
     if structure is None and phi is not None:
         structure = np.asarray(loadings, dtype=float) @ np.asarray(phi, dtype=float)
@@ -299,6 +329,10 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
 
     return json.dumps({
         'loadings': loadings_dict,
+        # 화면이 표를 적재량 크기순으로 세우는 근거. 행 순서만 담고 값은
+        # loadings 와 같다 — 패턴과 구조가 같은 순서로 서야 나란히 읽힌다.
+        'sortedLoadings': sorted_loadings,
+        'sortBySize': bool(sort_by_size),
         'structureLoadings': matrix_to_dict(structure, variables),
         'factorCorrelation': matrix_to_lists(phi),
         'eigenvalues': [float(x) for x in eigenvalues],

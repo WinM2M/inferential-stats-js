@@ -507,6 +507,46 @@ describe('InferentialStats browser e2e', () => {
     expect(tooMany.data.nFactors).toBe(variables.length);
   });
 
+  it('sorts the loading table by size, SPSS-style', async () => {
+    // 변수를 넣은 순서대로 늘어놓으면, 어느 문항이 어느 요인으로 갔는지
+    // 사람이 행을 짚어 가며 읽어야 한다. SPSS 가 기본으로 하는 것처럼
+    // 주 요인별로 묶고 그 안에서 적재량이 큰 것부터 세운다.
+    const variables = [
+      'music_satisfaction',
+      'weekly_hours_music',
+      'movie_satisfaction',
+      'weekly_hours_movie',
+      'art_satisfaction',
+      'monthly_art_visits',
+    ];
+
+    const result = await stats.efa({ data, variables, nFactors: 2, rotation: 'varimax' });
+    expect(result.success, JSON.stringify(result.error)).toBe(true);
+    expect(result.data.sortBySize).toBe(true);
+
+    const sorted = result.data.sortedLoadings as Array<{
+      variable: string;
+      dominantComponent: number;
+      dominantLoading: number;
+    }>;
+    expect(sorted).toHaveLength(variables.length);
+
+    // 같은 변수 집합이지, 값을 새로 만든 것이 아니다.
+    expect([...sorted.map((row) => row.variable)].sort()).toEqual([...variables].sort());
+
+    for (let i = 1; i < sorted.length; i += 1) {
+      const prev = sorted[i - 1];
+      const curr = sorted[i];
+      expect(curr.dominantComponent).toBeGreaterThanOrEqual(prev.dominantComponent);
+      if (curr.dominantComponent === prev.dominantComponent) {
+        expect(prev.dominantLoading).toBeGreaterThanOrEqual(curr.dominantLoading);
+      }
+    }
+
+    // 정렬은 표를 세우는 순서일 뿐이다. loadings 는 원래 순서를 지킨다.
+    expect(Object.keys(result.data.loadings)).toEqual(variables);
+  });
+
   it('reports progress while an analysis runs, not only while Pyodide loads', async () => {
     // init 구간에는 진행 이벤트가 있었고 실행 구간에는 없었다(#10). 실제 워커로 확인한다.
     expect(progressEvents.some((e) => e.stage === 'init')).toBe(true);

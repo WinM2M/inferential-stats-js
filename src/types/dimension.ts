@@ -59,6 +59,19 @@ export interface EFAOutput {
   variables?: string[];
   /** Pattern matrix under oblique rotation, rotated loadings otherwise. */
   loadings: Record<string, number[]>;
+  /**
+   * Row order for the loading tables, SPSS "Sort by size": grouped by the
+   * factor a variable loads on most, then by descending absolute loading.
+   * Same values as `loadings`, which keeps the input order.
+   */
+  sortedLoadings?: Array<{
+    variable: string;
+    dominantComponent: number;
+    dominantLoading: number;
+    loadings: number[];
+  }>;
+  /** Whether `sortedLoadings` is sorted or just the input order. */
+  sortBySize?: boolean;
   /** Structure matrix (S = P x Phi). Oblique rotation only, else null. */
   structureLoadings?: Record<string, number[]> | null;
   /** Factor correlation matrix Phi. Oblique rotation only, else null. */
