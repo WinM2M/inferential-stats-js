@@ -5,7 +5,7 @@
 [![license](https://img.shields.io/npm/l/@winm2m/inferential-stats-js.svg)](https://github.com/winm2m/inferential-stats-js/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![WebAssembly](https://img.shields.io/badge/WebAssembly-Pyodide-blueviolet.svg)](https://pyodide.org/)
-[![API Docs](https://img.shields.io/badge/docs-TypeDoc-blue.svg)](https://winm2m.github.io/inferential-stats-js/)
+[![Docs](https://img.shields.io/badge/docs-reference-blue.svg)](https://winm2m.github.io/inferential-stats-js/)
 
 **A headless JavaScript SDK for advanced statistical analysis in the browser using WebAssembly (Pyodide). Performs SPSS-level inferential statistics entirely client-side with no backend required.**
 
