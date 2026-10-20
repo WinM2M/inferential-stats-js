@@ -311,6 +311,12 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         # 「그릴 수 없는 모양」으로 떨어지고 있었다.
         'explainedVarianceRatio': [float(x) for x in v],
         'cumulativeVariance': [float(x) for x in cumulative] if cumulative is not None else [float(sum(v[:i+1])) for i in range(len(v))],
+        # 같은 값을 두 이름으로 낸다. 화면은 cumulativeVarianceRatio 를 보고,
+        # 주성분분석 쪽도 그 이름을 쓴다 — 요인분석만 짧은 이름이라 누적 열이
+        # 통째로 비어 있었다. 짧은 쪽은 쓰던 곳이 있을 수 있어 남긴다.
+        'cumulativeVarianceRatio': [float(x) for x in cumulative] if cumulative is not None else [float(sum(v[:i+1])) for i in range(len(v))],
+        # 표의 행 순서. 없으면 화면이 공통성 딕셔너리의 키 순서에 기댄다.
+        'variables': list(variables),
         'communalities': comm_dict,
         'uniquenesses': uniq_dict,
         'nFactors': n_factors,

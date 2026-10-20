@@ -458,6 +458,16 @@ describe('InferentialStats browser e2e', () => {
     expect(ratios.reduce((sum, value) => sum + value, 0)).toBeLessThanOrEqual(1);
     // 제곱적재합은 비율이 아니므로 같은 수일 리가 없다.
     expect(paf.data.variance[0]).toBeGreaterThan(ratios[0]);
+
+    // 🔴 화면이 읽는 이름으로 나와야 한다. 주성분분석 쪽과 이름이 어긋나
+    // 요인분석만 누적 열이 통째로 비어 있던 자리다.
+    const cumulative = paf.data.cumulativeVarianceRatio ?? [];
+    expect(cumulative.length).toBe(paf.data.nFactors);
+    expect(cumulative[cumulative.length - 1]).toBeCloseTo(
+      ratios.reduce((sum, value) => sum + value, 0),
+      6,
+    );
+    expect(paf.data.variables).toEqual(variables);
     expect(typeof paf.data.iterations).toBe('number');
     expect(paf.data.heywoodItems).toEqual([]);
     // 다른 추출법은 이 자리에서 반복하지 않으므로 「해당 없음」이어야 한다.

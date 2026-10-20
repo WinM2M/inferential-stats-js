@@ -53,6 +53,10 @@ export interface EFAOutput {
    * loadings, which sit on the eigenvalue scale and routinely exceed 1.
    */
   explainedVarianceRatio?: number[];
+  /** Running total of `explainedVarianceRatio`. Same values as `cumulativeVariance`. */
+  cumulativeVarianceRatio?: number[];
+  /** Variable order, so a table does not have to guess it from an object's keys. */
+  variables?: string[];
   /** Pattern matrix under oblique rotation, rotated loadings otherwise. */
   loadings: Record<string, number[]>;
   /** Structure matrix (S = P x Phi). Oblique rotation only, else null. */
