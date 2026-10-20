@@ -639,7 +639,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, EFA_PY, "run_efa", [
           dataJson,
           JSON.stringify(params?.variables ?? []),
-          null,
+          // Was hardcoded `null`, so `nFactors` never left the worker and every
+          // request came back with Kaiser's answer.
+          (params?.nFactors != null ? Number(params.nFactors) : null),
           String(params?.rotation ?? "varimax"),
           String(params?.method ?? "minres"),
         ]);

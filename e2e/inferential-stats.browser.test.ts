@@ -443,6 +443,38 @@ describe('InferentialStats browser e2e', () => {
     expect([...groupA][0]).not.toBe([...groupB][0]);
   });
 
+  it('honours the requested number of factors instead of Kaiser', async () => {
+    // 요청한 요인 수가 조용히 무시되고 있었다(#고유값 기준으로 덮어썼다).
+    // 카이저는 기본값이지 판정이 아니다 — 과대추출로 알려져 있고, 스크리나
+    // 이론으로 요인 수를 정하는 것이 보통의 연구 절차다.
+    const variables = [
+      'music_satisfaction',
+      'movie_satisfaction',
+      'art_satisfaction',
+      'weekly_hours_music',
+      'weekly_hours_movie',
+      'monthly_art_visits',
+    ];
+
+    const auto = await stats.efa({ data, variables, rotation: 'none' });
+    expect(auto.success, JSON.stringify(auto.error)).toBe(true);
+
+    const asked = await stats.efa({ data, variables, nFactors: 2, rotation: 'none' });
+    expect(asked.success, JSON.stringify(asked.error)).toBe(true);
+    expect(asked.data.nFactors).toBe(2);
+    expect(Object.values(asked.data.loadings)[0]).toHaveLength(2);
+
+    // 변수 수를 넘겨 달라고 해도 뽑을 수 있는 만큼만 나온다.
+    const tooMany = await stats.efa({
+      data,
+      variables,
+      nFactors: variables.length + 5,
+      rotation: 'none',
+    });
+    expect(tooMany.success, JSON.stringify(tooMany.error)).toBe(true);
+    expect(tooMany.data.nFactors).toBe(variables.length);
+  });
+
   it('reports progress while an analysis runs, not only while Pyodide loads', async () => {
     // init 구간에는 진행 이벤트가 있었고 실행 구간에는 없었다(#10). 실제 워커로 확인한다.
     expect(progressEvents.some((e) => e.stage === 'init')).toBe(true);

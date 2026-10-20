@@ -193,7 +193,22 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
     auto_n_factors = sum(1 for x in valid_eigenvalues if x >= 1.0)
     if auto_n_factors <= 0:
         auto_n_factors = 1
-    n_factors = min(auto_n_factors, len(variables))
+
+    # The caller's n_factors used to be overwritten here, so asking for three
+    # factors and getting Kaiser's answer looked like the analysis disagreeing
+    # with you. Kaiser is the default, not the verdict: it is known to
+    # over-extract, and deciding the number of factors from a scree plot or
+    # from theory is ordinary practice. Honour the request when there is one.
+    requested = None
+    if n_factors is not None:
+        try:
+            requested = int(n_factors)
+        except (TypeError, ValueError):
+            requested = None
+    if requested is not None and requested >= 1:
+        n_factors = min(requested, len(variables))
+    else:
+        n_factors = min(auto_n_factors, len(variables))
 
     # A single factor has no second axis to rotate against, and factor_analyzer
     # does not refuse the request: it raises for varimax and truncates the
