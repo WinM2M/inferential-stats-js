@@ -644,6 +644,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           (params?.nFactors != null ? Number(params.nFactors) : null),
           String(params?.rotation ?? "varimax"),
           String(params?.method ?? "minres"),
+          // 표를 크기순으로 세울지. 주성분분석에만 넘어가고 있었다.
+          params?.sortBySize !== false,
         ]);
         break;
 

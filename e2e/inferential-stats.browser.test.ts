@@ -545,6 +545,18 @@ describe('InferentialStats browser e2e', () => {
 
     // 정렬은 표를 세우는 순서일 뿐이다. loadings 는 원래 순서를 지킨다.
     expect(Object.keys(result.data.loadings)).toEqual(variables);
+
+    // 끌 수도 있어야 한다. 끄면 넣은 순서 그대로다.
+    const unsorted = await stats.efa({
+      data,
+      variables,
+      nFactors: 2,
+      rotation: 'varimax',
+      sortBySize: false,
+    });
+    expect(unsorted.success, JSON.stringify(unsorted.error)).toBe(true);
+    expect(unsorted.data.sortBySize).toBe(false);
+    expect(unsorted.data.sortedLoadings?.map((row) => row.variable)).toEqual(variables);
   });
 
   it('reports progress while an analysis runs, not only while Pyodide loads', async () => {

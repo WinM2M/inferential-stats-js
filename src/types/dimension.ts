@@ -3,10 +3,19 @@ export interface EFAInput {
   data: Record<string, unknown>[];
   variables: string[];
   /**
-   * @deprecated Factor count is auto-selected by Kaiser criterion
-   * (eigenvalue >= 1). Provided values are ignored.
+   * How many factors to extract. Omit for the Kaiser criterion
+   * (eigenvalue >= 1), which is the default.
+   *
+   * This carried a `@deprecated` note saying the value was ignored. It was --
+   * the worker passed `null` regardless -- and that was the bug, not the
+   * contract. Asking for a factor count is ordinary research practice.
    */
   nFactors?: number;
+  /**
+   * Sort the loading table SPSS-style: grouped by the factor a variable loads
+   * on most, then by descending absolute loading. On by default.
+   */
+  sortBySize?: boolean;
   /**
    * Rotation applied to the extracted factors. `varimax` keeps the factors
    * uncorrelated; `promax` and `oblimin` let them correlate and therefore add
