@@ -302,7 +302,14 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         'structureLoadings': matrix_to_dict(structure, variables),
         'factorCorrelation': matrix_to_lists(phi),
         'eigenvalues': [float(x) for x in eigenvalues],
+        # 🔴 variance 는 **비율이 아니라 제곱적재합(SSL)** 이다. 고유값과 같은
+        # 눈금이라 1 을 넘는 값이 정상이다. 이름이 비율처럼 읽히는 바람에
+        # 화면이 100 을 곱해 「320%」를 찍을 뻔했다.
         'variance': [float(x) for x in ev],
+        # 설명 분산 **비율** = SSL / 변수 수. 화면이 쓰는 것은 이쪽이다.
+        # 계산은 늘 하고 있었는데 내보내지 않아서, 요인분석 결과가 통째로
+        # 「그릴 수 없는 모양」으로 떨어지고 있었다.
+        'explainedVarianceRatio': [float(x) for x in v],
         'cumulativeVariance': [float(x) for x in cumulative] if cumulative is not None else [float(sum(v[:i+1])) for i in range(len(v))],
         'communalities': comm_dict,
         'uniquenesses': uniq_dict,

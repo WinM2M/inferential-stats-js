@@ -446,6 +446,18 @@ describe('InferentialStats browser e2e', () => {
     // 재현되지 않고, 헤이우드가 난 항목은 요인 수가 과하다는 신호다. 조용히
     // 넘기면 그 숫자가 그대로 논문에 적힌다.
     expect(paf.data.converged, 'PAF 수렴 여부가 결과에 실려야 한다').toBe(true);
+
+    // 🔴 화면이 표를 그리려면 **비율**이 필요하다. `variance` 는 제곱적재합이라
+    // 1 을 넘고, 그걸 비율로 읽으면 「320%」가 찍힌다. 둘이 섞이지 않는지 본다.
+    const ratios = paf.data.explainedVarianceRatio ?? [];
+    expect(ratios.length).toBe(paf.data.nFactors);
+    for (const ratio of ratios) {
+      expect(ratio).toBeGreaterThan(0);
+      expect(ratio).toBeLessThanOrEqual(1);
+    }
+    expect(ratios.reduce((sum, value) => sum + value, 0)).toBeLessThanOrEqual(1);
+    // 제곱적재합은 비율이 아니므로 같은 수일 리가 없다.
+    expect(paf.data.variance[0]).toBeGreaterThan(ratios[0]);
     expect(typeof paf.data.iterations).toBe('number');
     expect(paf.data.heywoodItems).toEqual([]);
     // 다른 추출법은 이 자리에서 반복하지 않으므로 「해당 없음」이어야 한다.

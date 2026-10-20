@@ -45,6 +45,14 @@ export interface EFAOutput {
    * sample is small. `null` outside principal axis factoring.
    */
   heywoodItems?: string[] | null;
+  /**
+   * Share of the total variance each factor accounts for (SSL / variable
+   * count). This is the one a table should print as a percentage.
+   *
+   * Note that `variance` is **not** this: it holds the sums of squared
+   * loadings, which sit on the eigenvalue scale and routinely exceed 1.
+   */
+  explainedVarianceRatio?: number[];
   /** Pattern matrix under oblique rotation, rotated loadings otherwise. */
   loadings: Record<string, number[]>;
   /** Structure matrix (S = P x Phi). Oblique rotation only, else null. */
