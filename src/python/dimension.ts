@@ -76,6 +76,76 @@ def matrix_to_dict(matrix, variables):
     for i, var in enumerate(variables):
         result[var] = [float(x) for x in rows[i].tolist()]
     return result
+
+# ---------------------------------------------------------------------------
+# Principal axis factoring
+#
+# factor_analyzer offers 'minres', 'ml' and 'principal'. The last one is named
+# after principal *factor* analysis but does not do it: it runs a randomized
+# SVD on the standardized data and reports item-component correlations, which
+# is principal components. The step that makes PAF a common-factor method --
+# replacing the correlation diagonal with communality estimates and iterating
+# until they settle -- is absent.
+#
+# PAF is what psychology scales are usually extracted with, so we implement it
+# here rather than mislabel PCA as PAF. The procedure is the textbook one and
+# matches SPSS's "Principal Axis Factoring":
+#
+#   1. Start with squared multiple correlations (SMC) on the diagonal. SMC is
+#      the share of an item's variance the other items can predict -- the
+#      standard lower-bound estimate of its communality.
+#   2. Eigen-decompose that reduced matrix, keep the top k, and read loadings
+#      off as eigenvector * sqrt(eigenvalue).
+#   3. Recompute communalities from those loadings, put them back on the
+#      diagonal, and repeat until they stop moving.
+#
+# Negative eigenvalues are expected here (the reduced matrix is not positive
+# definite) and are clamped to zero rather than square-rooted into NaN. SPSS
+# does the same.
+# ---------------------------------------------------------------------------
+
+PAF_MAX_ITER = 50
+PAF_TOLERANCE = 1e-6
+
+def squared_multiple_correlations(corr):
+    """SMC per variable: 1 - 1/diag(inv(R)). Falls back when R is singular."""
+    try:
+        inv = np.linalg.inv(corr)
+    except np.linalg.LinAlgError:
+        inv = np.linalg.pinv(corr)
+    diag = np.diag(inv)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        smc = 1.0 - 1.0 / diag
+    smc = np.where(np.isfinite(smc), smc, 0.0)
+    # A communality cannot be negative, and 1.0 would make the reduced matrix
+    # the original one (= principal components) for that item.
+    return np.clip(smc, 0.0, 0.999)
+
+def paf_loadings(corr, n_factors):
+    corr = np.asarray(corr, dtype=float)
+    communalities = squared_multiple_correlations(corr)
+    reduced = corr.copy()
+    loadings = np.zeros((corr.shape[0], n_factors))
+
+    for _ in range(PAF_MAX_ITER):
+        np.fill_diagonal(reduced, communalities)
+        eigenvalues, eigenvectors = np.linalg.eigh(reduced)
+        order = np.argsort(eigenvalues)[::-1][:n_factors]
+        top_values = np.clip(eigenvalues[order], 0.0, None)
+        loadings = eigenvectors[:, order] * np.sqrt(top_values)
+        updated = np.sum(loadings ** 2, axis=1)
+        if np.max(np.abs(updated - communalities)) < PAF_TOLERANCE:
+            communalities = updated
+            break
+        communalities = np.clip(updated, 0.0, 0.999)
+
+    # Sign is arbitrary in an eigen-decomposition. SPSS reports the column so
+    # that its dominant loadings are positive; without this the same data can
+    # come back with every sign flipped between runs.
+    for column in range(loadings.shape[1]):
+        if np.sum(loadings[:, column]) < 0:
+            loadings[:, column] = -loadings[:, column]
+    return loadings
 `;
 
 export const EFA_PY = `
@@ -84,6 +154,7 @@ import pandas as pd
 import numpy as np
 import scipy as sp
 from factor_analyzer import FactorAnalyzer
+from factor_analyzer.rotator import Rotator
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity, calculate_kmo
 ${ROTATION_PY}
 
@@ -106,8 +177,18 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         kmo_model = kmo_result
     chi2, p_value = calculate_bartlett_sphericity(X)
 
-    # Auto-select number of factors by Kaiser criterion (eigenvalue >= 1)
-    raw_eigenvalues = FactorAnalyzer(rotation=None, method=method).fit(X).get_eigenvalues()[0]
+    # 'paf' is ours; factor_analyzer has no principal axis factoring. See
+    # paf_loadings above for why we do not reach for its 'principal'.
+    is_paf = str(method).strip().lower() == 'paf'
+    corr_mtx_full = np.asarray(X.corr(), dtype=float)
+
+    # Auto-select number of factors by Kaiser criterion (eigenvalue >= 1).
+    # Kaiser reads the *unreduced* correlation matrix in both paths, so the two
+    # agree on how many factors to keep.
+    if is_paf:
+        raw_eigenvalues = np.sort(np.linalg.eigvalsh(corr_mtx_full))[::-1]
+    else:
+        raw_eigenvalues = FactorAnalyzer(rotation=None, method=method).fit(X).get_eigenvalues()[0]
     valid_eigenvalues = [float(x) for x in raw_eigenvalues if np.isfinite(x)]
     auto_n_factors = sum(1 for x in valid_eigenvalues if x >= 1.0)
     if auto_n_factors <= 0:
@@ -118,22 +199,40 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
     # does not refuse the request: it raises for varimax and truncates the
     # loadings for promax. Fit unrotated instead and say so in the output.
     rotation_applied = rotation != 'none' and n_factors > 1
-    fa = FactorAnalyzer(
-        n_factors=n_factors,
-        rotation=rotation if rotation_applied else None,
-        method=method
-    )
-    fa.fit(X)
 
-    loadings = fa.loadings_
+    if is_paf:
+        unrotated = paf_loadings(corr_mtx_full, n_factors)
+        phi = None
+        if rotation_applied:
+            rotator = Rotator(method=rotation)
+            loadings = rotator.fit_transform(unrotated)
+            phi = getattr(rotator, 'phi_', None) if oblique else None
+        else:
+            loadings = unrotated
+        fa = None
+    else:
+        fa = FactorAnalyzer(
+            n_factors=n_factors,
+            rotation=rotation if rotation_applied else None,
+            method=method
+        )
+        fa.fit(X)
+        loadings = fa.loadings_
+        phi = getattr(fa, 'phi_', None) if (rotation_applied and oblique) else None
+
     loadings_dict = matrix_to_dict(loadings, variables)
 
-    phi = getattr(fa, 'phi_', None) if (rotation_applied and oblique) else None
-    structure = getattr(fa, 'structure_', None) if phi is not None else None
+    structure = (getattr(fa, 'structure_', None) if fa is not None else None) if phi is not None else None
     if structure is None and phi is not None:
         structure = np.asarray(loadings, dtype=float) @ np.asarray(phi, dtype=float)
 
-    variance_result = fa.get_factor_variance()
+    if is_paf:
+        # SSL per factor, its share of the total number of variables, and the
+        # running total -- the same three columns factor_analyzer returns.
+        ssl = np.sum(np.asarray(loadings, dtype=float) ** 2, axis=0)
+        variance_result = (ssl, ssl / float(len(variables)), np.cumsum(ssl / float(len(variables))))
+    else:
+        variance_result = fa.get_factor_variance()
     if isinstance(variance_result, tuple):
         ev = variance_result[0]
         v = variance_result[1] if len(variance_result) > 1 else variance_result[0]
@@ -148,6 +247,9 @@ def run_efa(data_json, variables_json, n_factors=None, rotation='varimax', metho
         # loadings, which undercounts once the factors correlate.
         P = np.asarray(loadings, dtype=float)
         communalities = np.sum(P * (P @ np.asarray(phi, dtype=float)), axis=1)
+        uniquenesses = 1.0 - communalities
+    elif is_paf:
+        communalities = np.sum(np.asarray(loadings, dtype=float) ** 2, axis=1)
         uniquenesses = 1.0 - communalities
     else:
         communalities = fa.get_communalities()

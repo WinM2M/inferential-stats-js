@@ -13,7 +13,19 @@ export interface EFAInput {
    * `structureLoadings` and `factorCorrelation` to the output.
    */
   rotation?: FactorRotation;
-  method?: 'minres' | 'ml' | 'principal';
+  /**
+   * Extraction method.
+   *
+   * - `paf` — principal axis factoring. The usual choice for scale
+   *   development, and what SPSS calls "Principal Axis Factoring". Ours; see
+   *   `python/dimension.ts`.
+   * - `minres` — minimum residual (ordinary least squares). The default.
+   * - `ml` — maximum likelihood.
+   * - `principal` — principal *components*, despite the name factor_analyzer
+   *   gives it. It does not estimate communalities, so it answers a different
+   *   question than the three above.
+   */
+  method?: 'paf' | 'minres' | 'ml' | 'principal';
 }
 
 export interface EFAOutput {

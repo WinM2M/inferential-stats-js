@@ -367,6 +367,82 @@ describe('InferentialStats browser e2e', () => {
     expect(unrotated.data.rotationApplied).toBe(false);
   });
 
+  it('extracts factors by principal axis factoring, not components', async () => {
+    // factor_analyzer 의 'principal' 은 이름과 달리 주성분분석이다 — 공통성을
+    // 추정하지 않고 특이값 분해로 성분을 뽑는다. 그래서 'paf' 를 직접 구현했고,
+    // 여기서 **그것이 여전히 공통요인법인지**를 고정한다.
+    //
+    // 설문 픽스처를 쓰지 않는다. 그 데이터는 고유값이 전부 1 부근이라 요인
+    // 구조가 없고, 그런 자료에서는 어떤 추출법도 의미 있는 답을 내지 못한다
+    // (minres 는 공통성이 0.995 까지 치솟는 헤이우드 케이스가 난다). 요인이
+    // **있는** 자료라야 「요인을 제대로 뽑는가」를 물을 수 있다.
+    const rng = (seed: number) => () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed / 2147483648;
+    };
+    const next = rng(20261020);
+    const normal = () => {
+      // Box–Muller. 균등난수 둘로 정규난수 하나.
+      const u = Math.max(next(), 1e-9);
+      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * next());
+    };
+    const structured: Record<string, number>[] = [];
+    for (let i = 0; i < 400; i += 1) {
+      const factorA = normal();
+      const factorB = normal();
+      const row: Record<string, number> = {};
+      for (let j = 0; j < 4; j += 1) row[`a${j}`] = 0.75 * factorA + 0.66 * normal();
+      for (let j = 0; j < 4; j += 1) row[`b${j}`] = 0.75 * factorB + 0.66 * normal();
+      structured.push(row);
+    }
+    const variables = ['a0', 'a1', 'a2', 'a3', 'b0', 'b1', 'b2', 'b3'];
+
+    const paf = await stats.efa({
+      data: structured,
+      variables,
+      method: 'paf',
+      nFactors: 2,
+      rotation: 'varimax',
+    });
+    expect(paf.success, JSON.stringify(paf.error)).toBe(true);
+
+    const pca = await stats.efa({
+      data: structured,
+      variables,
+      method: 'principal',
+      nFactors: 2,
+      rotation: 'varimax',
+    });
+    expect(pca.success, JSON.stringify(pca.error)).toBe(true);
+
+    for (const variable of variables) {
+      const communality = paf.data.communalities[variable];
+      expectNonZeroFiniteNumber(communality, `paf.communalities.${variable}`);
+      // 공통요인법의 공통성은 1 을 넘지 못한다. 넘으면 헤이우드 케이스를
+      // 그대로 내보낸 것이다.
+      expect(communality).toBeLessThanOrEqual(1);
+      expect(paf.data.uniquenesses[variable]).toBeCloseTo(1 - communality, 10);
+      // 요인이 실제로 있는 자료다. 공통성이 0 에 붙어 있으면 못 뽑은 것이다.
+      expect(communality).toBeGreaterThan(0.2);
+
+      // 🔴 성분은 공통분산만 설명하지 않으므로 공통성이 늘 더 크다. 두 수가
+      // 같아졌다면 'paf' 가 실제로는 주성분을 돌린 것이다.
+      expect(communality, `paf vs pca communality of ${variable}`)
+        .toBeLessThan(pca.data.communalities[variable]);
+    }
+
+    // 넣은 구조를 되찾는지 — a 묶음과 b 묶음이 서로 다른 요인에 실려야 한다.
+    const dominant = (variable: string) => {
+      const row = paf.data.loadings[variable];
+      return Math.abs(row[0]) >= Math.abs(row[1]) ? 0 : 1;
+    };
+    const groupA = new Set(['a0', 'a1', 'a2', 'a3'].map(dominant));
+    const groupB = new Set(['b0', 'b1', 'b2', 'b3'].map(dominant));
+    expect(groupA.size, 'a 묶음이 한 요인에 모여야 한다').toBe(1);
+    expect(groupB.size, 'b 묶음이 한 요인에 모여야 한다').toBe(1);
+    expect([...groupA][0]).not.toBe([...groupB][0]);
+  });
+
   it('reports progress while an analysis runs, not only while Pyodide loads', async () => {
     // init 구간에는 진행 이벤트가 있었고 실행 구간에는 없었다(#10). 실제 워커로 확인한다.
     expect(progressEvents.some((e) => e.stage === 'init')).toBe(true);
