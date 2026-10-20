@@ -4,6 +4,7 @@ import type {
 } from './types/common';
 import type {
   FrequenciesInput, FrequenciesOutput,
+  MultipleResponseInput, MultipleResponseOutput,
   DescriptivesInput, DescriptivesOutput,
   CrosstabsInput, CrosstabsOutput,
 } from './types/descriptive';
@@ -279,6 +280,16 @@ export class InferentialStats {
   /** Frequency analysis for categorical variables */
   async frequencies(input: FrequenciesInput): Promise<AnalysisResult<FrequenciesOutput>> {
     return this._runAnalysis('frequencies', input);
+  }
+
+  /**
+   * Frequencies for a multiple-response set ("choose all that apply").
+   *
+   * Pass the 0/1 columns the question exploded into; the result is one table
+   * for the whole question rather than one per option.
+   */
+  async multipleResponse(input: MultipleResponseInput): Promise<AnalysisResult<MultipleResponseOutput>> {
+    return this._runAnalysis('multipleResponse', input);
   }
 
   /** Descriptive statistics for continuous variables */

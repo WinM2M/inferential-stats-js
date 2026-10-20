@@ -102,6 +102,85 @@ def run_descriptives(data_json, variables_json):
     return json.dumps({'statistics': results})
 `;
 
+export const MULTIPLE_RESPONSE_PY = `
+import json
+import math
+import pandas as pd
+
+def _is_selected(value):
+    """A respondent picked this option."""
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        if isinstance(value, float) and math.isnan(value):
+            return False
+        return value == 1
+    text = str(value).strip().lower()
+    return text in ('1', 'true', 'yes', 'y')
+
+
+def _is_missing(value):
+    """No answer at all, as opposed to 'saw it and did not pick it'."""
+    if value is None:
+        return True
+    if isinstance(value, float) and math.isnan(value):
+        return True
+    return str(value).strip() == ''
+
+
+def run_multiple_response(data_json, variables_json):
+    """Frequencies for a multiple-response set.
+
+    A "choose all that apply" question arrives as one 0/1 column per option.
+    Running an ordinary frequency on each column answers "how many picked this
+    option" one option at a time, in tables that cannot be read together. What
+    the question asks is how the picks divide, so the set needs one table.
+
+    Two percentages, because they answer different questions and SPSS prints
+    both:
+      - percentOfResponses = picks of this option / all picks
+      - percentOfCases     = picks of this option / respondents who answered
+
+    Cases sum past 100% and that is not an error -- one person can pick three
+    options. Respondents who skipped the question entirely are not cases.
+    """
+    df = pd.DataFrame(json.loads(data_json))
+    variables = [str(name) for name in json.loads(variables_json) if name]
+    variables = [name for name in variables if name in df.columns]
+
+    counts = []
+    for name in variables:
+        counts.append(int(sum(1 for value in df[name].tolist() if _is_selected(value))))
+
+    valid_cases = 0
+    for _, row in df[variables].iterrows() if variables else []:
+        values = [row[name] for name in variables]
+        if all(_is_missing(value) for value in values):
+            continue
+        valid_cases += 1
+
+    total_responses = int(sum(counts))
+    rows = []
+    for name, count in zip(variables, counts):
+        rows.append({
+            'variable': name,
+            'count': count,
+            'percentOfResponses': (count / total_responses * 100.0) if total_responses > 0 else 0.0,
+            'percentOfCases': (count / valid_cases * 100.0) if valid_cases > 0 else 0.0
+        })
+
+    return json.dumps({
+        'variables': variables,
+        'items': rows,
+        'totalResponses': total_responses,
+        'validCases': valid_cases,
+        'missingCases': int(len(df) - valid_cases),
+        'percentOfCasesTotal': (total_responses / valid_cases * 100.0) if valid_cases > 0 else 0.0
+    })
+`;
+
 export const CROSSTABS_PY = `
 import json
 import pandas as pd

@@ -507,6 +507,37 @@ describe('InferentialStats browser e2e', () => {
     expect(tooMany.data.nFactors).toBe(variables.length);
   });
 
+  it('sums a multiple-response set into one table', async () => {
+    // 「모두 고르세요」 문항을 보기마다 빈도 내면 0/1 표가 보기 수만큼 나오고,
+    // 그걸 나란히 놓아도 「어느 보기가 많이 골렸나」가 안 읽힌다. 한 표로 낸다.
+    const rows = [
+      { a: 1, b: 1, c: 0 },
+      { a: 1, b: 0, c: 0 },
+      { a: 1, b: 1, c: 1 },
+      { a: 0, b: 0, c: 0 },
+      { a: null, b: null, c: null } // 문항 자체를 건너뛴 사람
+    ];
+    const result = await stats.multipleResponse({ data: rows, variables: ['a', 'b', 'c'] });
+    expect(result.success, JSON.stringify(result.error)).toBe(true);
+
+    const data = result.data;
+    // 고른 횟수: a 3, b 2, c 1 = 6
+    expect(data.items.map((item) => item.count)).toEqual([3, 2, 1]);
+    expect(data.totalResponses).toBe(6);
+    // 건너뛴 한 명은 케이스가 아니다. 아무것도 안 고른 사람은 케이스다.
+    expect(data.validCases).toBe(4);
+    expect(data.missingCases).toBe(1);
+
+    // 응답 기준 백분율은 100 으로 떨어진다.
+    const responsesTotal = data.items.reduce((sum, item) => sum + item.percentOfResponses, 0);
+    expect(responsesTotal).toBeCloseTo(100, 6);
+    expect(data.items[0].percentOfResponses).toBeCloseTo(50, 6);
+
+    // 케이스 기준은 100 을 넘는다 — 한 사람이 여러 개를 고른다. 오류가 아니다.
+    expect(data.items[0].percentOfCases).toBeCloseTo(75, 6);
+    expect(data.percentOfCasesTotal).toBeCloseTo(150, 6);
+  });
+
   it('makes one frequency table per variable', async () => {
     // 설문을 문항별로 훑는 일이 빈도분석의 본래 쓰임이다. 한 번에 한 변수만
     // 받으면 문항 수만큼 다시 돌려야 했다.

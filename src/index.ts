@@ -20,7 +20,8 @@ export type {
 } from './types/common';
 
 export type {
-  FrequenciesInput, FrequenciesOutput, FrequencyItem,
+  FrequenciesInput, FrequenciesOutput, FrequencyItem, FrequencyTable,
+  MultipleResponseInput, MultipleResponseOutput, MultipleResponseItem,
   DescriptivesInput, DescriptivesOutput, DescriptiveStats,
   CrosstabsInput, CrosstabsOutput, CrosstabCell,
 } from './types/descriptive';

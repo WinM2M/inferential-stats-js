@@ -29,6 +29,7 @@ export type WorkerRequestType =
   | 'init'
   | 'destroy'
   | 'frequencies'
+  | 'multipleResponse'
   | 'descriptives'
   | 'crosstabs'
   | 'ttest_independent'

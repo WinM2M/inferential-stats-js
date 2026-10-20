@@ -29,6 +29,32 @@ export interface FrequenciesOutput extends FrequencyTable {
   tables?: FrequencyTable[];
 }
 
+// Multiple response (choose all that apply)
+export interface MultipleResponseInput {
+  data: Record<string, unknown>[];
+  /** One 0/1 column per option, in the order the options are shown. */
+  variables: string[];
+}
+
+export interface MultipleResponseItem {
+  variable: string;
+  count: number;
+  /** Share of all picks. These sum to 100. */
+  percentOfResponses: number;
+  /** Share of respondents who answered. These sum past 100 -- one person picks several. */
+  percentOfCases: number;
+}
+
+export interface MultipleResponseOutput {
+  variables: string[];
+  items: MultipleResponseItem[];
+  totalResponses: number;
+  /** Respondents who answered the question at all. */
+  validCases: number;
+  missingCases: number;
+  percentOfCasesTotal: number;
+}
+
 // Descriptives
 export interface DescriptivesInput {
   data: Record<string, unknown>[];

@@ -38,6 +38,7 @@ declare function loadPyodide(
 import { encodePythonArg, type PythonArg } from "./python-arg";
 import {
   FREQUENCIES_PY,
+  MULTIPLE_RESPONSE_PY,
   DESCRIPTIVES_PY,
   CROSSTABS_PY,
 } from "../python/descriptive";
@@ -518,6 +519,13 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           String(params?.variable ?? ""),
           // 변수 목록을 받으면 문항마다 표를 하나씩 낸다. 한 개만 넘기던 때와
           // 같은 키도 함께 나가므로 쓰던 쪽은 그대로다.
+          JSON.stringify(params?.variables ?? []),
+        ]);
+        break;
+
+      case "multipleResponse":
+        await runAnalysis(id, MULTIPLE_RESPONSE_PY, "run_multiple_response", [
+          dataJson,
           JSON.stringify(params?.variables ?? []),
         ]);
         break;
