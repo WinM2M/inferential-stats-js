@@ -516,6 +516,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, FREQUENCIES_PY, "run_frequencies", [
           dataJson,
           String(params?.variable ?? ""),
+          // 변수 목록을 받으면 문항마다 표를 하나씩 낸다. 한 개만 넘기던 때와
+          // 같은 키도 함께 나가므로 쓰던 쪽은 그대로다.
+          JSON.stringify(params?.variables ?? []),
         ]);
         break;
 
@@ -531,6 +534,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
           dataJson,
           String(params?.rowVariable ?? ""),
           String(params?.colVariable ?? ""),
+          // 행 변수를 여럿 받으면 같은 열 변수에 대해 표를 하나씩 낸다.
+          JSON.stringify(params?.rowVariables ?? []),
         ]);
         break;
 

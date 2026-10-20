@@ -1,7 +1,10 @@
 // Frequencies
 export interface FrequenciesInput {
   data: Record<string, unknown>[];
-  variable: string;
+  /** A single variable. Ignored when `variables` is given. */
+  variable?: string;
+  /** Several variables: one frequency table each, in this order. */
+  variables?: string[];
 }
 
 export interface FrequencyItem {
@@ -11,10 +14,19 @@ export interface FrequencyItem {
   cumulativePercentage: number;
 }
 
-export interface FrequenciesOutput {
+export interface FrequencyTable {
   variable: string;
   totalCount: number;
   frequencies: FrequencyItem[];
+}
+
+export interface FrequenciesOutput extends FrequencyTable {
+  /**
+   * One entry per requested variable. The top-level `variable`, `totalCount`
+   * and `frequencies` repeat the first entry so callers written against the
+   * single-variable shape keep working.
+   */
+  tables?: FrequencyTable[];
 }
 
 // Descriptives
@@ -44,7 +56,10 @@ export interface DescriptivesOutput {
 // Crosstabs
 export interface CrosstabsInput {
   data: Record<string, unknown>[];
-  rowVariable: string;
+  /** A single row variable. Ignored when `rowVariables` is given. */
+  rowVariable?: string;
+  /** Several row variables: one table each, all against `colVariable`. */
+  rowVariables?: string[];
   colVariable: string;
 }
 
@@ -58,7 +73,7 @@ export interface CrosstabCell {
   totalPercentage: number;
 }
 
-export interface CrosstabsOutput {
+export interface CrosstabTable {
   rowVariable: string;
   colVariable: string;
   table: CrosstabCell[];
@@ -68,4 +83,12 @@ export interface CrosstabsOutput {
   degreesOfFreedom: number;
   pValue: number;
   cramersV: number;
+}
+
+export interface CrosstabsOutput extends CrosstabTable {
+  /**
+   * One entry per row variable. The top-level fields repeat the first entry so
+   * callers written against the single-table shape keep working.
+   */
+  tables?: CrosstabTable[];
 }

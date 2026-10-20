@@ -507,6 +507,55 @@ describe('InferentialStats browser e2e', () => {
     expect(tooMany.data.nFactors).toBe(variables.length);
   });
 
+  it('makes one frequency table per variable', async () => {
+    // 설문을 문항별로 훑는 일이 빈도분석의 본래 쓰임이다. 한 번에 한 변수만
+    // 받으면 문항 수만큼 다시 돌려야 했다.
+    const variables = ['music_satisfaction', 'movie_satisfaction', 'art_satisfaction'];
+    const result = await stats.frequencies({ data, variables });
+    expect(result.success, JSON.stringify(result.error)).toBe(true);
+
+    const tables = result.data.tables ?? [];
+    expect(tables.map((table) => table.variable)).toEqual(variables);
+    for (const table of tables) {
+      expect(table.frequencies.length).toBeGreaterThan(0);
+      expect(table.totalCount).toBeGreaterThan(0);
+    }
+
+    // 한 변수만 받던 모양도 그대로 남는다 — 첫 표를 윗자리에 되풀이한다.
+    expect(result.data.variable).toBe(variables[0]);
+    expect(result.data.frequencies).toEqual(tables[0].frequencies);
+
+    // 변수 하나만 넘기던 옛 호출도 여전히 선다.
+    const single = await stats.frequencies({ data, variable: variables[1] });
+    expect(single.success, JSON.stringify(single.error)).toBe(true);
+    expect(single.data.variable).toBe(variables[1]);
+    expect(single.data.tables?.map((table) => table.variable)).toEqual([variables[1]]);
+  });
+
+  it('crosses several row variables against one column variable', async () => {
+    // 다중응답 문항은 보기마다 열이 하나씩 생긴다. 한 번에 한 행 변수만 받으면
+    // 보기 수만큼 돌려 놓고 결과를 따로 맞춰 봐야 한다.
+    const rowVariables = ['gender', 'age_group'];
+    const result = await stats.crosstabs({ data, rowVariables, colVariable: 'favorite_music' });
+    expect(result.success, JSON.stringify(result.error)).toBe(true);
+
+    const tables = result.data.tables ?? [];
+    expect(tables.map((table) => table.rowVariable)).toEqual(rowVariables);
+    for (const table of tables) {
+      expect(table.colVariable).toBe('favorite_music');
+      expect(table.table.length).toBeGreaterThan(0);
+    }
+
+    // 한 표만 받던 모양도 그대로 남는다.
+    expect(result.data.rowVariable).toBe(rowVariables[0]);
+    expect(result.data.table).toEqual(tables[0].table);
+
+    const single = await stats.crosstabs({ data, rowVariable: 'gender', colVariable: 'favorite_music' });
+    expect(single.success, JSON.stringify(single.error)).toBe(true);
+    expect(single.data.rowVariable).toBe('gender');
+    expect(single.data.tables?.map((table) => table.rowVariable)).toEqual(['gender']);
+  });
+
   it('sorts the loading table by size, SPSS-style', async () => {
     // 변수를 넣은 순서대로 늘어놓으면, 어느 문항이 어느 요인으로 갔는지
     // 사람이 행을 짚어 가며 읽어야 한다. SPSS 가 기본으로 하는 것처럼
