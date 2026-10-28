@@ -4,3 +4,4 @@ export { LINEAR_REGRESSION_PY, LOGISTIC_BINARY_PY, LOGISTIC_MULTINOMIAL_PY } fro
 export { KMEANS_PY, HIERARCHICAL_CLUSTER_PY } from './classify';
 export { EFA_PY, PCA_PY, MDS_PY } from './dimension';
 export { CRONBACH_ALPHA_PY } from './scale';
+export * from './process';

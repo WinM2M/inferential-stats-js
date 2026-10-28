@@ -32,6 +32,11 @@ import type {
   CronbachAlphaInput, CronbachAlphaOutput,
 } from './types/scale';
 
+import type {
+  ProcessInput,
+  ProcessOutput,
+} from './types/process';
+
 /** Configuration for InferentialStats SDK */
 export interface InferentialStatsConfig {
   /** URL to the worker script file. If not provided, uses the default bundled worker. */
@@ -395,6 +400,23 @@ export class InferentialStats {
   /** Reliability analysis (Cronbach's Alpha) */
   async cronbachAlpha(input: CronbachAlphaInput): Promise<AnalysisResult<CronbachAlphaOutput>> {
     return this._runAnalysis('cronbach_alpha', input);
+  }
+
+  /**
+   * 조건부 과정 분석 — 매개 · 조절 · 조절된 매개.
+   *
+   * `model` 이 그림을 정한다. 같은 변수 목록이라도 모형 4 는 **병렬 매개**,
+   * 모형 6 은 **순차 매개**로 전혀 다른 경로를 푼다. 번호는 Hayes 의 체계를
+   * 그대로 쓴다 — 논문에 "Model 4" 라고 적어야 하는 사람이 쓰는 도구다.
+   *
+   * 간접효과의 신뢰구간은 편향보정 부트스트랩이고, 그래서 **t·p 가 없다**
+   * (`null`). 판정은 구간이 0 을 품는지로 한다.
+   *
+   * 계산은 `pyprocessmacro`(MIT, Quentin André)가 한다. 원본 PROCESS 매크로는
+   * 쓰지 않는다 — 상업적 이용과 공개 서버 게시가 금지돼 있다.
+   */
+  async process(input: ProcessInput): Promise<AnalysisResult<ProcessOutput>> {
+    return this._runAnalysis('process', input);
   }
 
   // ═══════════════════════════════════════

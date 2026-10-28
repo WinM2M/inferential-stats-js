@@ -5,3 +5,4 @@ export * from './regression';
 export * from './classify';
 export * from './dimension';
 export * from './scale';
+export * from './process';

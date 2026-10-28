@@ -27,6 +27,12 @@ export type {
 } from './types/descriptive';
 
 export type {
+  ProcessInput, ProcessOutput, ProcessModelNumber,
+  ProcessPathCoefficient, ProcessOutcomeModel,
+  ProcessEffect, ProcessIndirectEffect, ProcessModeratedMediationIndex,
+} from './types/process';
+
+export type {
   TTestIndependentInput, TTestIndependentOutput, TTestResult, LeveneTestResult,
   TTestPairedInput, TTestPairedOutput,
   AnovaInput, AnovaOutput, AnovaGroupStats,

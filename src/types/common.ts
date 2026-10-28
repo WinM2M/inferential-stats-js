@@ -44,7 +44,8 @@ export type WorkerRequestType =
   | 'efa'
   | 'pca'
   | 'mds'
-  | 'cronbach_alpha';
+  | 'cronbach_alpha'
+  | 'process';
 
 export interface WorkerRequest {
   id: string;

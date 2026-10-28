@@ -56,6 +56,7 @@ import {
 import { KMEANS_PY, HIERARCHICAL_CLUSTER_PY } from "../python/classify";
 import { EFA_PY, PCA_PY, MDS_PY } from "../python/dimension";
 import { CRONBACH_ALPHA_PY } from "../python/scale";
+import { PROCESS_PY } from "../python/process";
 
 import type {
   WorkerRequest,
@@ -296,7 +297,7 @@ globals()['${FRAME_GLOBAL_NAME}'] = df
  * Initialize Pyodide with required packages
  */
 async function initPyodide(id: string, pyodideUrl?: string): Promise<void> {
-  const totalSteps = 6;
+  const totalSteps = 7;
   let currentStep = 0;
 
   const reportStep = (message: string) => {
@@ -364,7 +365,19 @@ await micropip.install('scikit-learn')
 import micropip
 await micropip.install('factor_analyzer')
     `);
-    reportStep("factor_analyzer installed - all packages ready");
+    reportStep("factor_analyzer installed");
+
+    // Step 7: Install pyprocessmacro (mediation / moderation).
+    //
+    // `deps=False` 로 받는다. numpy·pandas·scipy 는 위에서 이미 올렸고, 나머지
+    // 선언 의존성인 matplotlib·seaborn 은 **그림용**이라 우리가 쓰지 않는다.
+    // 그걸 받게 두면 수 MB 를 더 내려받는다 — 휠 자체는 660KB 다.
+    // (PROCESS_PY 가 import 전에 두 모듈의 빈 대역을 sys.modules 에 꽂는다.)
+    await pyodide.runPythonAsync(`
+import micropip
+await micropip.install('pyprocessmacro', deps=False)
+    `);
+    reportStep("pyprocessmacro installed - all packages ready");
 
     sendResult(id, { initialized: true });
   } catch (err) {
@@ -689,6 +702,23 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
         await runAnalysis(id, CRONBACH_ALPHA_PY, "run_cronbach_alpha", [
           dataJson,
           JSON.stringify(params?.items ?? []),
+        ]);
+        break;
+
+      // === Conditional Process Analysis ===
+      case "process":
+        await runAnalysis(id, PROCESS_PY, "run_process", [
+          dataJson,
+          Number(params?.model),
+          String(params?.predictor ?? ""),
+          String(params?.outcome ?? ""),
+          JSON.stringify(params?.mediators ?? []),
+          (params?.moderator != null ? String(params.moderator) : null),
+          (params?.moderator2 != null ? String(params.moderator2) : null),
+          JSON.stringify(params?.covariates ?? []),
+          Number(params?.bootstrapSamples ?? 5000),
+          Number(params?.confidenceLevel ?? 95),
+          (params?.seed != null ? Number(params.seed) : null),
         ]);
         break;
 
