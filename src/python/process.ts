@@ -33,24 +33,15 @@ _PROCESS_MODERATION_ONLY = {1, 2, 3}
 
 export const PROCESS_PY = `
 import json
-import sys
-import types
 
 import numpy as np
 import pandas as pd
 
-# pyprocessmacro 의 utils 가 그림용 matplotlib·seaborn 을 모듈 로드 시점에 import
-# 한다. 우리는 그림을 쓰지 않는데 Pyodide 가 수 MB 를 더 받게 되므로 빈 모듈을 미리
-# 꽂아 둔다. 라이브러리의 plot_* 함수를 부르면 깨지지만, 우리는 부르지 않는다.
-# (상류에 지연 import PR 이 반영되면 이 블록을 지운다.)
-for _name in ('matplotlib', 'matplotlib.pyplot', 'seaborn'):
-    if _name not in sys.modules:
-        sys.modules[_name] = types.ModuleType(_name)
-if not hasattr(sys.modules['seaborn'], 'FacetGrid'):
-    sys.modules['seaborn'].FacetGrid = object
-if not hasattr(sys.modules['matplotlib'], 'pyplot'):
-    sys.modules['matplotlib'].pyplot = sys.modules['matplotlib.pyplot']
-
+# pyprocessmacro 의 utils 가 그림용 matplotlib·seaborn 을 모듈 로드 시점에
+# import 한다. 우리는 그림을 그리지 않으므로 워커가 설치 단계에서 두 이름에
+# **빈 대역을 등록해 둔다**(micropip.add_mock_package). 여기서 또 막지 않는
+# 이유는 한 가지다 -- 두 군데서 같은 일을 하면, 한쪽이 사라졌을 때 다른 쪽이
+# 그것을 가려 버린다. 등록이 빠지면 여기서 바로 깨지는 편이 낫다.
 from pyprocessmacro import Process
 
 ${PROCESS_ROLE_MAP_PY}

@@ -13,6 +13,8 @@
  * 아래 기대값은 2026-10-28 에 `pyprocessmacro` 2.2.0 을 직접 돌려 확인한 것이다.
  * 9개 모형 전부가 이 조합에서만 실행에 성공했다.
  */
+import { readFileSync } from 'node:fs';
+
 import { describe, it, expect } from 'vitest';
 import { PROCESS_PY, PROCESS_ROLE_MAP_PY } from '../src/python/process';
 
@@ -84,11 +86,26 @@ describe('조건부 과정 분석 — Python 페이로드', () => {
     expect(PROCESS_PY).toContain('def run_process(');
   });
 
-  it('그림용 모듈을 import 전에 막아 둔다', () => {
-    const stub = PROCESS_PY.indexOf("sys.modules[_name] = types.ModuleType(_name)");
-    const imp = PROCESS_PY.indexOf('from pyprocessmacro import Process');
-    expect(stub).toBeGreaterThan(-1);
-    expect(imp).toBeGreaterThan(stub);
+  it('그림용 모듈을 받지 않도록 워커가 빈 대역을 등록한다', () => {
+    /*
+     * pyprocessmacro 는 matplotlib·seaborn 을 의존성으로 선언한다. 그대로 받으면
+     * 8.9MB 를 더 내려받는데 우리는 그림을 그리지 않는다. `deps=False` 는 Pyodide
+     * 0.27.5 의 micropip 에서 깨지므로(아래 주석 참고) 빈 대역을 등록해 해석만
+     * 만족시킨다. 설치가 그 등록보다 먼저 가면 8.9MB 가 그대로 들어온다.
+     */
+    const worker = readFileSync(
+      new URL('../src/worker/stats-worker.ts', import.meta.url),
+      'utf8',
+    );
+    const mockMatplotlib = worker.indexOf("add_mock_package('matplotlib'");
+    const mockSeaborn = worker.indexOf("add_mock_package('seaborn'");
+    const install = worker.indexOf("micropip.install('pyprocessmacro')");
+    expect(mockMatplotlib).toBeGreaterThan(-1);
+    expect(mockSeaborn).toBeGreaterThan(-1);
+    expect(install).toBeGreaterThan(mockMatplotlib);
+    expect(install).toBeGreaterThan(mockSeaborn);
+    // `deps=False` 는 micropip 이 거부한다. 다시 들어오면 여기서 멈춘다.
+    expect(worker).not.toContain("'pyprocessmacro', deps=False");
   });
 
   it('조절 전용 모형은 매개변수를 요구하지 않는다', () => {

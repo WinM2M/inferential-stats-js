@@ -369,13 +369,27 @@ await micropip.install('factor_analyzer')
 
     // Step 7: Install pyprocessmacro (mediation / moderation).
     //
-    // `deps=False` 로 받는다. numpy·pandas·scipy 는 위에서 이미 올렸고, 나머지
-    // 선언 의존성인 matplotlib·seaborn 은 **그림용**이라 우리가 쓰지 않는다.
-    // 그걸 받게 두면 수 MB 를 더 내려받는다 — 휠 자체는 660KB 다.
-    // (PROCESS_PY 가 import 전에 두 모듈의 빈 대역을 sys.modules 에 꽂는다.)
+    // pyprocessmacro 는 matplotlib 과 seaborn 을 의존성으로 선언한다. **그림용**
+    // 이고 우리는 그림을 그리지 않는데, 그대로 받으면 **8.9MB** 를 더 내려받는다
+    // (브라우저에서 실측). 휠 자체는 660KB 다.
+    //
+    // `deps=False` 는 쓸 수 없다. Pyodide 0.27.5 의 micropip 에서
+    // `RuntimeError: Micropip internal error: attempted to install wheel before
+    // downloading it?` 로 깨진다 — 이름으로 받든 휠 URL 로 받든 같다.
+    //
+    // 그래서 micropip 이 의존성 해석에 쓰는 자리에 **빈 대역을 등록해 둔다.**
+    // 이러면 내려받는 양이 0.09MB 로 줄고, 분석 결과는 두 경로가 동일했다.
+    // plot_* 함수를 부르면 깨지지만 우리는 부르지 않는다.
     await pyodide.runPythonAsync(`
 import micropip
-await micropip.install('pyprocessmacro', deps=False)
+micropip.add_mock_package('matplotlib', '3.9.0', modules={
+    'matplotlib': 'pyplot = None',
+    'matplotlib.pyplot': '',
+})
+micropip.add_mock_package('seaborn', '0.13.2', modules={
+    'seaborn': 'class FacetGrid: pass',
+})
+await micropip.install('pyprocessmacro')
     `);
     reportStep("pyprocessmacro installed - all packages ready");
 
